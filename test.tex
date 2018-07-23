@@ -1,6 +1,7 @@
-\documentclass{book}
+\documentclass{report}
 \usepackage[utf8]{inputenc}
-\usepackage{amsmath,fullpage,amsfonts,amssymb,tikz,geometry,amsthm,pgfplots,algorithm,algpseudocode}
+\usepackage{amsmath,fullpage,amsfonts,amssymb,tikz,geometry,amsthm,pgfplots}
+\usepackage[boxruled]{algorithm2e}
 \geometry{margin=0.5in}
 \usetikzlibrary{matrix}
 \pgfplotsset{soldot/.style={color=blue,only marks,mark=*}} \pgfplotsset{holdot/.style={color=blue,fill=white,only marks,mark=*}}
@@ -11,10 +12,145 @@
 \author{Yiu Sing Lau}
 \date{}
 \begin{document}
+
 \maketitle
+
+\renewcommand{\abstractname}{ACKNOWLEDGEMENTS}
+\begin{abstract}
+Thank you very much
+
+\end{abstract}
+
+\renewcommand{\abstractname}{ABSTRACT}
+
+\begin{abstract}
+second abstract
+\end{abstract}
 \tableofcontents 
-\part{Theory}
+
+\chapter{Introduction}
+\section{STAN}
+
+
+\begin{algorithm}[H]
+\caption{Metropolis-Adjusted Langevin Algorithm}
+\KwData{$iter$ is the maximum number of iterations, $p(\cdot)$ is the unnormalized target density, $\tau$ is the variance parameter}
+\While{not at end of this document}{
+  read current\;
+  \eIf{understand}{
+   go to next section\;
+   current section becomes this one\;
+   }{
+   go back to the beginning of current section\;
+  }
+ }
  
+\end{algorithm}
+
+haha
+
+\section{Bayesian Neural Network }
+
+yo
+
+
+\chapter{STAN}
+\section{Hamiltonian Monte Carlo}
+definition epsilon L, stepsize jitter, advantage over MH , 0.65 rule , geometric convergence. cov linear transformation invariance 
+
+\section{No U-Turn Sampler}
+multinomial sampling over slice sampling
+
+\section{NUTS Termination Criteria}
+xhmc over gnuts over nuts 
+\section{Adaptive Tuning of Step Size}
+same as nuts paper 
+
+\section{Adaptive Tuning of HMC Metric}
+different windows for fast vs slow parameters 
+
+\section{HMC-Specific Sampling Diagnostics}
+bfmi , divergence ( talk about example 8 school) , tree depth , 
+\section{Other Sampling Diagnostics}
+ess gelman definition, rhat 
+\section{Numeric tricks/Implementation tricks}
+cov add unity 0.0001 + welford
+logsumexp
+divergence check 
+recursion requiring dynamic graph  > pytorch
+
+
+\chapter{Bayesian Neural Networks}
+\section{Neal}
+typical model 
+i.e. windowed hmc, hand tuning, ard priors.  Refer back to NUTS for discussion  of windowed hmc . 
+multimodality convergence concern P v NP
+
+\section{gibbs vs joint sampling}
+describes gibbs as done by neal 
+i.e. tried joint sampling, ncp 
+side tracked to talk about cp vs ncp 
+\section{SGHMC}
+tried on mnist
+\section{sparsity inducing priors}
+horseshoe priors for model selection. variational inference
+ncp
+\section{self normalizing induced initialization}
+selu, gloriot initialization
+
+\section{model selection}
+test error vs waic 
+
+\section{Relation to STAN and PyTorch}
+why pytorch better than stan. gpu . float vs double 
+
+
+
+\chapter{experiments}
+\section{model and data}
+\section{baseline}
+early stopping committee of nn 
+bnn show better predictive performance 
+though single early stopping sometimes perform at about the same predictive performance inconsistent across seeds 
+cannot be explained away by 
+\section{gnuts v xhmc}
+xhmc better min ess 
+variable num transitions after warmup
+\section{gibbs v joint}
+cp vs ncp 
+observed multimodaility in sigma2 parameter 
+nuts can sample hyperparameter well tho does not improve prediction
+
+\section{sghmc}
+impossible to tune , does not perform well
+\section{scaled priors}
+worse performance 
+\section{adapt cov}
+compare adapt cov. problem with inverting mass matrix
+\section{num layers}
+sampling about equally well across num layers
+\section{float v double}
+about same performance describes experiment 
+stability 
+test error 
+can't talk about Rhat because multiple modes 
+\section{HMC v NUTS}
+better sampling performance by nuts >> better prediction 
+\section{waic}
+fails to predict best number of units . maybe bad mixing . talk about loo. psis
+\section{sparsity inducing priors}
+none of them predicts as well as normal prior 
+horsehose type maybe  due to poor mixing 
+but even gaussian inv gamma don't seem to do so well either
+
+\section{Conclusion}
+\chapter{Conclusion}
+use xhmc, unscaled normal prior, 
+use diag e 
+don't use sghmc
+don't use waic 
+can use float on gpu
+
 \chapter{Model}
 
 \section{Markov Chain Monte Carlo}
@@ -67,30 +203,10 @@ acceptance step is introduced and this gives the Metropolis Adjusted Langevin
 Algorithm. 
 
 
-\begin{algorithm}
-\caption{Metropolis-Adjusted Langevin Algorithm}
-\Comment{$iter$ is the maximum number of iterations, $p(\cdot)$ is the unnormalized target density, $\tau$ is the variance parameter}
-\begin{algorithmic}[1]
-\Function{MALA}{$iter,p(\cdot),\tau$} 
-\State $x_0$ is initialized randomly.
-\For{ i in 1:$iter$}
-\State $Z \sim \mathcal{N}(0, I_d) $
-\State $\tilde{x}= x_{i-1} + \tau \nabla log p(x_{i-1}) + \sqrt{2 \tau} Z$
-\State $\alpha = \min\{1, \frac{p(\tilde{x} q(x_{i-1}|\tilde{x})}{p(x_{i-1})q(\tilde{x}|x_{i-1})}\} $
-\State $U \sim U(0,1)$
-\If{ $U \le \alpha$}
- \State Set $x_i = \tilde{x}$
-\Else{}
- \State Set $x_i = x_{i-1}$.
-\EndIf
-\EndFor
-\EndFunction
-\end{algorithmic}
-\end{algorithm}
-\begin{enumerate} 
 
 
-\item General Metropolis-Hastings framework. Theoretical ideas like ergodicity, central limit theorem, and convergence diagnostics. Problem of correlationn in the multivariate case. Need for reparametrization sometimes.
+
+ General Metropolis-Hastings framework. Theoretical ideas like ergodicity, central limit theorem, and convergence diagnostics. Problem of correlationn in the multivariate case. Need for reparametrization sometimes.
 
 The general idea of detailed balance. What does this property bring us? 
 Fact:
@@ -391,27 +507,25 @@ access to the covariance of the target distribution and its inverse, although th
 MCMC sampling in general as well. 
 (Pseudo Code for basic HMC)
 \begin{algorithm}
-    \caption{HMC update}
-    \Comment{Input: potential energy function $U(x)$, its gradient $\nabla U(x)$, initial position $x_0$, $\epsilon$,$L$,$\Sigma$} 
-    \begin{algorithmic}[1]
-    \State{$x = x_0$}
-    \State{$y = \mathcal{N}(0,\Sigma)$}
-    \State{$y_{c} = y$}
-    \For{$i = 1:L$}
-    \State{$y = y - \frac{\epsilon}{2} * \nabla U(x)$}
-    \State{$x = x + \epsilon * \Sigma^{-1} y $}
-    \State{$y = y - \frac{\epsilon}{2} * \nabla U(x)$}
-    \EndFor
-    \State{$y = -y $}
-    \State{$H_{c} = U(x_0) + \frac{y_c^T\Sigma^{-1}y_c}{2}$}
-    \State{$H_{p} = U(x) + \frac{y^T\Sigma^{-1}y}{2}$}
-    \State{$u  = Unif(0,1)$}
-    \If{ $u < \exp(H_{c} - H_{p})$ }
-        \State{$out = x$}
-    \Else
-        \State{$out = x_0$}
-     \EndIf
-\end{algorithmic}
+    \KwData{Input: potential energy function $U(x)$, its gradient $\nabla U(x)$, initial position $x_0$, $\epsilon$,$L$,$\Sigma$} 
+    $x = x_0$ \;
+    $y = \mathcal{N}(0,\Sigma)$ \;
+    $y_{c} = y$ \;
+    \For{$i = 1:L$}{
+    $y = y - \frac{\epsilon}{2} * \nabla U(x)$ \;
+    $x = x + \epsilon * \Sigma^{-1} y $ \;
+    $y = y - \frac{\epsilon}{2} * \nabla U(x)$ \;
+    }
+    $y = -y $ \;
+    $H_{c} = U(x_0) + \frac{y_c^T\Sigma^{-1}y_c}{2}$ \;
+    $H_{p} = U(x) + \frac{y^T\Sigma^{-1}y}{2}$ \;
+    $u  = Unif(0,1)$ \;
+    \eIf{ $u < \exp(H_{c} - H_{p})$ }{
+        $out = x$ \;
+    }{
+        $out = x_0$ \;
+     }
+\caption{HMC update}
 \end{algorithm}
 
 There are several reasons why HMC is better than random-walk Metropolis. First,
@@ -699,7 +813,6 @@ each momentum variable before updating it by $\sqrt{\alpha}$ where $\alpha$ is s
 1, then follow by an exact number of division by $\sqrt{\alpha}$ in the second
 half of the directory. \cite{neal1996sampling}
 
-\end{enumerate}
 \section{Neural networks} 
 
 Deep learning, a field in machine learning studying multilayered neural network models, has become quite successful in artificial intelligence tasks and a lot of research has been, and is currently underwayto improve our understanding of these models and apply them better and to more fields. See \cite{Goodfellow-et-al-2016-Book,lecun2015deep} a general introduction into the methodology and application of deep learning, and \cite{schmidhuber2015deep} for an in-depth literature review. It is futile to attempt a complete overview of the field because it is too vast but we will provide some pointers that reflect what the author finds important and some motivations. 
@@ -843,23 +956,6 @@ Even though the original Hamiltonian $H$ is not separable, the two Hamiltonians 
 sum to $H$ are separable when looked at separately. This enables the simple
 leapfrog to be used instead of the more time consuming generalized leapfrog.
 
-\begin{algorithm}
-    \caption{SSHMC}
-    \Comment{Input:$L,\epsilon,\theta_0,\phi_0$}
-    \begin{algorithmic}[1]
-    \State{Initialize $r \sim \mathcal{N}(0,G_\theta(\phi,x))$ and $r_\phi \sim
-    \mathcal{N}(0,G_\phi(\theta))$}
-    \For{$\ell$ in $1,2, \dots, L$}
-    \State{$(\theta^{\ell + \epsilon/2},r^{\ell + \epsilon/2}) =
-    leapfrog(\theta^{\ell},r_\theta^{\ell}, H_1,\epsilon/2)$}
-    \State{$(\phi^{\ell + \epsilon/2},r^{\ell + \epsilon/2}) =
-    leapfrog(\phi^{\ell},r_\theta^{\ell}, H_2,\epsilon)$}
-    \State{$(\theta^{\ell + \epsilon},r^{\ell + \epsilon}) =
-    leapfrog(\theta^{\ell + \epsilon/2},r_\theta^{\ell +\epsilon/2}, H_1,\epsilon/2)$}
-    \State{Acceptance-Rejection Step}
-    \EndFor
-\end{algorithmic}
-\end{algorithm}
 \section{approximate inference for fast training and prediction}
 
 Because of the challenges of MCMC sampling from the posterior distribution of
@@ -927,20 +1023,7 @@ This estimator has lower variance than the naive alternative $\frac{1}{T} \sum_{
 
 The author proved that as the stepsizes $\epsilon_t$ goes to $0$ the samples $\{\theta_t\}$ converge tothe Langevin dynamics targeting the posterior distribution. Of course, in practice we set lower bound on $\epsilon_t$ and stop decreasing the stepsize once it is small enough. Also, the fact the we are not doing the acceptance-rejection step means there will be a bias in our posterior samples, which unlike the samples drawn from a Metropolis-Hastings sampler, does not decrese to $0$ as we sample from the chain longer.
 
-\begin{algorithm}
-    \caption{Stochastic Gradient Langevin Dynamics}
-    \Comment{Input: N,n,$\theta_0,\{\epsilon_t\}_{t=1}^T$}
-    \begin{algorithmic}[1]
-    \State{Initialize $\theta_0$}
-    \For{t in 0:T}
-    \State Sample random subset $\{x_{ti}\}_{i=1}^n$
-    \State Sample $\eta_t \sim \mathcal{N}(0,\epsilon_t) $
-    \State{$\theta_{t+1} = \theta_{t} + \frac{\epsilon}{2}(\nabla \log
-    p(\theta_t) + \frac{N}{n} \sum_{i=1}^n \nabla \log
-    p(x_{ti}|\theta_t))+\eta_t$}
-    \EndFor
-\end{algorithmic}
-\end{algorithm}
+
 Simulating from the discrete approximation to a Langevin dynamics is the basis
 for Langevin Monte Carlo or Metropolis adjusted Langevin Algorithm, which
 includes an acceptance-rejection step at each update. This can also be seen as a
@@ -952,22 +1035,22 @@ which extends HMC the way SGLD extends LMC.
 
 \begin{algorithm}
     \caption{Stochastic Gradient HMC}
-    \Comment{Input: $\eta,\alpha,n,T,m,\theta_0$}
-    \begin{algorithmic}[1]
-        \State{Initialize $\theta_0,v_0$}
-        \For{t = 1:T}
-        \State{$\theta^{0}=\theta_{t-1}$}
-        \State{$v^{0}=v_{t-1}$}
-        \For{i = 1:m}
-        \State{$\theta^{i} = \theta^{i-1} + v^{i-1}$}
-        \State{Sample $z \sim \mathcal{N}(0,2(\alpha-\hat{\beta} \eta)$}
-        \State{Sample minibatch and calculate $\nabla \tilde{U}(x)$ }
-        \State{$v^{i} = -\eta \nabla \tilde{U}(x) - \alpha v^{i-1} + z$}
-        \EndFor
-        \State{$\theta_t = \theta^{m}$}
-        \State{$v_t = v^{m}$}
-        \EndFor
-\end{algorithmic}
+    \KwData{Input: $\eta,\alpha,n,T,m,\theta_0$}
+        Initialize $\theta_0,v_0$ \;
+        \For{t = 1:T}{
+        $\theta^{0}=\theta_{t-1}$\;
+        $v^{0}=v_{t-1}$ \;
+        
+        \For{i = 1:m}{
+        $\theta^{i} = \theta^{i-1} + v^{i-1}$ \;
+        Sample $z \sim \mathcal{N}(0,2(\alpha-\hat{\beta} \eta)$ \;
+        Sample minibatch and calculate $\nabla \tilde{U}(x)$  \;
+        $v^{i} = -\eta \nabla \tilde{U}(x) - \alpha v^{i-1} + z$ \;
+        }
+        
+        $\theta_t = \theta^{m}$ \;
+        $v_t = v^{m}$ \;
+        }
 \end{algorithm}
 Important points to retain: connection to sgd with momentum. dont know how to
 set $C$ matrix. noise of gradient $B$ not actually estimated in any of the
@@ -975,51 +1058,6 @@ examples in the paper claiming as stepsizes goes to zero the noise goes to zero
 as well. The estimation can be done using along diagonal approximation, or  
 low-rank approximations. 
 
-Preconditioned SGLD
-\begin{algorithm}
-    \caption{pSGLD}
-    \Comment{Input $\{\eta_t\}_{t=1}^T , \lambda, \beta, \theta_0$}
-    \begin{algorithmic}[1]
-    \State{Initialize $v_0=0$}
-    \For{t in 1:T}
-    \State{$\tilde{f}_t = \nabla \tilde{U}_t(\theta)$}
-    \State{$v_t = \beta v_{t-1} + (1-\beta)\tilde{f}_t \odot \tilde{f}_t$}
-    \State{$G_t^{-1} = diag(1\oslash(\lambda 1 + v_t^{1/2}))$}
-    \State{$\psi_t \sim \mathcal{N}(0,\eta_t G_t^{-1})$ }
-    \State{$\theta_{t} = \theta_{t-1} + \frac{\eta_t}{2}G_t^{-1}\tilde{f}_t +
-\psi_t$}
-    \EndFor
-\end{algorithmic}
-\end{algorithm}
-Sampling via Stochastic Gradient Fisher-Scoring (SGFS) was proposed in
-\cite{ahn2012bayesian}.
-
-
-Sampling via Stochastic Gradient thermostat. 
-\begin{algorithm}
-    \caption{SG Thermostat}
-    \Comment{Input: $\eta,a,\theta_0$}
-    \begin{algorithmic}[1]
-    \State{Initialize $u_0 \sim \mathcal{N}(0,\eta I),\alpha_0=a$}
-    \For{t in 1:T}
-    \State{Evaluate $\nabla \tilde{U}(\theta_{t-1})$}
-    \State{$u_t = u_{t-1} - \alpha_{t-1} u_{t-1} - \nabla \tilde{U}(\theta_{t-1})\eta +
-    \mathcal{N}(0,2a\eta)$}
-    \State{$\theta_{t} = \theta_{t-1} + u_t$}
-    \State{$\alpha_{t} = \alpha_{t-1} + \frac{1}{n} u_t^Tu_t - \eta$}
-    \EndFor
-\end{algorithmic}
-\end{algorithm}
-Sampling via pre-conditioned Stochastic Gradient langevin dynamics. 
-\begin{algorithm}
-    \caption{Preconditioned SGLD}
-    \Comment{Inputs:$ \{\epsilon_t\}_{t=1}^T,\lambda,\alpha,T$}
-    \begin{algorithmic}[1]
-    \State{Initialize}
-    \For{t in 1:T}
-    \EndFor
-\end{algorithmic}
-\end{algorithm}
 
 Applying MCMC methods to large datasets often involve 2 problems. First, evaluating the unnormalized posterior density
 \[ p(D|\theta) = \prod_{i=1}^n p(x_i|\theta) \]
@@ -1060,19 +1098,6 @@ marginal variances for $W_s$.
 
 This is a general methodology that can be coupled with any sampling methods, be
 it MCMC or exact sampling. 
-\begin{algorithm}
-    \caption{Consensus Monte Carlo}
-    \Comment{Input: $S,G, \mathbf{x}$}
-    \begin{algorithmic}[1]
-    \State{Divide $\mathbf{x}$ into $S$ disjoint parts
-    $\{\mathbf{x}_s\}_{s=1}^S$}
-    \State{Draw samples $\theta_{sg} \sim p(\theta|\mathbf{x}_s) \propto
-    p(\mathbf{x}_s|\theta)p(\theta)^{1/S}$ for $g=1,\dots,G, s=1,\dots,S$}
-    \State Calculate $W_s$ for $s=1,\dots,S$.
-    \State Combine the draws for $g=1,\dots,G$:$ \theta_g = (\sum_{s=1}^S
-    W_s)^{-1}(\sum_s W_s \theta_{sg})$
-\end{algorithmic}
-\end{algorithm}
 
 Scaling based on splitting techniques from Neal. Random data subset used to approximate the Hamiltonianduring leapfrog step but uses the full dataset for calculating the Hastings ratio. Retains convergence to invariant distribution. 
 
@@ -1261,7 +1286,6 @@ Neural network models are known to have multiple modes, although it is widely be
 
 
 Insert pseudocode. 
-\part{Experiments}
 \chapter{Experimeints}
 Plan:
 Collect problems on which to fit neural networks of modest size. 

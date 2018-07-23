@@ -1,0 +1,78 @@
+This is BibTeX, Version 0.99d (TeX Live 2016)
+Capacity: max_strings=35307, hash_size=35307, hash_prime=30011
+The top-level auxiliary file: test.aux
+The style file: plain.bst
+Database file #1: test.bib
+Warning--I didn't find a database entry for "Goodfellow-et-al-2016-Book"
+Warning--I didn't find a database entry for "roberts2002langevin"
+Warning--I didn't find a database entry for "jordan1999introduction"
+Warning--I didn't find a database entry for ""
+Warning--I didn't find a database entry for "snoek2012practicalx"
+Warning--empty booktitle in bergstra2010theano
+Warning--empty year in bergstra2010theano
+Warning--empty institution in burda2011bayesian
+Warning--empty journal in carpenter2016stan
+Warning--empty year in carpenter2016stan
+Warning--empty booktitle in damianou2013deep
+Warning--empty year in damianou2013deep
+Warning--empty booktitle in filippone2015enabling
+Warning--empty year in filippone2015enabling
+Warning--empty journal in gal2015dropout
+Warning--empty year in gal2015dropout
+Warning--empty booktitle in gan2015scalable
+Warning--empty year in gan2015scalable
+Warning--empty journal in gelman1996efficient
+Warning--there's a number but no volume in geman1984stochastic
+Warning--can't use both volume and number fields in kohavi1995study
+Warning--empty booktitle in mahendran2012adaptive
+Warning--empty year in mahendran2012adaptive
+Warning--empty journal in neal1993bayesian
+Warning--empty year in neal1993bayesian
+Warning--empty journal in teh2014consistency
+Warning--empty year in teh2014consistency
+Warning--empty booktitle in wang2013adaptive
+Warning--empty year in wang2013adaptive
+Warning--empty journal in wright1999numerical
+Warning--empty year in wright1999numerical
+You've used 103 entries,
+            2118 wiz_defined-function locations,
+            987 strings with 20705 characters,
+and the built_in function-call counts, 36640 in all, are:
+= -- 3570
+> -- 1822
+< -- 36
++ -- 730
+- -- 616
+* -- 2456
+:= -- 5975
+add.period$ -- 306
+call.type$ -- 103
+change.case$ -- 598
+chr.to.int$ -- 0
+cite$ -- 129
+duplicate$ -- 1454
+empty$ -- 2768
+format.name$ -- 616
+if$ -- 7700
+int.to.chr$ -- 0
+int.to.str$ -- 103
+missing$ -- 111
+newline$ -- 507
+num.names$ -- 206
+pop$ -- 730
+preamble$ -- 1
+purify$ -- 506
+quote$ -- 0
+skip$ -- 1101
+stack$ -- 0
+substring$ -- 2134
+swap$ -- 393
+text.length$ -- 36
+text.prefix$ -- 0
+top$ -- 0
+type$ -- 390
+warning$ -- 26
+while$ -- 342
+width$ -- 106
+write$ -- 1069
+(There were 31 warnings)
