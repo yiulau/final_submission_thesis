@@ -24,248 +24,105 @@ Thank you very much
 \renewcommand{\abstractname}{ABSTRACT}
 
 \begin{abstract}
-second abstract
+Neural network models have seen tremendous success in predictive tasks in machine learning and artificial intelligence(quote), with some attributing their success to the use bayesian inference \cite{mandt2017stochastic}. STAN is a state of the art software for Bayesian statistical computing used mainly in the statistical community, however, it is not optimzed for use with neural network models. In this thesis, we replicated much of STAN's No U-Turn sampler in PyTorch and explore its use for sampling from bayesian neural network models. We were able to explore different samplers,model structures and their sampling and predictive performances, on a benchmark classification task. We found that bayesian inference improves predictive performance in general but care is needed with the choice of prior and MCMC sampler. 
+
 \end{abstract}
 \tableofcontents 
 
 \chapter{Introduction}
 \section{STAN}
 
+STAN has replaced most Bayesian statistical softwares like JAGS and WINBUGS as the recommeneded tool for Bayesian inference requiring Markov Chain Monte Carlo (MCMC)  because of its effectiveness, relative ease to learn, clear and extensive documentation, as well as its large community of users and expert support staff. Roughly based on the NUTS sampler, it has since evolved from the original NUTS sampler and has many more features built in to faciliate sampling and diagnosing sampling issues.
 
-\begin{algorithm}[H]
-\caption{Metropolis-Adjusted Langevin Algorithm}
-\KwData{$iter$ is the maximum number of iterations, $p(\cdot)$ is the unnormalized target density, $\tau$ is the variance parameter}
-\While{not at end of this document}{
-  read current\;
-  \eIf{understand}{
-   go to next section\;
-   current section becomes this one\;
-   }{
-   go back to the beginning of current section\;
-  }
- }
- 
-\end{algorithm}
+In Chapter 2, after giving a short introduction to MCMC, we will explain the version of No U-TURN sampler (NUTS) implemented in STAN, highlighting its difference from the original implemnted in \cite{hoffman2014no}. Adaptive tuning strategies for the step size parameter and covariance metric will also be discussed. The exhasutive terminal criteiron for NUTS (XHMC) , which has not been exposed in the latest version of STAN yet, has been shown to improve sampling efficiency in correlated distributions.  \cite{betancourt2016identifying}. Experiments comparing its performance against the default termination criterion will be discussed in chapter 4. Finally, we discuss some of the numerical tricks used by STAN that are omitted in the official documentation but can be critical for creating a robust implementation of the samper. 
 
-haha
+
+
+
 
 \section{Bayesian Neural Network }
 
-yo
+Neural network models has become hugely popular under the name of deep learning, attracting a lof of attention from researchers and practictioners alike. Many of its successes come from applications to problems in vision, text, speech, and many other subfields in the field of Aritifical Intelligence. 
+
+
+In Chapter 3 we give a brief overview of the bayesian neural network literature and identify areas where we feel could benefit from new developements in NUTS and related sampling techniques. In Neal's and Cho's work, sampling from the posterior distribution was done by alternating between the lower and higher level paramters in a block-gibbs fashion. With the model and data they used, they found that joint sampling offered no improvement over gibbs sampling for sampling the hyperparameter. We found that NUTS is capable of sampling the hyperparameter quite well, is more robust to tuning parameters, and requires much less manual tuning. 
+
+Then we talk about the choice of prior for neural network models. Originally it was standard to put a hierarhcical prior on the model weights, but in the new wave of Bayesian deep learning literature the standard normal prior is used most of the times. Recently shrinkage priors like the horseshoe prior have been used to automatically regularize the weights. In the paper the authors used variational inference which might miss important features of the posterior distribution. We compared a range of priors, including the shrinkage prior, and found that the standard normal prior performed best in terms of both effective sample size and predictive accuracy. 
+
+While the use of shrinkage priors should eliminate much of the need for model selection: one would simply fit the largest model possible and let the shrinkage prior eliminate any excessive capacity, in practice sampling from such a model might prove too difficult, for example having too many hidden layers might result in vanishing or exploding gradients(quote). There are also tuning parameters, like the activation function, which can not be chose by shrinkage priors. This necessitates model selection technicques. Model selection by information criterion like AIC and BIC is not backed by theory because neural networks violate one of their regularity conditions, namely that the model must have non-singular Fisher matrix. The Watanabe Information Criterion (WAIC) is designed to overcome this problem for all singular models. We experimented with the WAIC but found that it failed to choose the model that minimizes the test error on the dataset we chose. 
+
+We also experimented with Stochastic Gradient Hamiltonian Monte Carlo (SGHMC), a version of Hamiltonian Monte Carlo that only uses a fraction of the data to approximate the gradient of the full posterior density function. In (quote: betancourt) the author showed that stochastic gradients causes divergence in high dimensional problems and is not recommended. Our experimentation shows that SGHMC can yield better predictive performance than full HMC but it requires careful tuning and is not robust to the initial tuning parameters. 
+
+Initialization strategies where the weights are sampled from the normal distribution whose variance is scaled by the number of incoming units have been widely adopted for improving the final predictive accuracy. It motivates one to use such scaled normal distributions as the prior distribution. Its impact on predictive accuracy and sampling quality will be discussed in Chapter 4. 
+
+Finally, we explore the use of NUTS for sampling from bayesian neural networks.
+
+Model selection in the neural network literature is usually done by choosing the model that minimizes the error on a validation set. This works well for the problems 
+
+
+
+
+
+
+
+Currently the literature is dominated by frequentist methods where a local optimum of the loss function is found by stochastic optimization. 
+
+Talk about research by McKay and Neal.
+
+
 
 
 \chapter{STAN}
 \section{Hamiltonian Monte Carlo}
-definition epsilon L, stepsize jitter, advantage over MH , 0.65 rule , geometric convergence. cov linear transformation invariance 
-
-\section{No U-Turn Sampler}
-multinomial sampling over slice sampling
-
-\section{NUTS Termination Criteria}
-xhmc over gnuts over nuts 
-\section{Adaptive Tuning of Step Size}
-same as nuts paper 
-
-\section{Adaptive Tuning of HMC Metric}
-different windows for fast vs slow parameters 
-
-\section{HMC-Specific Sampling Diagnostics}
-bfmi , divergence ( talk about example 8 school) , tree depth , 
-\section{Other Sampling Diagnostics}
-ess gelman definition, rhat 
-\section{Numeric tricks/Implementation tricks}
-cov add unity 0.0001 + welford
-logsumexp
-divergence check 
-recursion requiring dynamic graph  > pytorch
-
-
-\chapter{Bayesian Neural Networks}
-\section{Neal}
-typical model 
-i.e. windowed hmc, hand tuning, ard priors.  Refer back to NUTS for discussion  of windowed hmc . 
-multimodality convergence concern P v NP
-
-\section{gibbs vs joint sampling}
-describes gibbs as done by neal 
-i.e. tried joint sampling, ncp 
-side tracked to talk about cp vs ncp 
-\section{SGHMC}
-tried on mnist
-\section{sparsity inducing priors}
-horseshoe priors for model selection. variational inference
-ncp
-\section{self normalizing induced initialization}
-selu, gloriot initialization
-
-\section{model selection}
-test error vs waic 
-
-\section{Relation to STAN and PyTorch}
-why pytorch better than stan. gpu . float vs double 
-
-
-
-\chapter{experiments}
-\section{model and data}
-\section{baseline}
-early stopping committee of nn 
-bnn show better predictive performance 
-though single early stopping sometimes perform at about the same predictive performance inconsistent across seeds 
-cannot be explained away by 
-\section{gnuts v xhmc}
-xhmc better min ess 
-variable num transitions after warmup
-\section{gibbs v joint}
-cp vs ncp 
-observed multimodaility in sigma2 parameter 
-nuts can sample hyperparameter well tho does not improve prediction
-
-\section{sghmc}
-impossible to tune , does not perform well
-\section{scaled priors}
-worse performance 
-\section{adapt cov}
-compare adapt cov. problem with inverting mass matrix
-\section{num layers}
-sampling about equally well across num layers
-\section{float v double}
-about same performance describes experiment 
-stability 
-test error 
-can't talk about Rhat because multiple modes 
-\section{HMC v NUTS}
-better sampling performance by nuts >> better prediction 
-\section{waic}
-fails to predict best number of units . maybe bad mixing . talk about loo. psis
-\section{sparsity inducing priors}
-none of them predicts as well as normal prior 
-horsehose type maybe  due to poor mixing 
-but even gaussian inv gamma don't seem to do so well either
-
-\section{Conclusion}
-\chapter{Conclusion}
-use xhmc, unscaled normal prior, 
-use diag e 
-don't use sghmc
-don't use waic 
-can use float on gpu
-
-\chapter{Model}
-
-\section{Markov Chain Monte Carlo}
-
-Starting from the beginning of  using MCMC techniques in statistical applications, there has been work \cite{geman1984stochastic,besag1986statistical} in the area of image analysis. Because of the high-dimensional nature of image datasets, initially only the Gibbs sampler were used, circumventing the well known slow-mixing/low-acceptance behaviour of the random-walk Metropolis-Hastings sampler in high dimension. The introduction of Hamiltonian Monte Carlo into the field of statistics by Neal \cite{neal2011mcmc,neal2012bayesian}, who built on the work of physicists using HMC to simulate from lattice field models \cite{duane1987hybrid}, brings an exciting new tool that allows statisicians to simulate much more efficiently from high-dimenisonal distributions. Unfortunately, because of the relative difficulty in implementing such samplers its use in statistics has been limited. In the last few years there has been a rebirth of the HMC sampler, with new developments thattry to utilize information about the local curvature of the density function during  sampling \cite{girolami2011riemann,betancourt2013general}, as well as to automate the selection of tuning parameters \cite{hoffman2014no,betancourt2016identifying}. 
-
-In this work, we seek to understand the behaviour of the HMC sampler when
-applied to multilayer neural network models grouped under the umbrella term of
-"deep learning"\cite{schmidhuber2015deep}. Previous work exists
-\cite{choo2000learning,neal2012bayesian} but they date from before the "deep
-learning revolution" of the mid 2000s, when training neural networks of more
-than one hidden layer proved to be feasible and yielded superior performance to
-one-hidden-layered models. Also, those works rely heavily on manual tuning,
-assume small datasets and do not have access to parallel computing, all of which
-make the methodology lacking for dealing with the type of tasks present in deep
-learning presently.
-
-\cite{green2015bayesian} gives a good summary of dynamical MCMC methods (langevin diffusion,MALA,HMC) and related convergence assessment methodologies.
-
-In the late 80s and throughout the 90s, Bayesian statistical modeling became
-feasible for a much larger class of problems than previously thought possible,
-because of the availability of abundant computing power. Much work was produced
-in MCMC methodologies\cite{robert2013monte}, theory\cite{tierney1994markov,roberts2004general} as well as in applications thereof.  
 
 Bayesian Inference can be simply summarized by the specification of a likelihood and a prior function. Suppose $\theta \in \mathbb{R}^d$ is the parameter of the likelihood function for observed data $X \sim p(x| \theta)$, we can
-model our uncertainty about it with a prior function $p(\theta)$. Upon observing the data, we can perform Bayesian inference by using information from the poserior distribution 
+model our uncertainty about it with a prior function $p(\theta)$. Upon observing the data, we can perform Bayesian inference by using information from the posterior distribution 
 
 \[ p(\theta | x ) \propto p(x | \theta) p(\theta) \]
 
-Examples: MAP, marginal posterior, credible interval. The exact calculation of the normalizing constant $Z = \int p(x | \theta) p(\theta) d\theta $ is possible for certain convenient functions only, and we must rely on Markov Chain Monte Carlo techniques to approximate the constant. 
+Examples: MAP, marginal posterior estimation, credible intervals. The exact calculation of the normalizing constant $Z = \int p(x | \theta) p(\theta) d\theta $ is possible for certain convenient functions only, and we must rely on Markov Chain Monte Carlo (MCMC) to calculate posterior quantities. The most basic form of MCMC is the Metropolis-Hastings sampler. 
 
-See more about Bayesian data analysis in \cite{gelman2014bayesian}. 
-
-The Metropolis-Hastings sampler.
 
 Suppose we have a an unnormalized density $p(x)$, and $q(x,y)$ is a proposal function such that conditional on the current state $x$, the probability of moving from $x$ to a measurable set $A$ is denoted by $q(x,A)$, we can calculate the Hastings ratio
 \[ r(x,y) = \frac{p(y)q(y,x)}{p(x)q(x,y)}. \]
 
 Then we accept the move to state $y$ with probability $ \min (1, r(x,y)) $, and stay in the current state otherwise.
 
-The acceptance probability can be optimized, as shown in \cite{roberts1997weak,gelman1996efficient,roberts2001optimal}. In the case of a target distribution with zero correlation between components and using a symmetric gaussian proposal, the optimal acceptance rate is 0.234. Optimal scaling can also be derived for the langevin sampler \cite{roberts1998optimal}.
+\begin{algorithm}
+\caption{Metropolis Hastings Sampler}
+\KwIn{$x_0$ initial state, $p(\cdot)$ unnormalized target density, $q(\cdot,\cdot)$ proposal density}
+
+
+\For{$i = 1:n$}{
+  	Draw $x_{prop}$ from $q(x_{i-1},\cdot)$ \;  	
+  	Accept $x_{prop}$ with probability $\min(1,r(x_{prop},x_{i-1}))$ \;
+  	
+}
+ 
+ 
+\end{algorithm}
+
+
+The choice of a proposal distribution is highly critical to the efficiency of the MH sampler. Even after a proposal distribution is chosen, there is usually further tuning parameters that needs to be chosen. The acceptance probability is an important quantity which 
+can be optimized . In the case of a target distribution with zero correlation between components and using a symmetric gaussian proposal, the optimal acceptance rate is 0.234.\cite{roberts1997weak,gelman1996efficient,roberts2001optimal} 
 
 Very much like optimization \cite{wright1999numerical}, for differentiable density
 functions, information about the gradient can be useful for proposing the next
-state. It inspires the Langevin diffusion \cite{}, which is a stochastic process
-defined by a stochastic differential equation with the posterior distribution as
-its stationary distribution. It can only be implemented by discretization, which
-introduces some bias into the samples drawn. To offset this, a Metropolis
-acceptance step is introduced and this gives the Metropolis Adjusted Langevin
-Algorithm. 
+state, which brings us to the subject of Hamiltonian Monte Carlo.
 
 
+The use of MCMC in statistical applications began with \cite{geman1984stochastic,besag1986statistical} in the field of image analysis. Because of the high-dimensional nature of image datasets, initially only the Gibbs sampler were used, circumventing the well known slow-mixing/low-acceptance behaviour of the random-walk Metropolis-Hastings sampler in high dimensions. The introduction of Hamiltonian Monte Carlo into the field of statistics by Neal \cite{neal2011mcmc,neal2012bayesian}, who built on the work of physicists using HMC to simulate from lattice field models \cite{duane1987hybrid}, brings an exciting new tool that allows statisicians to simulate much more efficiently from high-dimenisonal distributions. Unfortunately, because of the relative difficulty in implementing such samplers its use in statistics has been limited. In the last few years there has been a rebirth of the HMC sampler, with new developments that try to utilize information about the local curvature of the density function during  sampling \cite{girolami2011riemann,betancourt2013general}, as well as  automate the selection of tuning parameters.  \cite{hoffman2014no,betancourt2016identifying}. 
+Arguably the most important development that is part of this rebirth is the development of the No U-Turn Sampler and the STAN software which uses NUTS as its main sampler. We  also have a better theoretical understanding of the HMC with work (cite)
+that provides a differential geometric interpretation of the sampler and conditions under which geometric convergence can be obtained.
 
-
-
- General Metropolis-Hastings framework. Theoretical ideas like ergodicity, central limit theorem, and convergence diagnostics. Problem of correlationn in the multivariate case. Need for reparametrization sometimes.
-
-The general idea of detailed balance. What does this property bring us? 
-Fact:
-The Metropolis-Hastings algorithm satisfies the detailed balance condition and
-if the proposal conditional density function satisifies the positivity condition
-\[ q(y|x) > 0 \text{ for every } (x,y) \in \Omega \times \Omega \]
-
-
-Gibbs sampling as a special case of Metropolis-Hastings.
-Suppose our distribution is $p$ dimensional, then the Gibbs sampler consists
-of drawing samples from each of the $p$ conditional distributions in turn,
-visiting each component deterministically or randomly. (Insert reference to
-random vs fixed scan Gibbs sampler)
-
-Evaluate sample quality
-Effective sample size is defined as 
-\[ ESS = N \{ 1 + 2 \sum_k \gamma(k) \}^{-1}, \]
-
-estimated by the initial
-monotone sequence estimator \cite{geyer1992practical}
-
-It is a useful metric for measuring quality of the samples obtained from a
-Markov Chain. We can take the mean or minimum ESS across all covariates.
-
-Convergence diagnostics for high-dimensional target distributions. Theoretically, need convergence of the Markov Chain to the joint distribution, in practice only convergence to marginal distributions are checked. The literature has only looked at applying univariate diagnostics to each parameter individually and then calculate some summary statistic (mean,min) or carry out multiple testing if the diagnostic is based on a hypothesis test.
-
-KL-divergence can be used to compare samples drawn from two different samplers.
-The method advanced in \cite{boltz2007knn,boltz2007high} uses a kernel estimator to estimate the KL divergence between two empiricial distributions. The curse of dimensionality makes it difficult for application to high-dimensional posterior distributions $p(\theta|x)$, however, we can apply it to marginal predictive distributions $p(y|D)$ which usually are low-dimensional, when the covariates $x$ are fixed.
-
-Tune MCMC algorithms. MCMC algorithms usually have a small number of tuning
-parameters, such as a stepsize $\epsilon$, the number of leapfrog steps, or more
-basic quantities like the length of the chain. Classic Bayesian methodology
-\cite{robert2013monte} uses a mix of visual inspection of trace plots and
-numerical convergence diagnostics like ESS as discussed earlier. The process
-requires human intervention each time an algorithm is run and tuning parameters
-readjusted after the diagnostics are computed. 
-
-
-\section{ Hamiltonian Monte Carlo }. 
-
-Originally developed in the physics community \cite{duane1987hybrid},
-Hamilotnian Monte Carlo was introduced to the statistics community by Neal
-\cite{neal2012bayesian}, 
-by way of Computer Science, through his work on inference for Bayesian neural
-networks. It was shown to be very efficient in sampling from high-dimensional
-distributions and was used in bayesian inference to achieve superior predictive
-performance in machine learning tasks\cite{guyon2004result}. However, its sensitivity to tuning parameters, relative difficulty of
-implementation, and a lack of accessible
-exposition to its theory, itself a subject of open research, precludes
-widespread adoption. While some of these challenges remain to this day, the development of STAN \cite{carpenter2016stan} has made it significantly easier to carry out Bayesian inference with HMC, and is the main reason for increasing adoption of HMC in applications (cite statistics). Meanwhile, the invention Riemmanian Manifold Hamiltonian Monte Carlo (RMHMC) \cite{girolami2011riemann}, which exploits differential geometry to aid in local adaptation of the HMC sampler, and subsequent exploration the ideas introducd in the their paper, lead to better understanding of the mathematics behind HMC \cite{livingstone2016geometric,betancourt2014geometric} and  improvements to the sampler \cite{betancourt2013generalizing,betancourt2013general}. Many of these new developments have been and will be included in the STAN language. STAN also eliminates the need for tuning HMC. Users of STAN are shielded from the implementation details and tuning parameters settings, required only to specifiy the distributions involved in the models. 
-
-Since STAN is so central to the present HMC literature, we would explain how it functions in the following exposition. Before that, however, we would explain the basic version of HMC on which STAN is built and to which many extensions are added. 
-
+First we give a brief introduction to the HMC,explaining its algorithm and listing its major features and advantages. 
 
 Suppose we have a density $p(x),x \in \mathbb{R}^d$ from which we would like to
 sample. If $p(x)$ is simply the marginal density of some distribution $p(x,y),
 (x,y) \in \mathbb{R}^{d+p}$ in a larger space containing the original domain, then sampling from $p(x,y)$ and keeping only the $x$'s is equivalent to sampling from $p(x)$ directly. These extra variables introduced are called auxillary variables. The auxillary variables methods are known to speed up sampling by introducing extra degrees of freedom in the state space and allows the chain to move more easily across different parts of it. The Swendsen-Wang sampler \cite{wang1990cluster}, the slice sampler\cite{wang1990cluster} are well known examples of this class of methods. See \cite{liang2011advanced,liu2008monte} for more details.
 
-The Metropolis-Hastings sampler is a general algorithm that allows us to sample from any distribution, discrete, continuous or neither, as long as we know its density up to normality. The Hamiltonian Monte Carlo (HMC) sampler is less general in that it requires the unnormalized density be continuous and differentiable. 
+The Metropolis-Hastings sampler as introduced above is a general algorithm that allows us to sample from any distribution, discrete, continuous or neither, as long as we know its density up to its normalizing constant. The Hamiltonian Monte Carlo (HMC) sampler is a particular class requires the unnormalized density be continuous and differentiable. 
+
 
 We denote the unnormalized density of the target distribution by $P(x)$, and the normalizing constant by $Z = \int P(x)dx $, and we define the potential energy function $U(x)$ as 
 \[ U(x) =  \exp(-\log(P(x))) \]
@@ -500,36 +357,17 @@ each dimension is sampled independently and separately, and since the proposal
 distribution is Gaussian it is very easy explore the support of the target
 distribution in the 1-dimensional as it overlaps with the target distribution
 exactly. 
-This is exactly the
-reparametrization trick for improving mixing in general MCMC methodology. This
-fact about the HMC suggests it would improve sampling efficiency if one has
-access to the covariance of the target distribution and its inverse, although this is true for
-MCMC sampling in general as well. 
-(Pseudo Code for basic HMC)
-\begin{algorithm}
-    \KwData{Input: potential energy function $U(x)$, its gradient $\nabla U(x)$, initial position $x_0$, $\epsilon$,$L$,$\Sigma$} 
-    $x = x_0$ \;
-    $y = \mathcal{N}(0,\Sigma)$ \;
-    $y_{c} = y$ \;
-    \For{$i = 1:L$}{
-    $y = y - \frac{\epsilon}{2} * \nabla U(x)$ \;
-    $x = x + \epsilon * \Sigma^{-1} y $ \;
-    $y = y - \frac{\epsilon}{2} * \nabla U(x)$ \;
-    }
-    $y = -y $ \;
-    $H_{c} = U(x_0) + \frac{y_c^T\Sigma^{-1}y_c}{2}$ \;
-    $H_{p} = U(x) + \frac{y^T\Sigma^{-1}y}{2}$ \;
-    $u  = Unif(0,1)$ \;
-    \eIf{ $u < \exp(H_{c} - H_{p})$ }{
-        $out = x$ \;
-    }{
-        $out = x_0$ \;
-     }
-\caption{HMC update}
-\end{algorithm}
+
+In general the momentum distribution can be tuned by first exploring the density
+with a simple HMC sampler with standard Gaussian momentum distribution, then use
+the samples to estimate the covariance matrix of the target distribution, the
+inverese of which could be set as the covariance. The disadvantage of allowing
+arbitrary covaraince matrices for the momentum distribution is the $O(p^3)$ time
+complexity for inverting matrices, which quickly becomes problematic as the
+problem becomes high dimensional. 
 
 There are several reasons why HMC is better than random-walk Metropolis. First,
-it avoids random walks. Random walks are inefficient because successive
+it avoids random walks in the parameter space. Random walks are inefficient because successive
 proposals might double back to previous positions, thus limiting the range of
 the exploration of the support, whereas Hamiltonian trajectories would be in the
 same direction for many steps. Assuming independence, $n$ steps of random walk
@@ -554,6 +392,34 @@ balance between staying close to the mode and in the neighbourhood containing
 the mode. From almost any standard introduction to statistical learning \cite{friedman2001elements} we learn about the curse of dimensionality, which says that the probability mass in the neighbourhood containing the mode of the density function decreases exponentially as the dimension increases. This means that simply sampling from around the mode will miss a lot of the support which contributes to the integral, but it remains an important starting point because the interesting part of the support lies just outside the immediate neighbourhood of the mode. The gradient draws the
 trajectory to
 the mode while the momentum variable keeps it from getting stuck there and moves it around with each resampling.
+
+This is exactly the
+reparametrization trick for improving mixing in general MCMC methodology. This
+fact about the HMC suggests it would improve sampling efficiency if one has
+access to the covariance of the target distribution and its inverse, although this is true for
+MCMC sampling in general as well. 
+(Pseudo Code for basic HMC)
+\begin{algorithm}
+    \KwData{Input: potential energy function $U(x)$, its gradient $\nabla U(x)$, initial position $x_0$, $\epsilon$,$L$,$\Sigma$} 
+    $x = x_0$ \;
+    $y = \mathcal{N}(0,\Sigma)$ \;
+    $y_{c} = y$ \;
+    \For{$i = 1:L$}{
+    $y = y - \frac{\epsilon}{2} * \nabla U(x)$ \;
+    $x = x + \epsilon * \Sigma^{-1} y $ \;
+    $y = y - \frac{\epsilon}{2} * \nabla U(x)$ \;
+    }
+    $y = -y $ \;
+    $H_{c} = U(x_0) + \frac{y_c^T\Sigma^{-1}y_c}{2}$ \;
+    $H_{p} = U(x) + \frac{y^T\Sigma^{-1}y}{2}$ \;
+    $u  = Unif(0,1)$ \;
+    \eIf{ $u < \min(1,\exp(H_{c} - H_{p}))$ }{
+        $out = x$ \;
+    }{
+        $out = x_0$ \;
+     }
+\caption{HMC update}
+\end{algorithm}
 
 We have described some of the advantages of HMC, but unfortunately it has one great disadvantage, which is its sensitivity to tuning parameters. 
 In the description of the basic HMC sampler above, we assume the stepsize $\epsilon$, trajectory length $L$, and the momentum covariance $M$ are known. These cannot be set arbitrarily as the performance of the algorithm can change completely when they are not set appropriately. HMC can perform no better than random walk Metropolis --itself an highly inefficient sampler-- for high-dimensional distributions. The manual tuning of these parameters is the next part of our discussion. 
@@ -607,9 +473,9 @@ models, for which the second derivatives of the potential energy, commonly
 defined as the negative log of the posterior density, almost certainly would
 have a dependency on the variables $x_i$. In Neal's tuning of BNN's, he used
 various model-dependent approximation tricks to get rid of the dependency on
-$x$. To implement this trick for general bayesian models would require
-problem-solving each time a new model is used, which makes it impractical for
-quick sampling, not to mention there are better ways of adaptively tuning
+$x$. To implement this trick for general bayesian neural network models would require
+problem-solving each time a new model with is used, which makes it impractical for
+testing a large number of model architecture of different complexities, not to mention there are better ways of adaptively tuning
 stepsizes and momentum distribution parameters. One principle about tuning
 the stepsize, assuming we are not varying stepsizes across varibles, is that it
 should be less than the minimum 2$\sigma_{min}$, $\sigma_i$'s being the marginal
@@ -620,12 +486,115 @@ level set the trajectory is supposed to stay on. This type of unstable
 simulation is called divergence. On this note, we end our discussion of the
 standard HMC sampler.
 
-Now, STAN has many tiny yet crucial tricks which form part of the adaptive
-tuning and diagnostic mechanism. Bear in mind that Bayesian inference with STAN is not completely
-automatic because judgement still has to be made upon reviewing the results of
-the returned samples to determine if they are valid. And like traditional MCMC
-diagnostics this judgement is not completely objective in the sense that there
-are no metrics that come with theoretical guarantees. 
+So far we have already touched upon the integration time in discussion of
+its connection with stepsizes and trajectory lengths. It is a tuning parameter
+that exists in both the theoretical and numerical version of HMC. In the
+theoretical version, we assume Hamiltonian dynamics can be simulated exactly,
+even then we would still have to decide the duration for which the imaginary
+particle is integrated. This
+is the amount of time we decide to simulate the trajectory in the augmented
+space $(x,y)$ before projecting back to the sample space $(x)$. In any
+numerical implementation this is subsumed in the product of the stepsize and the
+number of leapfrog steps $\epsilon L$. It influences mainly the exploration of
+the augmented space, where a trajectory is simulated along the level set
+$\{(x,y):H(x,y)=E\}$.
+
+
+
+
+Hamiltonian Monte Carlo 
+definition epsilon L, stepsize jitter, advantage over MH , 0.65 rule , geometric convergence. cov linear transformation invariance 
+
+
+\section{No U-Turn Sampler}
+
+There exists an extension of the basic HMC sampler that increases the acceptance
+rate by proposing a trajectory instead of proposing just a state at the end
+of the trajectory. Two trajectories are proposed, one containing the initial state; one
+
+of the two trajectories is chosen then a state is sampled from the chosen
+trajectory. The HMC update step is then much more likely to propose and accept
+a state different from the initial state. This is Neal's window
+method \cite{neal1992improved}. 
+
+First we select a window size $W < L$, then sample randomly $s \in \{0, 1,2 , \dots , W -1 \}$. Take the current $(q,p)$ as $(q_s, p_s)$, we geneerate the sequence $[(q_0,p_0),(q_1, p_1), \dots (q_L,p_L)]$ deterministically by applying forward leapfrog steps (original leapfrog step with stepsize $\epsilon$) for $(q_i,p_i), i > s $, and backward leapfrog steps (stepsize equal to $-\epsilon$. ). 
+Then the acceptance window is a sequence of $W$ $(q_i,p_i)$ pairs at the end of the trajectory, more specifically,
+
+\[ \{(q_{L-W+1},p_{L-W+1}), \dots , (q_L,p_L)\} \]
+
+And the rejection window the $W$ pairs 
+\[ \{(q_0,p_0), \dots, (q_{W-1},p_{W-1})\} \]
+
+Set the probability of accepting the acceptance window as 
+
+\[ \min (1, \frac{\sum_{i\in A} P(q_i,p_i)}{\sum_{j \in R} P(q_j,p_j) }) = \min (1, \frac{\sum_{i=L-W+1}^L P(q_i,p_i)}{\sum_{i=0}^{W-1}P(q_i,p_i)}) \]
+where $A,R$ are the set of indices for pairs belonging to the acceptance window and rejection windows respectively. We are essentially choosing the acceptance window with probability equal to the ratio of the sum of probabilities of each pair in the acceptance window to the sum of probability of pairs in the rejection sequence. 
+
+Once a window has been chosen, we select a pair among the $W$ pairs in the window with probability weighted by $P(q_i,p_i)$. That is, suppose the rejection window is chosen, we chose the new state to be $(q_i,p_i)$, $i \in {0,\dots,W-1}$ with probability 
+\[ \frac{P(q_i,p_i)}{\sum_{j=0}^{W-1} P(q_j,p_j)} \]
+It shows that even when we don't accept the proposal window near the end of the trajectory (acceptance window), there is still a probability of moving the chain away from its current state. This method generates a Markov Chain that leaves the target distribution invariant, and has been applied by Neal in neural network models to increase acceptance probability of the HMC sampler\cite{neal1992improved}. The two reasons for discussing the Window method are first that it has been shown to
+significantly improve sampling from BNN models and second that a special case of
+the method is incorporated in the No U-Turn sampler implemented in STAN. 
+
+multinomial sampling over slice sampling
+
+\section{NUTS Termination Criteria}
+xhmc over gnuts over nuts 
+\section{Adaptive Tuning of Step Size}
+
+Setting the stepsize that makes the leapfrog mapping stable.
+
+Analysis: For one dimensional potential energy function $U(q) = \frac{q^2}{2\sigma^2}$,
+that is, normal distributed with variance $\sigma^2$. Writing out the matrix that encodes the linear mapping from $(q(t),p(t))$ to $(q(t+\epsilon),p(t+\epsilon))$ gives that the mapping is stable if $\epsilon < 2 \sigma$, and diverges otherwise. 
+
+For the general multivariate $q$ with arbitrary potential energy function, equivalent to a general density fucntion, we approximate the potential energy function with a second order taylor expansion, so that the $q^2$ term in the taylor expansion of $U(q)$ has coefficient $\frac{1}{2} \frac{\partial^2 U}{\partial q^2}$  
+By matching the two expressions we get 
+\[ \sigma \approx ( \frac{\partial^2 U}{\partial q^2})^{-1/2} \]
+
+So by setting $\epsilon$ to that value, we are exactly in the middle of the domain of allowable stepsizes, equivalent to half of the boundary limit.
+Care has to be taken to note evalue the second derivative using values of the current parameters, because then the leapfrog steps are no longer reversible (i.e. get different stepsizes at two ends of a trajectory. So when you reverse direction at the other end you don't return to  the starting point). 
+
+This is only useful if you are doing a sort of blocks gibbs sampling, where you use HMC to sample from the low-level paramters while keeping the hyperparameters fixed, then sample the hyperparameters while keep the parameters fixed. 
+
+Might be much more difficult to select stepsize if we don't do this. Try to use Riemmanian Monte Carlo to overcome skewness of joint distribution of hyperparameters and parameters. 
+
+same as nuts paper 
+
+
+
+Now we describe how the stepsizes are automatically tuned in STAN. First, keep
+in mind that the stepsize is adapted only during the warmup phase and stays
+fixed during the sampling phase. This ensures the correctness of the algorithm
+as the induced Markov chain resulted from an adaptive stepsize may not be
+reversible. One way of manual tuning is try to find the stepsize
+$\epsilon'$ that would result in an acceptance probability of $0.65$. The
+acceptance probabiilty is an averaged quantity, calculated as an expectation
+over a chain. That is, we try to optimize $\epsilon \in \mathbb{R}$ with respect
+to the function 
+\[ h(\epsilon) = E_\pi[f(X)|\epsilon]  = \lim_{T \rightarrow \infty} \frac{1}{T}
+\sum_{t=1}^T E[f(X_t)|\epsilon] \]
+
+where $f(X_t)$ denotes the acceptance probability for iteration $t$. The
+second equality comes from the convergence of the MCMC sampler. This is a
+stochastic optimization problem, and STAN uses the dual averaging scheme of
+Nesterov compute the stepsize. The dual averaging scheme works in general as
+follows, supose we are trying to find $x\in \mathbb{R}$ such that $h(x) =
+E[H_t|x] = 0$ then we perform the updates 
+
+\[x_{t+1}  = \mu - \frac{\sqrt{t}}{\gamma} \frac{1}{t+t_0} \sum_{i=1}^tH_i;
+\bar{x}_{t+1} = \eta_t x_{t+1} + (1-\eta_t) \bar{x}_t \]
+
+where $\mu$ is the target that the $x_t$'s are shrunk towards, $\gamma > 0$ a
+paramater that controls the amount of shrinkage, $t_0 \ge 0$ a parameter that
+stablizes the early iterations, and $\eta_t = t^{-\kappa},\kappa>0$ is a
+stepsize schedule ensuring convergence. Since $\epsilon>0$, this is technically
+a constrained optimization problem, but it can be easily converted into an
+unconstrained problem by optimizing for $\log(\epsilon)$ instead. 
+\section{Adaptive Tuning of HMC Metric}
+different windows for fast vs slow parameters 
+
+\section{HMC-Specific Sampling Diagnostics}
+bfmi , divergence ( talk about example 8 school) , tree depth ,
 
 First we describe how it uses
 divergence to diagnose $\epsilon$'s that are too large. First, a large constant
@@ -663,157 +632,18 @@ probability we have $0 \le BFMI \le 1 $ and the optimal value is when it is
 1. A low value of $BFMI$ suggests that the auxillary momentum distribution is
 inefficient for sampling. 
 
+ 
+\section{Other Sampling Diagnostics}
+ess gelman definition, rhat 
+\section{Numeric tricks/Implementation tricks}
+cov add unity 0.0001 + welford
+logsumexp
+divergence check 
+recursion requiring dynamic graph  > pytorch
+version of nuts that takes care of divergence
 
-In general the momentum distribution can be tuned by first exploring the density
-with a simple HMC sampler with standard Gaussian momentum distribution, then use
-the samples to estimate the covariance matrix of the target distribution, the
-inverese of which could be set as the covariance. The disadvantage of allowing
-arbitrary covaraince matrices for the momentum distribution is the $O(p^3)$ time
-complexity for inverting matrices, which quickly becomes problematic as the
-problem becomes high dimensional. 
-
-
-Another problem with the above approach is that it is only unsuitable when the
-target distribution can be approximately linearly transformed into a
-distribution which can be easily explored by a basis HMC sampler.If the target
-distribution has more complicated geometry that might differ in
-curvature in various parts of its support, a constant $M$ is not enough to ensure
-effective decorrelation during sampling. This motivates the use of
-a location-dependent mass matrix $M(x)$ and is called the Riemannian Hamiltonian
-Monte Carlo. More on this later. 
-
-So far we have already touched upon the integration time in discussion of
-its connection with stepsizes and trajectory lengths. It is a tuning parameter
-that exists in both the theoretical and numerical version of HMC. In the
-theoretical version, we assume Hamiltonian dynamics can be simulated exactly,
-even then we would still have to decide the duration for which the imaginary
-particle is integrated. This
-is the amount of time we decide to simulate the trajectory in the augmented
-space $(x,y)$ before projecting back to the sample space $(x)$. In any
-numerical implementation this is subsumed in the product of the stepsize and the
-number of leapfrog steps $\epsilon L$. It influences mainly the exploration of
-the augmented space, where a trajectory is simulated along the level set
-$\{(x,y):H(x,y)=E\}$.
-
-Now we describe how the stepsizes are automatically tuned in STAN. First, keep
-in mind that the stepsize is adapted only during the warmup phase and stays
-fixed during the sampling phase. This ensures the correctness of the algorithm
-as the induced Markov chain resulted from an adaptive stepsize may not be
-reversible. One way of manual tuning is try to find the stepsize
-$\epsilon'$ that would result in an acceptance probability of $0.65$. The
-acceptance probabiilty is an averaged quantity, calculated as an expectation
-over a chain. That is, we try to optimize $\epsilon \in \mathbb{R}$ with respect
-to the function 
-\[ h(\epsilon) = E_\pi[f(X)|\epsilon]  = \lim_{T \rightarrow \infty} \frac{1}{T}
-\sum_{t=1}^T E[f(X_t)|\epsilon] \]
-
-where $f(X_t)$ denotes the acceptance probability for iteration $t$. The
-second equality comes from the convergence of the MCMC sampler. This is a
-stochastic optimization problem, and STAN uses the dual averaging scheme of
-Nesterov compute the stepsize. The dual averaging scheme works in general as
-follows, supose we are trying to find $x\in \mathbb{R}$ such that $h(x) =
-E[H_t|x] = 0$ then we perform the updates 
-
-\[x_{t+1}  = \mu - \frac{\sqrt{t}}{\gamma} \frac{1}{t+t_0} \sum_{i=1}^tH_i;
-\bar{x}_{t+1} = \eta_t x_{t+1} + (1-\eta_t) \bar{x}_t \]
-
-where $\mu$ is the target that the $x_t$'s are shrunk towards, $\gamma > 0$ a
-paramater that controls the amount of shrinkage, $t_0 \ge 0$ a parameter that
-stablizes the early iterations, and $\eta_t = t^{-\kappa},\kappa>0$ is a
-stepsize schedule ensuring convergence. Since $\epsilon>0$, this is technically
-a constrained optimization problem, but it can be easily converted into an
-unconstrained problem by optimizing for $\log(\epsilon)$ instead. 
-There exists an extension of the basic HMC sampler that increases the acceptance
-rate by proposing a trajectory instead of proposing just a state at the end
-of the trajectory. Two trajectories are proposed, one containing the initial state; one
-
-of the two trajectories is chosen then a state is sampled from the chosen
-trajectory. The HMC update step is then much more likely to propose and accept
-a state different from the initial state. This is Neal's window
-method \cite{neal1992improved}. 
-
-First we select a window size $W < L$, then sample randomly $s \in \{0, 1,2 , \dots , W -1 \}$. Take the current $(q,p)$ as $(q_s, p_s)$, we geneerate the sequence $[(q_0,p_0),(q_1, p_1), \dots (q_L,p_L)]$ deterministically by applying forward leapfrog steps (original leapfrog step with stepsize $\epsilon$) for $(q_i,p_i), i > s $, and backward leapfrog steps (stepsize equal to $-\epsilon$. ). 
-Then the acceptance window is a sequence of $W$ $(q_i,p_i)$ pairs at the end of the trajectory, more specifically,
-
-\[ \{(q_{L-W+1},p_{L-W+1}), \dots , (q_L,p_L)\} \]
-
-And the rejection window the $W$ pairs 
-\[ \{(q_0,p_0), \dots, (q_{W-1},p_{W-1})\} \]
-
-Set the probability of accepting the acceptance window as 
-
-\[ \min (1, \frac{\sum_{i\in A} P(q_i,p_i)}{\sum_{j \in R} P(q_j,p_j) }) = \min (1, \frac{\sum_{i=L-W+1}^L P(q_i,p_i)}{\sum_{i=0}^{W-1}P(q_i,p_i)}) \]
-where $A,R$ are the set of indices for pairs belonging to the acceptance window and rejection windows respectively. We are essentially choosing the acceptance window with probability equal to the ratio of the sum of probabilities of each pair in the acceptance window to the sum of probability of pairs in the rejection sequence. 
-
-Once a window has been chosen, we select a pair among the $W$ pairs in the window with probability weighted by $P(q_i,p_i)$. That is, suppose the rejection window is chosen, we chose the new state to be $(q_i,p_i)$, $i \in {0,\dots,W-1}$ with probability 
-\[ \frac{P(q_i,p_i)}{\sum_{j=0}^{W-1} P(q_j,p_j)} \]
-It shows that even when we don't accept the proposal window near the end of the trajectory (acceptance window), there is still a probability of moving the chain away from its current state. This method generates a Markov Chain that leaves the target distribution invariant, and has been applied by Neal in neural network models to increase acceptance probability of the HMC sampler\cite{neal1992improved}. The two reasons for discussing the Window method are first that it has been shown to
-significantly improve sampling from BNN models and second that a special case of
-the method is incorporated in the No U-Turn sampler implemented in STAN. 
-
-
-
-Another trick that helps to speed up the HMC sampler is data subsampling, also denoted partial gradient in Neal's thesis \cite{neal2012bayesian}.
-Assuming there are $n$ data points, the potential energy function $U(q)$ can be written as 
-\[ U(q) = -\log( p(q) p(q|data) = -\log(p(q)) -\log p(q|data) = -\log(p(q)) - \sum_{i=1}^n \log p(q|data_i) \]
-where $p(q)$ is the prior density function and $p(q|data)$ is the likelihood function. Note that the finite series in the last expression above can be approximated as 
-\[ \sum_{i=1}^n \log p(q|data_i) \approx \frac{n}{k} \sum_{i \in I} \log p(q|data_i) \]
-where $I$ is a subset of $\{1,\dots, n\}$ of size $\frac{k}{n}$. 
-More pratically, if we divide the datapoints into $M$ equally sized subsets. Then for any such subset $S$, the potential energy function can be approximated by 
-\[ U(q) \approx    -\log(p(q)) + M \sum_{i \in S} \log(p(q|data_i)) \]
-
-Note to preserve the correct invariant distribution, the calculation of the
-potential energy function in the Hastings ratio must be done exactly. In later
-discussion of stochastic gradient HMC sampler and extensions, we see data
-subsamlping being combined with stochastic optimization to yield 
-randomly varying the trajectory length is a recommended part of standard HMC
-methodology. 
-
-HMC is invariant to rotation.
-Randomly choose stepsize. 
-Shortcut method.
-Mapping Multivariate Gaussian distribution. width of the distribution in the most constrained direction. Square root of the smallest eigenvalue of the covariance matrix for q.
-Quote: HMC is valid as long as the dynamics is simulated using a method thatis reversible and volume-preserving. 
-
-Tuning the HMC is tricky: for optimal stepsize see \cite{beskos2013optimal}
-
-Understanding of optimal HMC stepsize, number of leapfrogs steps, number of leapfrog steps to reach nearly independent points.
-Ex: Grows as $O(d^{1/4})$.
-
-Setting the stepsize that makes the leapfrog mapping stable.
-
-Analysis: For one dimensional potential energy function $U(q) = \frac{q^2}{2\sigma^2}$,
-that is, normal distributed with variance $\sigma^2$. Writing out the matrix that encodes the linear mapping from $(q(t),p(t))$ to $(q(t+\epsilon),p(t+\epsilon))$ gives that the mapping is stable if $\epsilon < 2 \sigma$, and diverges otherwise. 
-
-For the general multivariate $q$ with arbitrary potential energy function, equivalent to a general density fucntion, we approximate the potential energy function with a second order taylor expansion, so that the $q^2$ term in the taylor expansion of $U(q)$ has coefficient $\frac{1}{2} \frac{\partial^2 U}{\partial q^2}$  
-By matching the two expressions we get 
-\[ \sigma \approx ( \frac{\partial^2 U}{\partial q^2})^{-1/2} \]
-
-So by setting $\epsilon$ to that value, we are exactly in the middle of the domain of allowable stepsizes, equivalent to half of the boundary limit.
-Care has to be taken to note evalue the second derivative using values of the current parameters, because then the leapfrog steps are no longer reversible (i.e. get different stepsizes at two ends of a trajectory. So when you reverse direction at the other end you don't return to  the starting point). 
-
-This is only useful if you are doing a sort of blocks gibbs sampling, where you use HMC to sample from the low-level paramters while keeping the hyperparameters fixed, then sample the hyperparameters while keep the parameters fixed. 
-
-Might be much more difficult to select stepsize if we don't do this. Try to use Riemmanian Monte Carlo to overcome skewness of joint distribution of hyperparameters and parameters. 
-
-Partial momentum:
-
-Suppose the kinetic energy has the form $K(p) = p^TM^{-1}p/2$,, then $p$ has the same marginal distribution as 
-\[ p' = \alpha p + (1-\alpha^2)^{1/2} n \]
-where $\alpha \in [-1,1]$, and $n \sim \mathcal{N}(0,M)$. 
-It is claimed that only a small improvement is obtained with this generalization.
-
-Leapfrog does not preserve volume in the case where the potential energy and kinetic energy functions interact.
-
-Symplectic  = volume-preserving
-Tempered trajectory. 
-
-During a trajectory (full $L$ leapfrog steps), for the first half of it, muliply
-each momentum variable before updating it by $\sqrt{\alpha}$ where $\alpha$ is slightly larger than
-1, then follow by an exact number of division by $\sqrt{\alpha}$ in the second
-half of the directory. \cite{neal1996sampling}
-
-\section{Neural networks} 
+\chapter{Bayesian Neural Networks}
+\section{Neal}
 
 Deep learning, a field in machine learning studying multilayered neural network models, has become quite successful in artificial intelligence tasks and a lot of research has been, and is currently underwayto improve our understanding of these models and apply them better and to more fields. See \cite{Goodfellow-et-al-2016-Book,lecun2015deep} a general introduction into the methodology and application of deep learning, and \cite{schmidhuber2015deep} for an in-depth literature review. It is futile to attempt a complete overview of the field because it is too vast but we will provide some pointers that reflect what the author finds important and some motivations. 
 
@@ -854,155 +684,28 @@ The most exact way to perform bayesian inference for BNNs is still MCMC sampling
 
 For some theory on why, for the same number of hidden layers, it would be better to have multiple layers in a NN rather than a wide single-layer network, see \cite{montufar2014number}. 
 
-\section{MCMC methods applied to hierarchical models}
-\begin{enumerate}
-\item Centered vs uncentered parametrization in hierarchical models.
+typical model 
+i.e. windowed hmc, hand tuning, ard priors.  Refer back to NUTS for discussion  of windowed hmc . 
+multimodality convergence concern P v NP
 
-\item Deal with skewness through Riemanian Manifold Hamiltonian Monte Carlo
-In the original Hamiltonian Monte Carlo, the kinetic energy is defined by the weight matrix $M$ with momentum $p$ as $p^T M^{-1}p$. In the Riemann Manifold Hamiltonian Monte Carlo (RMHMC), the mass matrix is generalized to a position specific metric tensor $G(\theta)$, when the parameter space is treated as a Manifold.
+\section{gibbs vs joint sampling}
+describes gibbs as done by neal 
+i.e. tried joint sampling, ncp 
+side tracked to talk about cp vs ncp 
+\section{SGHMC}
+tried on mnist
+The idea of simulating Hamilotnian dynamics without the metropolis acceptance step was first experimented in the statistics/machine learning literature by Neal \cite{neal1993bayesian} in a batch MCMC sampler for the posterior distribution of a BNN. He found that with careful selection of the leapfrog stepsize, the biased samples achieve similar predictive performance as the full MCMC samples. Therefore, it seems to suggest that for predictive tasks .e.g. regression or classificaiton where observations are abundant, we could 
+use a validation set (predictive performance) to select tuning parameters, hoping to achieve trade off a bit of bias for better predictive performance. 
+Tie in with stochastic gradient descent hamiltonian monte carlo
+Another trick that helps to speed up the HMC sampler is data subsampling, also denoted partial gradient in Neal's thesis \cite{neal2012bayesian}.
+Assuming there are $n$ data points, the potential energy function $U(q)$ can be written as 
+\[ U(q) = -\log( p(q) p(q|data) = -\log(p(q)) -\log p(q|data) = -\log(p(q)) - \sum_{i=1}^n \log p(q|data_i) \]
+where $p(q)$ is the prior density function and $p(q|data)$ is the likelihood function. Note that the finite series in the last expression above can be approximated as 
+\[ \sum_{i=1}^n \log p(q|data_i) \approx \frac{n}{k} \sum_{i \in I} \log p(q|data_i) \]
+where $I$ is a subset of $\{1,\dots, n\}$ of size $\frac{k}{n}$. 
+More pratically, if we divide the datapoints into $M$ equally sized subsets. Then for any such subset $S$, the potential energy function can be approximated by 
+\[ U(q) \approx    -\log(p(q)) + M \sum_{i \in S} \log(p(q|data_i)) \]
 
-The Hamiltonian is defined as 
-\[ H(\theta, p) = - \mathcal{L}(\theta)  + \frac{1}{2} \log (2\pi)^D|G(\theta)|) + \frac{1}{2}p^T \]
-In the original HMC, the momentum variables are normal auxillary variables independent of the position variables, which are usually the parameters of interest. In the RMHMC, the momentum variables are conditionally distributed as $\mathcal{N(0,G(\theta)}$ given the current position.
-
-To simulate the Hamiltonian dynamics, we use 
-\begin{align}
-\frac{\partial H}{\partial p_i} = (G(\theta)^{-1}p)_i \\
-\frac{\partial H}{\partial \theta_i} = \frac{\mathcal{L}(\theta)}{\partial \theta_i} - \frac{1}{2} Tr(G(\theta)^{-1} \frac{\partial G(\theta)}{\partial \theta_i})+ \frac{1}{2}p^TG(\theta)^{-1}\frac{\partial G(\theta)}{\partial \theta_i} G(\theta)^{-1}p 
-\end{align}
-Any implementation needs to discretize the simulation. The algorithm chosen is referred to as the Generalized Leapfrog.
-\begin{align}
-p^{n+1/2} = p^n - \frac{\epsilon}{2} \nabla_{\theta}H(\theta^n,p^{n+1/2}) \\
-\theta^{n+1}  = \theta^n + \frac{\epsilon}{2} [ \nabla_p H(\theta^n, p^{n+1/2})+\nabla_p H(\theta^{n+1},p^{n+1/2}) \\
-p^{n+1} = p^{n+1/2} - \frac{\epsilon}{2} \nabla_\theta H(\theta^{n+1},p^{n+1/2}) 
-\end{align}
-Note in the last three steps above we see the term to be generated on both sides of the equation. The authors recommend solving the equation by fixed point iteration.
-If 
-\[f_n = g(f_n) \]
-then to solve for $f_n$, we start with some initial guess, usually $f^*=f_{n-1}$, then iterate 
-
-\[f_n^1 = g(f^*),f_n^2 = g(g(f^*)),\dots, f_n^k=g^k(f^*) \]
-
-$k$ is set to a small number like $5$ or $6$. 
-
-The choice of $G(\theta)$ can be very general. Techincally it gives the correct invariant distribution as long as it remains positive definite.
-
-In the examples given in the JRSS-B paper, the metric tensor chosen was the
-expected fisher information matrix, which has theoretical justification form
-information theory. It is recommeneded that the observed Fisher information be
-used when the expected value can't be calculated analytically, which is the case
-for practically all neural networks, except trivial cases. In those cases, we
-can modify the Empirical FIM to make it PD, by adding a constant multiple of the
-identity matrix, for example. 
-
-In Betancourt's paper, he demonstrated the effectiveness of the softabs metric in sampling from hierarchical models, which motivates us to test it with neural network models. 
-
-The softabs metric consists of the following.
-Let the SoftAbs map be 
-\[ SA(X) = [ \exp(\alpha X) + \exp(-\alpha X)] \cdot X \cdot [\exp(\alpha X) - \exp(-\alpha X)]^{-1} \]
-Then the proposed metric is $SA(H)$,where $H$ is the Hessian matrix taken with respect to the potential energy function, equivalent to the negative log posterior density in this case.
-
-There are lots of implementation details that we can find in
-\cite{betancourt2013general}. Notably, the 3rd order partial derivatives of the
-posterior density need to be calculated. 
-
-This sampler is reminescent of second order methods in optimization. The move
-from using only information about the gradient to the Hessian is like
-going from steepest descent to Newton's method. There is already in the
-literature of neural networks a body of work which looks at using a Riemmanian
-metric to define the descent direction. See \cite{ollivier2013riemannian,martens2014new,pascanu2013revisiting}
-We will be experimenting with some of the more memory efficient metrics. 
-
-The same metrics can be applied to the Riemann langevin dynamics.
-
-\cite{girolami2011riemann}
-To quote MALA, \cite{roberts2002langevin}
-\item Softabs metric 
-There is an easily implemented extension to the original HMC which does some tempering to help sampling from multi-modal distribution.
-
-Semi-separable HMC has limited applicability because it still requires inverting
-a Fisher information matrix, which may be singular for neural network models.
-Likely to depend heavily on the choice of mass matrices.
-
-Let $\theta$ be the model parameter and $\phi$ the hyperparameter such that
-the distribution of $\theta$ is parameterized by $\phi$. Following the HMC
-methodology, we introduce corresponding auxillary variables $r_\theta$ and
-$r_\phi$. 
-In the HMC methodology following Neal's introduction. The auxillary variables
-are modeled to have Gaussian distribution marginally, with a diagonal precision
-matrix to be tuned manually. In RMHMC this is assumed to be the expected Fisher
-information matrix. Importantly, the precision matrices $G_\theta(\theta)$,
-$G_\phi(\phi)$
-are dependent on the varaibles they are modeling. In semi-separable Hamiltonian
-Monte Carlo (SSHMC), the precision matrix has the form
-\[ G(\theta,\phi) = 
-    \begin{pmatrix}
-    G_\theta(\phi,x) & 0 \\
-    0 &G_\phi(\theta)
-    \end{pmatrix}
-\]
-While giving up information about the local curvature of $\theta$, this modeling
-assumption can deal with the correlation between the parameters and
-the hyperparameters, which gives enough improvement in mixing speed to yield
-better performance for hierarchical models, as shown in the paper by Zhang and
-Sutton. 
-
-The Hamiltonian 
-\[H(\theta,\phi,r_\theta,r_\phi) = U(\theta,\phi) + K(r_\theta,
-r_\phi|\theta,\phi)\] can then be rewritten as the sum of two Hamiltonians 
-\[H = H_1(\theta,r_\theta) + H_2(\phi,r_\phi) \]
-
-Even though the original Hamiltonian $H$ is not separable, the two Hamiltonians that
-sum to $H$ are separable when looked at separately. This enables the simple
-leapfrog to be used instead of the more time consuming generalized leapfrog.
-
-\section{approximate inference for fast training and prediction}
-
-Because of the challenges of MCMC sampling from the posterior distribution of
-bayesian neural networks described above, much work has been done to bypass MCMC
-sampling altogether when performing bayesian inference on these models.
-
-Variational inference \cite{jordan1999introduction,fox2012tutorial,blei2016variational} is a popular class of methods designed to do just that. Its basic idea is to approximate the complicated posterior distribution by a simpler parametric distribution avaialble in closed form. The approximating distribution is chosen by an optimization procedure minimizing the Kullback-Leibler (KL) divergence between the approximating distribution and the posterior distribution. Numerical integration such as MCMC is intuitively more difficult than optimization because it requires knowing global properties of the target function, whereas optimization can be done using local information (gradient descent) only. Immediately, one observes a disadvantage of variational inference compared to MCMC sampling -- inference done using the varitional distribution is biased,in the sense of not targeting the posterior distribution of interest, whereas that with MCMC samples is unbiased and asymptotically consistent as the length of the chain goes to infinity \cite{robert2013monte}. While this is might seem highly undesirable, given a finite computational budget, variational inference allows fast training and prediction, which might win out over MCMC sampling, especially if the model size severely limits the number and quality of the MCMC samples. The bias-varaiance trade-off suggests we should not disregard the variational approach immediately. An interesting experiment would be to test the above hypothesis, that variational inference yields better predictive performance than MCMC sampling in the early training phase, and that it would take a disproportionate amount of time and memory storage for it to match the performance of the former.
-
-More specifically, in variational inference, we take a parametric family of distributions $q(w|\theta)$, called the variational distributions, and try to minimize its KL divergence with the posterior distribution calculated under the original model
-
-\[ KL(q(w|\theta) || p(w|D)) = -\int q(w|\theta) \ln(\frac{p(w|D)}{q(w|\theta)}) dw = KL(q(w|\theta)||p(w)) - E_{q(w|\theta)}[\ln(p(D|w))] \]
-
-The variational distribution is usually chosen to be a member of the exponential
-family. A popular choice is the diagonal Gaussian distribution, that is 
-
-\[ q(w|\theta) = \prod_{i=1}^p \mathcal{N}(w_i|\mu_i,\sigma^2_i) \]
-where $\mathcal{N}(w|\mu,\sigma^2)$ is the density function of normal
-distribution with mean $\mu$ and variance $\sigma^2$. 
-
-The minimization can be done by usual optimization techniques, with extension to 
-Because the KL divergence is asymmetric, one is tempted to consider
-minimizing it but with $p(w|D)$ and $q(w|\theta)$ swapped in the order of
-evaluation. There is some subtlety with regards to the usual multimodality of
-the posterior distribution that calls for a different optimization technique.
-This inspires as class of approximation inference algorithms called expectation
-propogation \cite{minka2001expectation}. 
-
-Finally, there is the simple idea of approximating the the posterior
-distribution by fitting a gaussian density around the posterior mode, this is
-known as Laplace's method. It is first applied to BNNs by Mackay in \cite{mackay1992evidence}. In \cite{vivarelli2001comparing}, the author compared the predictive performance of Laplces's method against HMC and found the latter to perform slightly better, with more marked improvement on smaller datasets. An interesting point to note about this method is that by using a Gaussian approximation we have to calculate its covariance matrix by using the Hessian. Since neural network models are actually singular the Hessian is not positive definite everywhere and adjustments have to be made to make it work. In \cite{hernandez2015probabilistic} the authors compared Laplace's method with several approximate inference methods as well as HMC and found it to perform less well than the others. However, they constrained the covariance matrix of the Gaussian approximation to be diagonal to save computational time. Understandibly this leads to worse approximation. On the other hand, one is not forced to choose between a diagonal covariance or the full-rank one. Quasi-newton approximations are possible, and fits neatly within the optimization pipeline.
-
-Variationa inference for bayesian neural networks started with the work of \cite{hinton1993keeping}, who developed a variational inference algorithm using the language of information theory. He used the concept of minimizing the description length of the weight, which is equivalent to minimizing the KL divergence as described above. 
-
-Graves' work \cite{graves2011practical} built on the the Hinton's paper and introduced a stochastic gradient variational method. However, the stochastic gradient estimates are biased and the prior is limited to be Gaussian. In \cite{blundell2015weight} this is further improved upon using the re-parametrization trick \cite{opper2009variational,kingma2013auto,rezende2014stochastic}. This yields the Bayes by Backprops (BBB) algorithm.
-
-The Expectation propogation (EP) approach to approximate inference in BNNs was experimented in \cite{jylanki2014expectation} but saw little follow-up because they method the authors developed was batch-only and could not scale to large datasets.A stochastic version was designed by \cite{hernandez2015probabilistic}, called the Probabilistic Backpropogation (PBP), and was shown to perform well on a wide range of test datasets. However, it has the limitation of being applicable only to regression problems. In \cite{ghosh2016assumed} it is extended to multiclass classification problems through a monte carlo approximation. 
-
-In Myshkov et al's submission to a NIPS workshop (cite), the authors analyzed the performance of a few approximate inference algorithms for BNNs against the "gold-standard" that is the HMC, among those tested were PBP and EP. And they did not perform too poorly against MCMC methods. More analysis of this work to come later.  
-
-In Bayesian dark knowlege, we also try to minimize the KL divergence, but do so
-in a way that compresses model knowledge.  
-
-Why do we assume the prior distribution of weight parameters to be normal centered at 0?
-
-Study of prior distributions in neural networks.\cite{lampinen2001bayesian,titterington2004bayesian}
-
-\section{Scaling MCMC methods to large datasets}
 
 In modern deep learning, fitting of neural network models usually is done by stochastic gradient descent (SGD) \cite{ngiam2011optimization}.
 This is exactly the same as regular gradient descent \cite{wright1999numerical}, except at each weight update and random subset(batch) of datapoints are sampled to be the full observations, and the sequence of stepsizes over the optimiztion process must decrease while satisfying the property
@@ -1022,6 +725,7 @@ Marginal predictive distributions or any expectation taken with respect to the p
 This estimator has lower variance than the naive alternative $\frac{1}{T} \sum_{t=1}^T f(\theta_t) $ and is unbiased as well. 
 
 The author proved that as the stepsizes $\epsilon_t$ goes to $0$ the samples $\{\theta_t\}$ converge tothe Langevin dynamics targeting the posterior distribution. Of course, in practice we set lower bound on $\epsilon_t$ and stop decreasing the stepsize once it is small enough. Also, the fact the we are not doing the acceptance-rejection step means there will be a bias in our posterior samples, which unlike the samples drawn from a Metropolis-Hastings sampler, does not decrese to $0$ as we sample from the chain longer.
+
 
 
 Simulating from the discrete approximation to a Langevin dynamics is the basis
@@ -1052,12 +756,6 @@ which extends HMC the way SGLD extends LMC.
         $v_t = v^{m}$ \;
         }
 \end{algorithm}
-Important points to retain: connection to sgd with momentum. dont know how to
-set $C$ matrix. noise of gradient $B$ not actually estimated in any of the
-examples in the paper claiming as stepsizes goes to zero the noise goes to zero
-as well. The estimation can be done using along diagonal approximation, or  
-low-rank approximations. 
-
 
 Applying MCMC methods to large datasets often involve 2 problems. First, evaluating the unnormalized posterior density
 \[ p(D|\theta) = \prod_{i=1}^n p(x_i|\theta) \]
@@ -1065,45 +763,11 @@ Applying MCMC methods to large datasets often involve 2 problems. First, evaluat
 
 Asympotic normality is also assumed for the application of stochastic gradient mcmc methods to neural network models \cite{welling2011bayesian,chen2014stochastic,ahn2012bayesian,ding2014bayesian,ma2015complete}. Even though neural networks are singular models where the conditions for the central limit theorem do not hold, these methods have shown good predictive performance on a variety of datasets. This is opposite of what one would expect and merits further investigation.
 
-For now we focus on the class of datasubsetting or parallelisable MCMC sampler. This consists of 
-splitting the data points into subsets and sample from the respective posterior distributions corresponding to each of these subsets. The problem with applying this to neural network models, notwithstanding the assumption of bayesian central limit theorem, is the difficulty of tuning the MCMC samplers. If many partitions/parallel servers are required to speed up the sampling prcoess, it makes monitoring and diagnosing convergence an even harder task. Essentially, one would have to treat these samplers as a black-box \cite{breiman2001statistical}, which is fine when there is abundant labeled data for sanity checks with classification and/or regression tasks on hold-out sets. This makes it unsuitable for unsupervised learning. Even in the case where the scaled MCMC samples yield better predicitve performance, it is difficult ot interpret the results, seeing that we could not claim the algorithm is sampling exactly from the target distributions, not even asymptotically. 
-
-First, we review the data subsampling approach. (Talk about Consensus MCMC). What happens when some subset servers mix poorly?     
-
-Let $\mathbf{x}$ be the full data of size $N$ and $\theta$ be the model
-parameters. Assuming independence of the data, for $S \le N$, the posterior distribution of
-$\theta$ can be written as 
-\[ p(\theta|\mathbf{x}) \propto \prod_{s=1}^S p(\mathbf{x}_s|\theta)
-p(\theta)^{1/S} \]
-where $\{\mathbf{x}_s\}_{s=1}^S$ is a disjoint partition of the original data.
-Technically, in this formulation, each subset can be of variable size. But for
-the purpose of computational efficiency we assume $|\mathbf{x}_s|=\frac{N}{S}
-\forall s$. 
-
-Now, for each subset $\mathbf{x}_s$, we draw $G$ samples $\theta_{s1},\dots,
-\theta_{sG}$ from
-$p(\theta|\mathbf{x}_s) \propto p(\mathbf{y}_s|\theta)p(\theta)^{1/S}$. To
-combine these $S \times G$ samples we do 
-\[ \theta_g = (\sum_{s} W_s)^{-1} \sum_s W_s \theta_{sg} \]
-where $W_s$ is a weighting matrix. For models where the posterior distributions
-$p(\theta|\mathbf{x}_s)$ are Gaussian. $\sum_{s} =
-Var(\theta|\mathbf{x}_s)^{-1}$ is exact. By the bayesian central limit theorem,
-for regular models the normal approximation for the posterior distribution is
-arbitrarily good, so we can use the inverse of the empirical variance as $W_s$.
-There is no theoretical guarantee that normal approximation to the posterior
-distribution for neural network models is accurate. 
-
-For high dimensional $\theta$, we can ignore the correlations and use the
-marginal variances for $W_s$.
-
-This is a general methodology that can be coupled with any sampling methods, be
-it MCMC or exact sampling. 
-
-Scaling based on splitting techniques from Neal. Random data subset used to approximate the Hamiltonianduring leapfrog step but uses the full dataset for calculating the Hastings ratio. Retains convergence to invariant distribution. 
 
 
-The idea of simulating Hamilotnian dynamics without the metropolis acceptance step was first experimented in the statistics/machine learning literature by Neal \cite{neal1993bayesian} in a batch MCMC sampler for the posterior distribution of a BNN. He found that with careful selection of the leapfrog stepsize, the biased samples achieve similar predictive performance as the full MCMC samples. Therefore, it seems to suggest that for predictive tasks .e.g. regression or classificaiton where observations are abundant, we could 
-use a validation set (predictive performance) to select tuning parameters, hoping to achieve trade off a bit of bias for better predictive performance. 
+
+
+
 
 Now we review some important samplers in the stochastic gradient MCMC
 literature. Stochastic Gradient Langevin Dynamics (SGLD) was first introduced by
@@ -1154,52 +818,21 @@ stochastic gradient quasi netwon langevin dynamics requires extra tuning paramte
 
 preconditioned sgld introduces bias\cite{li2015preconditioned}.
 
-Expectation propogation. Original paper\cite{minka2001expectation}, Gelman and collegues wrote a paper on it \cite{gelman2014expectation}
 
-Stochastic version discussed here \cite{li2015stochastic}
-See also \cite{dehaene2015expectation} for another study of expectation propogation in the large sample size context. 
+Important points to retain: connection to sgd with momentum. dont know how to
+set $C$ matrix. noise of gradient $B$ not actually estimated in any of the
+examples in the paper claiming as stepsizes goes to zero the noise goes to zero
+as well. The estimation can be done using along diagonal approximation, or  
+low-rank approximations. 
 
-A stochastic natural gradient extension has been devised and applied to bayesian neural network models \cite{teh2015distributed}
-Probabilistic Backpropogation is a special case of SEP applied to Bayesian neural networks \cite{hernandez2015probabilistic}.
+\section{sparsity inducing priors}
+horseshoe priors for model selection. variational inference
+ncp
+\section{self normalizing induced initialization}
+selu, gloriot initialization
 
-
-Laplace Approximation. It is based on the second order approximation of the
-log-likelihood of the posterior density around its mode.
-
-Suppose the log posterior density $f(x)$ has a mode at $x^*$, then near $x^*$ we
-have 
-\[ f(x) = f(x^*) + \nabla f(x)|_{x=x^*} (x-x^*) + \frac{1}{2} (x-x^*)^TH(x-x^*)
-\]
-where $H$ is the Hessian matrix of $f(x)$ evaluated at $f(x)$, that is,
-\[ H_{ij} = \frac{\partial^2 f(x)}{\partial x_i \partial x_j }|_{x=x^*} \]
-
-Automatic tuning of MCMC algorithms:
-
-If datasubsetting / parallel MCMC is to be sucessful, the intensely manual task
-of tuning the samplers must be automated. The Stan software comes with an
-optimized U-turn sampler \cite{hoffman2014no} that automates the selection of trajectory length. There is also the adaptive MCMC literature which have created adaptive methods for Hamiltonian Monte Carlo. However, all of those methodologies mentioned above is batch only, which limits applicability. 
-
-Also, the theory of adaptive HMC relies on assumptions about the HMC which is still not proven on general state spaces (e.g. uniform or geometric ergodicity).
-
-There is also an older version of adaptive HMC which uses predictive performance to adjust tuning parameters adaptively. The two need to be compared, along with immediate stochastic gradient extension. 
-Propose a stochastic gradient extension to adaptive HMC. Replace the sampler by stochastic gradient version.  
-
-Adaptive MCMC means varying the tuning parameters (stepsize, trajectory length)
-while sampling along the chain. Since all samples collected need to converge to
-the target distribution, the requirement is much more strict on the sampler.
-On the other hand, we can simply consider the sampler as a black-box and select
-tuning parameters using bayesian optimization.\cite{snoek2012practical}.
-
-Compare different acquisition functions for choosing tuning parameters in MCMC
-algorithms, in batch and stochastic gradient settings. 
-Use acquisition functions in the Snoek paper, as well as expected squared jump
-distance.
-
-Can it beat grid search?
-Compare ESS/L. 
-
-Insert Bayesian Optimization
-\section{Bayesian Model Selection and Prediction}
+\section{model selection}
+test error vs waic 
 In a neural network model there are multiple hyperparameters left to be tuned be
 the user. These include the number of hidden layers, the number of hidden
 variables in each layer, the choice of activation functions, the use of
@@ -1279,6 +912,244 @@ Once we have selected a model, we can make predictions about new data using its 
 \[ p(y_{new}|D) = \int p(y_{new}|x_{new},\theta) p(\theta|D) d\theta \]
 If this is a classification problem of $C$ classes we would evaluate $p(y_{new}|D)$ for all $y_{new}=1,\dots, C$, and if a regression problem a number of points on the domain of the output can be evaluated 
 and a prediction made by drawing from the empirical distribution. 
+\section{Relation to STAN and PyTorch}
+why pytorch better than stan. gpu . float vs double 
+
+
+
+\chapter{experiments}
+\section{model and data}
+show mnist
+
+\section{baseline}
+early stopping committee of nn 
+bnn show better predictive performance 
+though single early stopping sometimes perform at about the same predictive performance inconsistent across seeds 
+cannot be explained away by 
+\section{gnuts v xhmc}
+xhmc better min ess 
+variable num transitions after warmup
+\section{gibbs v joint}
+cp vs ncp 
+observed multimodaility in sigma2 parameter 
+nuts can sample hyperparameter well tho does not improve prediction
+
+\section{sghmc}
+impossible to tune , does not perform well
+\section{scaled priors}
+worse performance 
+\section{adapt cov}
+compare adapt cov. problem with inverting mass matrix
+\section{num layers}
+sampling about equally well across num layers
+\section{float v double}
+about same performance describes experiment 
+stability 
+test error 
+can't talk about Rhat because multiple modes 
+\section{HMC v NUTS}
+better sampling performance by nuts >> better prediction 
+\section{waic}
+fails to predict best number of units . maybe bad mixing . talk about loo. psis
+\section{sparsity inducing priors}
+none of them predicts as well as normal prior 
+horsehose type maybe  due to poor mixing 
+but even gaussian inv gamma don't seem to do so well either
+
+\section{Conclusion}
+\chapter{Conclusion}
+use xhmc, unscaled normal prior, 
+use diag e 
+don't use sghmc
+don't use waic 
+can use float on gpu
+
+\chapter{Model}
+
+\section{Markov Chain Monte Carlo}
+
+
+
+
+\cite{green2015bayesian} gives a good summary of dynamical MCMC methods (langevin diffusion,MALA,HMC) and related convergence assessment methodologies.
+
+In the late 80s and throughout the 90s, Bayesian statistical modeling became
+feasible for a much larger class of problems than previously thought possible,
+because of the availability of abundant computing power. Much work was produced
+in MCMC methodologies\cite{robert2013monte}, theory\cite{tierney1994markov,roberts2004general} as well as in applications thereof.  
+
+
+
+See more about Bayesian data analysis in \cite{gelman2014bayesian}. 
+
+
+Evaluate sample quality
+Effective sample size is defined as 
+\[ ESS = N \{ 1 + 2 \sum_k \gamma(k) \}^{-1}, \]
+
+estimated by the initial
+monotone sequence estimator \cite{geyer1992practical}
+
+It is a useful metric for measuring quality of the samples obtained from a
+Markov Chain. We can take the mean or minimum ESS across all covariates.
+
+Convergence diagnostics for high-dimensional target distributions. Theoretically, need convergence of the Markov Chain to the joint distribution, in practice only convergence to marginal distributions are checked. The literature has only looked at applying univariate diagnostics to each parameter individually and then calculate some summary statistic (mean,min) or carry out multiple testing if the diagnostic is based on a hypothesis test.
+
+KL-divergence can be used to compare samples drawn from two different samplers.
+The method advanced in \cite{boltz2007knn,boltz2007high} uses a kernel estimator to estimate the KL divergence between two empiricial distributions. The curse of dimensionality makes it difficult for application to high-dimensional posterior distributions $p(\theta|x)$, however, we can apply it to marginal predictive distributions $p(y|D)$ which usually are low-dimensional, when the covariates $x$ are fixed.
+
+Tune MCMC algorithms. MCMC algorithms usually have a small number of tuning
+parameters, such as a stepsize $\epsilon$, the number of leapfrog steps, or more
+basic quantities like the length of the chain. Classic Bayesian methodology
+\cite{robert2013monte} uses a mix of visual inspection of trace plots and
+numerical convergence diagnostics like ESS as discussed earlier. The process
+requires human intervention each time an algorithm is run and tuning parameters
+readjusted after the diagnostics are computed. 
+
+
+\section{ Hamiltonian Monte Carlo }. 
+
+Originally developed in the physics community \cite{duane1987hybrid},
+Hamilotnian Monte Carlo was introduced to the statistics community by Neal
+\cite{neal2012bayesian}, 
+by way of Computer Science, through his work on inference for Bayesian neural
+networks. It was shown to be very efficient in sampling from high-dimensional
+distributions and was used in the framework of bayesian inference to achieve superior predictive
+performance in machine learning tasks\cite{guyon2004result}. However, its sensitivity to tuning parameters, relative difficulty of
+implementation, and a lack of accessible
+exposition to its theory, itself a subject of open research, precludes
+widespread adoption. While some of these challenges remain to this day, the development of STAN \cite{carpenter2016stan} has made it significantly easier to carry out Bayesian inference with HMC, and is the main reason for increasing adoption of HMC in applications (cite statistics). Meanwhile, the invention Riemmanian Manifold Hamiltonian Monte Carlo (RMHMC) \cite{girolami2011riemann}, which exploits differential geometry to aid in local adaptation of the HMC sampler, and subsequent exploration the ideas introducd in the their paper, lead to better understanding of the mathematics behind HMC \cite{livingstone2016geometric,betancourt2014geometric} and  improvements to the sampler \cite{betancourt2013generalizing,betancourt2013general}. Many of these new developments have been and will be included in the STAN language. STAN also eliminates the need for tuning HMC. Users of STAN are shielded from the implementation details and tuning parameters settings, required only to specifiy the distributions involved in the models. 
+
+Since STAN is so central to the present HMC literature, we would explain how it functions in the following exposition. Before that, however, we would explain the basic version of HMC on which STAN is built and to which many extensions are added. 
+
+
+
+
+
+
+
+
+
+
+
+
+Now, STAN has many tiny yet crucial tricks which form part of the adaptive
+tuning and diagnostic mechanism. Bear in mind that Bayesian inference with STAN is not completely
+automatic because judgement still has to be made upon reviewing the results of
+the returned samples to determine if they are valid. And like traditional MCMC
+diagnostics this judgement is not completely objective in the sense that there
+are no metrics that come with theoretical guarantees. 
+
+
+
+
+
+Another problem with the above approach is that it is only unsuitable when the
+target distribution can be approximately linearly transformed into a
+distribution which can be easily explored by a standard HMC sampler.If the target
+distribution has more complicated geometry that might differ in
+curvature in various parts of its support, a constant $M$ is not enough to ensure
+effective decorrelation during sampling. This motivates the use of
+a location-dependent mass matrix $M(x)$ and is called the Riemannian Hamiltonian
+Monte Carlo. More on this later. 
+
+
+
+
+
+
+Note to preserve the correct invariant distribution, the calculation of the
+potential energy function in the Hastings ratio must be done exactly. In later
+discussion of stochastic gradient HMC sampler and extensions, we see data
+subsamlping being combined with stochastic optimization to yield 
+randomly varying the trajectory length is a recommended part of standard HMC
+methodology. 
+
+HMC is invariant to rotation.
+Randomly choose stepsize. 
+Shortcut method.
+Mapping Multivariate Gaussian distribution. width of the distribution in the most constrained direction. Square root of the smallest eigenvalue of the covariance matrix for q.
+Quote: HMC is valid as long as the dynamics is simulated using a method thatis reversible and volume-preserving. 
+
+Tuning the HMC is tricky: for optimal stepsize see \cite{beskos2013optimal}
+
+Understanding of optimal HMC stepsize, number of leapfrogs steps, number of leapfrog steps to reach nearly independent points.
+Ex: Grows as $O(d^{1/4})$.
+
+
+
+
+
+
+
+Symplectic  = volume-preserving
+
+
+\section{Neural networks} 
+
+
+
+\section{MCMC methods applied to hierarchical models}
+\begin{enumerate}
+\item Centered vs uncentered parametrization in hierarchical models.
+
+
+
+
+
+
+
+\section{approximate inference for fast training and prediction}
+
+
+Finally, there is the simple idea of approximating the the posterior
+distribution by fitting a gaussian density around the posterior mode, this is
+known as Laplace's method. It is first applied to BNNs by Mackay in \cite{mackay1992evidence}. In \cite{vivarelli2001comparing}, the author compared the predictive performance of Laplces's method against HMC and found the latter to perform slightly better, with more marked improvement on smaller datasets. An interesting point to note about this method is that by using a Gaussian approximation we have to calculate its covariance matrix by using the Hessian. Since neural network models are actually singular the Hessian is not positive definite everywhere and adjustments have to be made to make it work. In \cite{hernandez2015probabilistic} the authors compared Laplace's method with several approximate inference methods as well as HMC and found it to perform less well than the others. However, they constrained the covariance matrix of the Gaussian approximation to be diagonal to save computational time. Understandibly this leads to worse approximation. On the other hand, one is not forced to choose between a diagonal covariance or the full-rank one. Quasi-newton approximations are possible, and fits neatly within the optimization pipeline.
+
+Variationa inference for bayesian neural networks started with the work of \cite{hinton1993keeping}, who developed a variational inference algorithm using the language of information theory. He used the concept of minimizing the description length of the weight, which is equivalent to minimizing the KL divergence as described above. 
+
+Graves' work \cite{graves2011practical} built on the the Hinton's paper and introduced a stochastic gradient variational method. However, the stochastic gradient estimates are biased and the prior is limited to be Gaussian. In \cite{blundell2015weight} this is further improved upon using the re-parametrization trick \cite{opper2009variational,kingma2013auto,rezende2014stochastic}. This yields the Bayes by Backprops (BBB) algorithm.
+
+The Expectation propogation (EP) approach to approximate inference in BNNs was experimented in \cite{jylanki2014expectation} but saw little follow-up because they method the authors developed was batch-only and could not scale to large datasets.A stochastic version was designed by \cite{hernandez2015probabilistic}, called the Probabilistic Backpropogation (PBP), and was shown to perform well on a wide range of test datasets. However, it has the limitation of being applicable only to regression problems. In \cite{ghosh2016assumed} it is extended to multiclass classification problems through a monte carlo approximation. 
+
+In Myshkov et al's submission to a NIPS workshop (cite), the authors analyzed the performance of a few approximate inference algorithms for BNNs against the "gold-standard" that is the HMC, among those tested were PBP and EP. And they did not perform too poorly against MCMC methods. More analysis of this work to come later.  
+
+In Bayesian dark knowlege, we also try to minimize the KL divergence, but do so
+in a way that compresses model knowledge.  
+
+Why do we assume the prior distribution of weight parameters to be normal centered at 0?
+
+Study of prior distributions in neural networks.\cite{lampinen2001bayesian,titterington2004bayesian}
+
+\section{Scaling MCMC methods to large datasets}
+
+
+
+
+Expectation propogation. Original paper\cite{minka2001expectation}, Gelman and collegues wrote a paper on it \cite{gelman2014expectation}
+
+Stochastic version discussed here \cite{li2015stochastic}
+See also \cite{dehaene2015expectation} for another study of expectation propogation in the large sample size context. 
+
+A stochastic natural gradient extension has been devised and applied to bayesian neural network models \cite{teh2015distributed}
+Probabilistic Backpropogation is a special case of SEP applied to Bayesian neural networks \cite{hernandez2015probabilistic}.
+
+
+Laplace Approximation. It is based on the second order approximation of the
+log-likelihood of the posterior density around its mode.
+
+Suppose the log posterior density $f(x)$ has a mode at $x^*$, then near $x^*$ we
+have 
+\[ f(x) = f(x^*) + \nabla f(x)|_{x=x^*} (x-x^*) + \frac{1}{2} (x-x^*)^TH(x-x^*)
+\]
+where $H$ is the Hessian matrix of $f(x)$ evaluated at $f(x)$, that is,
+\[ H_{ij} = \frac{\partial^2 f(x)}{\partial x_i \partial x_j }|_{x=x^*} \]
+
+
+
+
+\section{Bayesian Model Selection and Prediction}
+
 
 \section{Multiple Modes}
 
