@@ -540,6 +540,7 @@ the method is incorporated in the No U-Turn sampler implemented in STAN.
 multinomial sampling over slice sampling
 
 
+
 \begin{algorithm}
     \KwIn{initial position $\theta^0$, step size $\epsilon$, joint density $\pi$} 
     Re-sample $r^0 \sim \mathcal{N}(0,\mathbb{I})$ \;
@@ -591,6 +592,12 @@ $ w' \leftarrow \pi(\theta',r') $ \;
 }
 \caption{BuildTree 1}
 \end{algorithm}
+
+\[ \sum_{z} T(z'| z) \pi(z) \mathbb{I}(z \in \mathbf{t}) = \pi(z') \mathbb{I}(z' \in \mathbf{t}) \]
+
+\[T(z'|z) = \sum_{\mathbf{t}} T(z'|\mathbf{t}) T(\mathbf{t}|z) \]
+
+\[T(\mathbf{t}|z) = T(\mathbf{t}|z') , \forall \mathbf{t} \in \mathcal{L}^L_{z,z'} \]
 
 \section{NUTS Termination Criteria}
 
@@ -870,6 +877,7 @@ i.e. windowed hmc, hand tuning, ard priors.  Refer back to NUTS for discussion  
 multimodality convergence concern P v NP
 
 \section{gibbs vs joint sampling}
+
 describes gibbs as done by neal 
 i.e. tried joint sampling, ncp 
 side tracked to talk about cp vs ncp 
