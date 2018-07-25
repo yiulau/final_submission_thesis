@@ -1,4 +1,4 @@
-\begin{thebibliography}{100}
+\begin{thebibliography}{10}
 
 \bibitem{tensorflow2015-whitepaper}
 Mart\'{\i}n Abadi, Ashish Agarwal, Paul Barham, Eugene Brevdo, Zhifeng Chen,
@@ -68,11 +68,6 @@ Christopher~M Bishop.
 \newblock {\em Neural networks for pattern recognition}.
 \newblock Oxford university press, 1995.
 
-\bibitem{blei2016variational}
-David~M Blei, Alp Kucukelbir, and Jon~D McAuliffe.
-\newblock Variational inference: A review for statisticians.
-\newblock {\em arXiv preprint arXiv:1601.00670}, 2016.
-
 \bibitem{blundell2015weight}
 Charles Blundell, Julien Cornebise, Koray Kavukcuoglu, and Daan Wierstra.
 \newblock Weight uncertainty in neural networks.
@@ -91,12 +86,6 @@ Sylvain Boltz, Eric Debreuve, and Michel Barlaud.
 \newblock knn-based high-dimensional kullback-leibler distance for tracking.
 \newblock In {\em Image Analysis for Multimedia Interactive Services, 2007.
   WIAMIS'07. Eighth International Workshop on}, pages 16--16. IEEE, 2007.
-
-\bibitem{breiman2001statistical}
-Leo Breiman et~al.
-\newblock Statistical modeling: The two cultures (with comments and a rejoinder
-  by the author).
-\newblock {\em Statistical science}, 16(3):199--231, 2001.
 
 \bibitem{burda2011bayesian}
 Martin Burda, John Maheu, et~al.
@@ -119,12 +108,6 @@ Changyou Chen, Nan Ding, and Lawrence Carin.
 Tianqi Chen, Emily~B Fox, and Carlos Guestrin.
 \newblock Stochastic gradient hamiltonian monte carlo.
 \newblock In {\em ICML}, pages 1683--1691, 2014.
-
-\bibitem{choo2000learning}
-Kiam Choo.
-\newblock {\em Learning hyperparameters for neural network models using
-  Hamiltonian dynamics}.
-\newblock PhD thesis, Citeseer, 2000.
 
 \bibitem{damianou2013deep}
 Andreas~C Damianou and Neil~D Lawrence.
@@ -151,11 +134,6 @@ Simon Duane, Anthony~D Kennedy, Brian~J Pendleton, and Duncan Roweth.
 Maurizio Filippone and Raphael Engler.
 \newblock Enabling scalable stochastic gradient-based inference for gaussian
   processes by employing the unbiased linear system solver (ulisse).
-
-\bibitem{fox2012tutorial}
-Charles~W Fox and Stephen~J Roberts.
-\newblock A tutorial on variational bayesian inference.
-\newblock {\em Artificial intelligence review}, 38(2):85--95, 2012.
 
 \bibitem{friedman2001elements}
 Jerome Friedman, Trevor Hastie, and Robert Tibshirani.
@@ -358,10 +336,11 @@ David~JC MacKay.
 Nimalan Mahendran, Ziyu Wang, Firas Hamze, and Nando De~Freitas.
 \newblock Adaptive mcmc with bayesian optimization.
 
-\bibitem{martens2014new}
-James Martens.
-\newblock New insights and perspectives on the natural gradient method.
-\newblock {\em arXiv preprint arXiv:1412.1193}, 2014.
+\bibitem{mandt2017stochastic}
+Stephan Mandt, Matthew~D Hoffman, and David~M Blei.
+\newblock Stochastic gradient descent as approximate bayesian inference.
+\newblock {\em The Journal of Machine Learning Research}, 18(1):4873--4907,
+  2017.
 
 \bibitem{minka2001expectation}
 Thomas~P Minka.
@@ -392,11 +371,6 @@ Radford~M Neal.
   algorithm.
 \newblock {\em arXiv preprint hep-lat/9208011}, 1992.
 
-\bibitem{neal1996sampling}
-Radford~M Neal.
-\newblock Sampling from multimodal distributions using tempered transitions.
-\newblock {\em Statistics and computing}, 6(4):353--366, 1996.
-
 \bibitem{neal2012bayesian}
 Radford~M Neal.
 \newblock {\em Bayesian learning for neural networks}, volume 118.
@@ -419,20 +393,16 @@ Jiquan Ngiam, Adam Coates, Ahbik Lahiri, Bobby Prochnow, Quoc~V Le, and
 \newblock In {\em Proceedings of the 28th International Conference on Machine
   Learning (ICML-11)}, pages 265--272, 2011.
 
-\bibitem{ollivier2013riemannian}
-Yann Ollivier.
-\newblock Riemannian metrics for neural networks i: feedforward networks.
-\newblock {\em arXiv preprint arXiv:1303.0818}, 2013.
-
 \bibitem{opper2009variational}
 Manfred Opper and C{\'e}dric Archambeau.
 \newblock The variational gaussian approximation revisited.
 \newblock {\em Neural computation}, 21(3):786--792, 2009.
 
-\bibitem{pascanu2013revisiting}
-Razvan Pascanu and Yoshua Bengio.
-\newblock Revisiting natural gradient for deep networks.
-\newblock {\em arXiv preprint arXiv:1301.3584}, 2013.
+\bibitem{piironen2017sparsity}
+Juho Piironen, Aki Vehtari, et~al.
+\newblock Sparsity information and regularization in the horseshoe and other
+  shrinkage priors.
+\newblock {\em Electronic Journal of Statistics}, 11(2):5018--5051, 2017.
 
 \bibitem{rezende2014stochastic}
 Danilo~Jimenez Rezende, Shakir Mohamed, and Daan Wierstra.
@@ -460,12 +430,6 @@ Gareth~O Roberts, Andrew Gelman, Walter~R Gilks, et~al.
 \newblock Weak convergence and optimal scaling of random walk metropolis
   algorithms.
 \newblock {\em The annals of applied probability}, 7(1):110--120, 1997.
-
-\bibitem{roberts1998optimal}
-Gareth~O Roberts and Jeffrey~S Rosenthal.
-\newblock Optimal scaling of discrete approximations to langevin diffusions.
-\newblock {\em Journal of the Royal Statistical Society: Series B (Statistical
-  Methodology)}, 60(1):255--268, 1998.
 
 \bibitem{roberts2009examples}
 Gareth~O Roberts and Jeffrey~S Rosenthal.
@@ -500,12 +464,6 @@ Umut {\c{S}}im{\c{s}}ekli, Roland Badeau, A~Taylan Cemgil, and Ga{\"e}l
   Richard.
 \newblock Stochastic quasi-newton langevin monte carlo.
 \newblock {\em arXiv preprint arXiv:1602.03442}, 2016.
-
-\bibitem{snoek2012practical}
-Jasper Snoek, Hugo Larochelle, and Ryan~P Adams.
-\newblock Practical bayesian optimization of machine learning algorithms.
-\newblock In {\em Advances in neural information processing systems}, pages
-  2951--2959, 2012.
 
 \bibitem{teh2015distributed}
 Yee~Whye Teh, Leonard Hasenclever, Thibaut Lienart, Sebastian Vollmer, Stefan

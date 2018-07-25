@@ -1,4 +1,4 @@
-\documentclass{report}
+\documentclass[]{report}
 \usepackage[utf8]{inputenc}
 \usepackage{amsmath,fullpage,amsfonts,amssymb,tikz,geometry,amsthm,pgfplots}
 \usepackage[boxruled]{algorithm2e}
@@ -816,18 +816,77 @@ $E[(\psi_i - \psi_{i-1})^2] = 2(1-\rho_t)\text{var}(\psi)$
 
 \section{Numeric tricks/Implementation tricks}
 cov add unity 0.0001 + welford
+
+Covariance added dimension unity matrix.
+
+\begin{algorithm}
+\DontPrintSemicolon
+\KwIn{current sample counter $t$, current accumulator for mean $m$, current accumulator for $m_2$, current sample $x$}
+
+$\delta = x-m$ \;
+$m = m + \frac{\delta}{t} $\;
+$m_2 = (x-m)\delta^T $ \;
+$\mu = m $\;
+$\Sigma = \frac{m_2}{t-1} $\;
+\KwRet{$m,m_2,\mu,\Sigma$}
+\caption{Welford algorithm}
+\end{algorithm}
+
 logsumexp
+\begin{algorithm}
+\DontPrintSemicolon
+\KwIn{$a,b$}
+\KwOut{$c = \log(\exp(a)+ \exp(b)) $}
+$s = \max(a,b) $\;
+$c = s + \log( \exp(a-s) + \exp(b-s)) $\;
+
+\KwRet{$c$}
+\caption{logsumexp}
+\end{algorithm}
+
+
 stable sum 
+\begin{algorithm}
+\DontPrintSemicolon
+\KwIn{$a_1,\log w_1 , a_2, \log w_2$}
+\KwOut{$a = \frac{a_1 \log w_1 + a_2 \log w_2}{w_1+w_2} ,w = w_1 + w_2$}
+
+\eIf{$\log w_1 > \log w_2 $}{
+	$e = \exp(\log w_1 - \log w_2 ) $\;
+	$a = \frac{e \cdot a_1 + a_2}{1+e} $\;
+	$w = \log w_2 + \log(1+e) $ \;
+}{
+	$e = \exp(\log w_2 - \log w_1 ) $\;
+	$a = \frac{e \cdot a_2 + a_1}{1+e} $\;
+	$w = \log w_1 + \log(1+e) $ \;
+}
+
+
+\KwRet{$a,w$}
+\caption{Stable Sum }
+\end{algorithm}
+
 divergence check 
 recursion requiring dynamic graph  > pytorch
 version of nuts that takes care of divergence
 fft variogram
+
+map from unconstrained space to constrained space
+
+Suppose $ X = exp(y) $  
+\begin{align*}
+p_Y(y) = p_X(f^{-1}(y)) \ |\frac{d}{dY} f^{-1}(y) |\\
+p_Y(y) = p_X(\exp(y)) \cdot \exp(y) \\
+\log p_Y(y) = \log p_X(\exp(y)) + y \\
+\end{align*}
 
 \begin{align*}
  \sum_{n=t+1}^N (\theta_{n} - \theta_{n-t})^2 &= \sum_{n=t+1}^N \theta_n^2 - 2 \theta_n \theta_{n-t} + \theta_{n-t}^2  \\
  &= \sum_{n=t+1}^N \theta_n^2 -2 \sum_{n=t+1}^N \theta_n \theta_{n-t} + \sum_{n=t+1}^N \theta_{n-t}^2 \\ 
   &= \sum_{n=t+1}^N 1 \cdot \theta_n^2 -2 \sum_{n=t+1}^N \theta_n \theta_{n-t} + \sum_{n=t+1}^N 1 \cdot \theta_{n-t}^2 \\
 \end{align*}
+
+
 
 
 \chapter{Bayesian Neural Networks}
@@ -877,6 +936,27 @@ i.e. windowed hmc, hand tuning, ard priors.  Refer back to NUTS for discussion  
 multimodality convergence concern P v NP
 
 \section{gibbs vs joint sampling}
+Suppose $W_{ij} \sim \mathcal{N}(0,\sigma^2), \sigma^{-2} \sim \text{Gamma}(a_0,b_0) $
+
+Then , $n = |W|$ 
+\[\sigma^{-2}|W,X,y \sim \text{Gamma}(a_1,b_1)\]
+\[a_1 = a_0 + 0.5 n  \]
+\[b_1 = b_0 + 0.5 \sum_{ij} W_{ij}^2 \]
+
+\begin{algorithm}
+\KwIn{Initial variance $\sigma^2_0$, number of MCMC samples $M$}
+
+\For{$ i = 1:M$ }{
+	Sample $W_i \sim p(W|\sigma^2_{i-1},data)$ \;
+	$a_1 = a_0 + 0.5 n $ \; 
+	$b_1 = b_0 + 0.5 \sum_{ij} W_{ij}^2$ \;
+	Update $\sigma^2 \sim \text{Inv-Gamma}(a_1,b_1)$ \;
+}
+\KwRet{$W_{i=1:M}$}
+\caption{Blocks-Gibbs Sampler for NN weights and variance}
+\end{algorithm}
+
+
 
 describes gibbs as done by neal 
 i.e. tried joint sampling, ncp 
@@ -1015,8 +1095,49 @@ as well. The estimation can be done using along diagonal approximation, or
 low-rank approximations. 
 
 \section{sparsity inducing priors}
-horseshoe priors for model selection. variational inference
-ncp
+horseshoe priors for model selection.
+
+Horseshoe prior \cite{piironen2017sparsity}
+
+\[ \mathbf{\beta} = (\beta_1,\cdots,\beta_D)\]
+
+\begin{align*}
+ &\beta_j \sim \mathcal{N}(0,\tau^2\lambda^2) \\
+ &\lambda_j \sim C^+(0,1),\, j = 1,\dots , D, \\
+\end{align*}
+
+Talk about parametrization ncp 
+
+Regularized horseshoe prior 
+
+\begin{align*}
+\beta_j | \lambda_j, \tau, c \sim \mathcal{N}(0,\tau^2 \tilde{\lambda}_j^2) ,\, \tilde{\lambda}_j^2 = \frac{c^2 \lambda_j^2}{c^2 + \tau^2 \lambda_j^2} \\
+\lambda_j \sim C^+(0,1),\, j = 1,\dots,D,
+\end{align*}
+\[c^2 \sim \text{Inv-gamma}(2,8) \]
+Relation to student-t distribution. 
+
+Cauchy distribution equivalent to student-t distribution of degree 1. Also, if $x \sim t_{\nu}(0,1) $ 
+equivalent to 
+\[ x \sim \mathcal{N}(0,\sigma^2)\]
+\[\sigma^2 \sim \text{Inv-gamma}(0.5,0.5) \]
+
+Equivalent to 
+\[ x = z * \sigma \]
+\[ z \sim \mathcal{N}^+(0,1)\]
+\[\sigma^2 \text{Inv-gamma}(0.5,0.5) \]
+
+The unconstrained space become 
+
+\[(z,r1_l,r2_l,r1_g,r2_g) \]
+Where
+\[ z \sim \mathcal{N}(0,1) \]
+\[ {r_1}_l \sim \mathcal{N}^+(0,1) \]
+\[ {r_2}_l \sim \text{Inv-gamma}(0.5,0.5) \]
+\[ \lambda =  {r1}_l \cdot {r2}_l \]
+\[ \tau = r1_g \cdot r2_g \]
+\[\beta = z \cdot \lambda \tau \]
+
 \section{self normalizing induced initialization}
 selu, gloriot initialization
 
