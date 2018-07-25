@@ -508,6 +508,7 @@ definition epsilon L, stepsize jitter, advantage over MH , 0.65 rule , geometric
 
 \section{No U-Turn Sampler}
 
+
 There exists an extension of the basic HMC sampler that increases the acceptance
 rate by proposing a trajectory instead of proposing just a state at the end
 of the trajectory. Two trajectories are proposed, one containing the initial state; one
@@ -538,7 +539,117 @@ the method is incorporated in the No U-Turn sampler implemented in STAN.
 
 multinomial sampling over slice sampling
 
+
+\begin{algorithm}
+    \KwIn{initial position $\theta^0$, step size $\epsilon$, joint density $\pi$} 
+    Re-sample $r^0 \sim \mathcal{N}(0,\mathbb{I})$ \;
+    Initialize $\theta^{-} = \theta^0 , \theta^{+} = \theta^0 , r^{-1} =r^0 , r^+ = r^0, j =0 ,	\theta^{next} = \theta^0 , s = 1 , w = \pi(\theta^0,r^0)$ \;
+    \While{$s=1$}{
+    Choose a direction $v_j \sim \text{Uniform}(-1,1) $ \;
+    \eIf{$v_j = -1$}{
+    		$\theta^-,r^-,-,-,\theta',s',w' \leftarrow \text{BuildTree}(\theta^-,r^-,v_j,j,\epsilon)$\;
+    }{
+    		$-,-,\theta^+,r^+,\theta',s',w' \leftarrow \text{BuildTree}(\theta^+,r^+,v_j,j,\epsilon)$\;
+    }
+    \If{$s'=1$}{
+    		With probability $\min(1,\frac{w'}{w})$, set $\theta^{next} \leftarrow \theta^-$\;
+    }
+    $ w = w + w'$\;
+    $ s = s \mathbb{I}[(\theta^+ - \theta^-) \cdot r^- \ge 0 ] \mathbb{I}[(\theta^+ - \theta^-) \cdot r^+ \ge 0 ] $\;
+    $j = j+1 $ \;
+    
+    }
+
+\KwRet{$\theta^{next}$}
+\caption{No U-Turn Sampler Update with Unity Covariance Metric}
+\end{algorithm}
+
+
+\begin{algorithm}
+\KwIn{initial position $\theta$, initial momentum $r$,integration direction $v$,tree depth $j$,step size $\epsilon$}
+
+\eIf{$j=0$}{
+Base case: take one step in direction $v$ \;
+$ \theta' , r' \leftarrow \text{Leapfrog}(\theta,r,v\epsilon) $ \;
+$ w' \leftarrow \pi(\theta',r') $ \;
+\KwRet{$\theta^-,r^-,\theta^+,r^+,\theta',s',w'$} \;
+
+}{
+	$\theta^-,r^-,\theta^+,r^+,\theta',s',w \leftarrow \text{BuildTree}(\theta,r,v,j-1,\epsilon) $ \;
+	
+	\If{$s'=1$}{
+		\eIf{$v=-1$}{
+			$\theta^-,r^-,-,-,\theta",s'',w'' \leftarrow \text{BuildTree}(\theta^-,r^-,v,j-1,\epsilon)$ \;
+		}{
+			$-,-,\theta^+,r^+,\theta'',s'',w'' \leftarrow \text{BuildTree}(\theta^+,r^+,v,j-1,\epsilon)$ \;
+		}
+		With probability $\min(1, \frac{w''}{w'+w''})$ , set $\theta' = \theta''$. \;
+		$ s' \leftarrow s'' \mathbb{I}[(\theta^+ - \theta^- )\cdot r^- \ge 0 ] \mathbb{I}[(\theta^+ - \theta^- )\cdot r^+ \ge 0 ]$ \;
+		$w' \leftarrow w' + w'' $ \;
+	}
+	\KwRet{$\theta^-,r^-,\theta^+,r^+,\theta',s',w' $ }\;
+}
+\caption{BuildTree 1}
+\end{algorithm}
+
 \section{NUTS Termination Criteria}
+
+Generalized No U-Turn sampler termination criterion:
+
+\begin{algorithm}
+  	\DontPrintSemicolon
+	\SetKwFunction{FBuildTree}{G-BuildTree}
+
+    \KwIn{initial position $\theta^0$, step size $\epsilon$, joint density $\pi$} 
+    Re-sample $r^0 \sim \mathcal{N}(0,\mathbb{I})$ \;
+    Initialize $\theta^{-} = \theta^0 , \theta^{+} = \theta^0 , r^{-1} =r^0 , r^+ = r^0, j =0 ,	\theta^{next} = \theta^0 , s = 1 , w = \pi(\theta^0,r^0)$ \;
+    \While{$s=1$}{
+    Choose a direction $v_j \sim \text{Uniform}(-1,1) $ \;
+    \eIf{$v_j = -1$}{
+    		$\theta^-,r^-,-,-,\theta',s',w' \leftarrow \text{G-BuildTree}(\theta^-,r^-,v_j,j,\epsilon)$\;
+    }{
+    		$-,-,\theta^+,r^+,\theta',s',w' \leftarrow \text{G-BuildTree}(\theta^+,r^+,v_j,j,\epsilon)$\;
+    }
+    \If{$s'=1$}{
+    		With probability $\min(1,\frac{w'}{w})$, set $\theta^{next} \leftarrow \theta^-$\;
+    }
+    $ w = w + w'$\;
+    $ s = s \mathbb{I}[(\theta^+ - \theta^-) \cdot r^- \ge 0 ] \mathbb{I}[(\theta^+ - \theta^-) \cdot r^+ \ge 0 ] $\;
+    $j = j+1 $ \;
+    
+    }
+
+\KwRet{$\theta^{next}$}
+
+\FBuildTree{$\theta, r, v, j, \epsilon$}{\;
+        \eIf{$j=0$}{
+Base case: take one step in direction $v$ \;
+$ \theta' , r' \leftarrow \text{Leapfrog}(\theta,r,v\epsilon) $ \;
+$ w' \leftarrow \pi(\theta',r') $ \;
+\KwRet{$\theta^-,r^-,\theta^+,r^+,\theta',s',w'$} \;
+
+}{
+	$\theta^-,r^-,\theta^+,r^+,\theta',s',w \leftarrow \text{G-BuildTree}(\theta,r,v,j-1,\epsilon) $ \;
+	
+	\If{$s'=1$}{
+		\eIf{$v=-1$}{
+			$\theta^-,r^-,-,-,\theta",s'',w'' \leftarrow \text{G-BuildTree}(\theta^-,r^-,v,j-1,\epsilon)$ \;
+		}{
+			$-,-,\theta^+,r^+,\theta'',s'',w'' \leftarrow \text{G-BuildTree}(\theta^+,r^+,v,j-1,\epsilon)$ \;
+		}
+		With probability $\min(1, \frac{w''}{w'+w''})$ , set $\theta' = \theta''$. \;
+		$ s' \leftarrow s'' \mathbb{I}[(\theta^+ - \theta^- )\cdot r^- \ge 0 ] \mathbb{I}[(\theta^+ - \theta^- )\cdot r^+ \ge 0 ]$ \;
+		$w' \leftarrow w' + w'' $ \;
+	}
+	\KwRet{$\theta^-,r^-,\theta^+,r^+,\theta',s',w' $ }\;
+}
+    }
+\caption{Generalized No U-Turn Sampler Update}
+\end{algorithm}
+
+
+Exhaustive Hamiltonian Monte Carlo termination criterion:
+
 xhmc over gnuts over nuts 
 \section{Adaptive Tuning of Step Size}
 
@@ -590,6 +701,25 @@ stablizes the early iterations, and $\eta_t = t^{-\kappa},\kappa>0$ is a
 stepsize schedule ensuring convergence. Since $\epsilon>0$, this is technically
 a constrained optimization problem, but it can be easily converted into an
 unconstrained problem by optimizing for $\log(\epsilon)$ instead. 
+
+\begin{algorithm}
+\KwIn{Target Metropolis acceptance rate $\delta$, initial step size $\epsilon_0$, duration of tuning $M^{adapt}$ }
+
+Initialize $\overline{H}_0 = 0, \gamma = 0.05, t_0 = 10 ,\kappa = 0.8 $ \;
+	
+	Calculate acceptance rate $\alpha$ using $\epsilon_0$. \;
+\For{$m = 1:M^{adapt}$}{
+	 $\overline{H}_m = (1- \frac{1}{m+t_0}) \overline{H}_{m-1} + \frac{1}{m + t_0} (\delta - \alpha) $ \;
+	 $\log \epsilon_m = \mu - \frac{\sqrt{m}}{\gamma} \overline{H}_m $ \;
+	 $\log \overline{\epsilon}_m = m^{-\kappa} \log \epsilon_m + (1-m^{-\kappa}) \log \overline{\epsilon}_{m-1} $ \;
+	
+	Update acceptance rate $\alpha$ using $\overline{\epsilon}_m$ \;
+	
+}
+
+\caption{dual averaging tuning of $\epsilon$ }
+\end{algorithm}
+
 \section{Adaptive Tuning of HMC Metric}
 different windows for fast vs slow parameters 
 
