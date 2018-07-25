@@ -742,8 +742,33 @@ Initialize $\overline{H}_0 = 0, \gamma = 0.05, t_0 = 10 ,\kappa = 0.8 $ \;
 \caption{dual averaging tuning of $\epsilon$ }
 \end{algorithm}
 
+
+\begin{algorithm}
+Initialize $\epsilon = 1$, momentum $r \sim \mathcal{N}(0,\mathbb{I}) $ \;
+$(\theta',r') \leftarrow \text{Leapfrog}(\theta,r,\epsilon) $ \;
+$a \leftarrow 2 \mathbb{I}[ \frac{\pi(\theta',r')}{\pi(\theta,r)} > 0.5 ] -1 $\;
+\While{ ( $\frac{\pi(\theta',r')}{\pi(\theta,r)} )^a > 2^{-a} $}{
+	$\epsilon \leftarrow 2^a \epsilon$ \;
+	$(\theta',r') \leftarrow \text{Leapfrog}(\theta,r,\epsilon) $ \;
+}
+\KwRet{$\epsilon$}
+\caption{find initial $\epsilon$} 
+\end{algorithm}
+
 \section{Adaptive Tuning of HMC Metric}
-different windows for fast vs slow parameters 
+STAN divides the tuning period into a number of windows of different lengths. The following quantities followed by their current default values in brackets are of relevance in this discussion: 
+
+\begin{enumerate}
+\item Initial buffer (n=75): the first window of the sampling stage, where only the step size parameter is updated by dual averaging .
+
+\item End buffer (n=50): the last window of the sampling stage, where the covariance metric is fixed and only the step size is updated and allows it to stabilize.
+
+\item Window size (n=25): the base length of interval for updating the covariance metric. 
+\end{enumerate}
+
+Both the step size and covariance metric are updated during the tuning stage. And it proceeds as follows: the covariance metric is initialized by the identity matrix and an initial step size found by the doubling-halving heuristic. Parameter tuning happens in three stages. The first is the initial buffer where only $\epsilon $ is updated. In the second stage both the step size and covariance metric are updated. While $\epsilon$ is updated after every MCMC transition, because the dual averaging procedure only requires an acceptance rate, the covariance metric is updated only after the number of MCMC samples collected is equal to the current window size. Then compute the empirical covariance and set the metric to its inverse. Double the window size or increase it to cover the rest of the remaining second stage if doubling is impossible. The third and last stage updates the step size only. 
+
+The algorithm is designed so that the covariance metric is not updated immediately at the start of the tuning stage, because the model might be initialized particularly poorly and hence the initial examples could be misleading. The doubling of window size is to allow progressive improvement of the covariance metric. For larger window sizes, the memory requirement for storing all the MCMC samples to estimate the covariance matrix could be prohibitive. Therefore, STAN actually uses an online algorithm for calculating the covariance, whose memory complexity is independent of the window size. 
 
 \section{HMC-Specific Sampling Diagnostics}
 bfmi , divergence ( talk about example 8 school) , tree depth ,
@@ -815,6 +840,15 @@ $E[(\psi_i - \psi_{i-1})^2] = 2(1-\rho_t)\text{var}(\psi)$
 
 
 \section{Numeric tricks/Implementation tricks}
+
+$p(\theta,r)  = \exp(H(\theta,r)) $
+
+$\frac{\pi(\theta',r')}{\pi(\theta,r)} )^a > 2^{-a} $
+
+Equivalent to 
+
+$ a (H(\theta',r') - H(\theta,r) ) > -a \log 2 $ 
+
 cov add unity 0.0001 + welford
 
 Covariance added dimension unity matrix.
@@ -1111,10 +1145,11 @@ Talk about parametrization ncp
 Regularized horseshoe prior 
 
 \begin{align*}
-\beta_j | \lambda_j, \tau, c \sim \mathcal{N}(0,\tau^2 \tilde{\lambda}_j^2) ,\, \tilde{\lambda}_j^2 = \frac{c^2 \lambda_j^2}{c^2 + \tau^2 \lambda_j^2} \\
-\lambda_j \sim C^+(0,1),\, j = 1,\dots,D,
+&\beta_j | \lambda_j, \tau, c \sim \mathcal{N}(0,\tau^2 \tilde{\lambda}_j^2) ,\, \tilde{\lambda}_j^2 = \frac{c^2 \lambda_j^2}{c^2 + \tau^2 \lambda_j^2} \\
+&\lambda_j \sim C^+(0,1),\, j = 1,\dots,D\\
+&c^2 \sim \text{Inv-gamma}(2,8) ,
 \end{align*}
-\[c^2 \sim \text{Inv-gamma}(2,8) \]
+
 Relation to student-t distribution. 
 
 Cauchy distribution equivalent to student-t distribution of degree 1. Also, if $x \sim t_{\nu}(0,1) $ 
@@ -1127,19 +1162,26 @@ Equivalent to
 \[ z \sim \mathcal{N}^+(0,1)\]
 \[\sigma^2 \text{Inv-gamma}(0.5,0.5) \]
 
-The unconstrained space become 
+The parameter space becomes 
 
 \[(z,r1_l,r2_l,r1_g,r2_g) \]
 Where
 \[ z \sim \mathcal{N}(0,1) \]
-\[ {r_1}_l \sim \mathcal{N}^+(0,1) \]
-\[ {r_2}_l \sim \text{Inv-gamma}(0.5,0.5) \]
+\[ {r_1}_l^j \sim \mathcal{N}^+(0,1) \, \forall j \]
+\[ {r_2}_l^j \sim \text{Inv-gamma}(0.5,0.5) \, \forall j  \]
+\[ {r_1}_g \sim \mathcal{N}^+(0,1)  \]
+\[ {r_2}_g \sim \text{Inv-gamma}(0.5,0.5)   \]
+
 \[ \lambda =  {r1}_l \cdot {r2}_l \]
 \[ \tau = r1_g \cdot r2_g \]
 \[\beta = z \cdot \lambda \tau \]
 
+The unconstrained parameter space becomes $(z,\log r1_l,r2_l,\log r1_g,r2_g)$
+
 \section{self normalizing induced initialization}
 selu, gloriot initialization
+
+\[ W \sim \text{Uniform}(\frac{-1}{\sqrt{N_{in}}},\frac{1}{\sqrt{N_{in}}}) \]
 
 \section{model selection}
 test error vs waic 
