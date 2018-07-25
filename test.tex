@@ -595,7 +595,16 @@ $ w' \leftarrow \pi(\theta',r') $ \;
 \section{NUTS Termination Criteria}
 
 Generalized No U-Turn sampler termination criterion:
-
+\begin{align*}
+ p_{+}^T (q_{+} -q_{-})  
+ &=p_{+}^T \int_{t=0}^{T} M^{-1}p(t) dt   \\
+ &=p_{+}^T M^{-1} \int_{t=0}^{T} p(t)dt \\
+ &=(M^{-1} p_{+})^T  \int_{t=0}^{T} p(t)dt \\
+ &= p^{\#}_{+}  \int_{t=0}^{T} p(t)dt \\
+ &\approx p^{\#}_{+} \sum_{i=0}^n p(t_{k_i}) \\
+ &=  p^{\#}_{+} \sum_{z \sim \mathbf{t}} p(z) \\
+\end{align*}
+ 
 \begin{algorithm}
   	\DontPrintSemicolon
 	\SetKwFunction{FBuildTree}{G-BuildTree}
@@ -650,6 +659,12 @@ $ w' \leftarrow \pi(\theta',r') $ \;
 
 Exhaustive Hamiltonian Monte Carlo termination criterion:
 
+\begin{align*}
+ \frac{dG}{dt} &= \frac{d}{dt}\sum_{i=1}^D q_i p_i \\
+ &= \sum_{i=1}^D p_i \frac{dq_i}{dt} + q_i \frac{dp_i}{dt} \\
+ &= \sum_{i=1}^D [M^{-1}p]_i p_i - q_i \frac{\partial V}{\partial q_i} \\
+ &= 2 T - q \cdot \frac{\partial V}{\partial q} \\
+\end{align*}
 xhmc over gnuts over nuts 
 \section{Adaptive Tuning of Step Size}
 
@@ -765,12 +780,48 @@ inefficient for sampling.
  
 \section{Other Sampling Diagnostics}
 ess gelman definition, rhat 
+
+\begin{align*}
+&B = \frac{n}{m-1} \sum_{j=1}^{m}(\overline{\psi}_{\cdot j} - \overline{\psi}_{\cdot \cdot})^2, \text{ where } 
+\overline{\psi}_{\cdot j} = \frac{1}{n} \sum_{i=1}^n \psi_{ij} , \overline{\psi}_{\cdot \cdot} = \frac{1}{m} \sum_{j=1}^m \overline{\psi}_{\cdot j }
+ \\
+&W = \frac{1}{m} \sum_{j=1}^m s_j^2 , \text{ where }
+s_j^2 = \frac{1}{n-1} \sum_{i=1}^n (\psi_{ij} - \overline{\psi}_{\cdot j } )^2.\\
+\end{align*}
+
+\[ \hat{\text{var}}^+(\psi|y) = \frac{n-1}{n} W + \frac{1}{n} B \]
+
+\[\hat{R} = \sqrt{\frac{\hat{\text{var}}^+(\psi|y)}{W}} \]
+
+ESS 
+\[n_{eff}  = \frac{mn}{1 + 2 \sum_{t=1}^\infty \rho_t} \]
+
+\[V_t = \frac{1}{m(n-t)} \sum_{j=1}^m \sum_{i=t+1}^n (\psi_{i,j} - \psi_{i-t,j})^2 \]
+
+$E[(\psi_i - \psi_{i-1})^2] = 2(1-\rho_t)\text{var}(\psi)$
+
+\[\hat{\rho}_t = 1 - \frac{V_t}{2 \hat{\text{var}}^+}\]
+
+
+\[\hat{n}_{eff} = \frac{mn}{1 + 2 \sum_{t=1}^T \hat{\rho}_t} \]
+ 
+
+
 \section{Numeric tricks/Implementation tricks}
 cov add unity 0.0001 + welford
 logsumexp
+stable sum 
 divergence check 
 recursion requiring dynamic graph  > pytorch
 version of nuts that takes care of divergence
+fft variogram
+
+\begin{align*}
+ \sum_{n=t+1}^N (\theta_{n} - \theta_{n-t})^2 &= \sum_{n=t+1}^N \theta_n^2 - 2 \theta_n \theta_{n-t} + \theta_{n-t}^2  \\
+ &= \sum_{n=t+1}^N \theta_n^2 -2 \sum_{n=t+1}^N \theta_n \theta_{n-t} + \sum_{n=t+1}^N \theta_{n-t}^2 \\ 
+  &= \sum_{n=t+1}^N 1 \cdot \theta_n^2 -2 \sum_{n=t+1}^N \theta_n \theta_{n-t} + \sum_{n=t+1}^N 1 \cdot \theta_{n-t}^2 \\
+\end{align*}
+
 
 \chapter{Bayesian Neural Networks}
 \section{Neal}
