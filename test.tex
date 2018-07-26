@@ -540,6 +540,29 @@ the method is incorporated in the No U-Turn sampler implemented in STAN.
 multinomial sampling over slice sampling
 
 
+\begin{algorithm}
+\KwIn{number of leapfrog steps $L$, initial position $q_0$ }
+Sample initial momentum $p_0$ \;
+$q_l,q_r, q_{prop} \leftarrow q_0$\;
+$p_l,p_r, p_{prop} \leftarrow p_0$ \;
+$\log w_{prop} = H(q_{prop},p_{prop}) $ \;
+
+\For{$i = 1:L$}{
+	$\log w_{old} = \log w_{prop} $\;
+	Sample $v \sim \text{Uniform}(\{-1,1\}) $  \;
+	\eIf{$v=-1$}{
+		$q_l,p_l \leftarrow \text{Leapfrog}(q_l,p_l,-\epsilon) $\;
+		$\log w_{prop} = H(q_l,p_l) $\;
+	}{
+		$q_r,p_r \leftarrow \text{Leapfrog}(q_r,p_r,\epsilon) $\;
+		$\log w_{prop} = H(q_r,p_r) $\;
+	}
+	With probability $ \min(1,\frac{w_{prop}}{w_{old}}) $ accept $(q,p)$ as $(q_{prop},p_{prop})$\;
+	$q_i,p_i \leftarrow q_{prop},p_{prop} $\;
+}
+\caption{Windowed HMC update step}
+\end{algorithm}
+
 
 \begin{algorithm}
     \KwIn{initial position $\theta^0$, step size $\epsilon$, joint density $\pi$} 
