@@ -75,27 +75,27 @@ Talk about research by McKay and Neal.
 \chapter{STAN}
 \section{Hamiltonian Monte Carlo}
 
-Bayesian Inference can be simply summarized by the specification of a likelihood and a prior function. Suppose $\theta \in \mathbb{R}^d$ is the parameter of the likelihood function for observed data $X \sim p(x| \theta)$, we can
-model our uncertainty about it with a prior function $p(\theta)$. Upon observing the data, we can perform Bayesian inference by using information from the posterior distribution 
+Bayesian Inference can be simply summarized by the specification of a likelihood and a prior function. Suppose $q \in \mathbb{R}^D$ is the parameter of the likelihood function for observed data $X \sim \pi(x|q)$, we can
+model our uncertainty about it with a prior function $\pi(q)$. Upon observing the data, we can perform Bayesian inference by using information from the posterior distribution 
 
-\[ p(\theta | x ) \propto p(x | \theta) p(\theta) \]
+\[ \pi(q | x ) \propto \pi(x | q) \pi(q) \]
 
-Examples: MAP, marginal posterior estimation, credible intervals. The exact calculation of the normalizing constant $Z = \int p(x | \theta) p(\theta) d\theta $ is possible for certain convenient functions only, and we must rely on Markov Chain Monte Carlo (MCMC) to calculate posterior quantities. The most basic form of MCMC is the Metropolis-Hastings sampler. 
+Examples: MAP, marginal posterior estimation, credible intervals. The exact calculation of the normalizing constant $Z = \int \pi(x | q) \pi(q) dq $ is possible for certain convenient functions only, and we must rely on Markov Chain Monte Carlo (MCMC) to calculate posterior quantities. The most basic form of MCMC is the Metropolis-Hastings sampler. 
 
 
-Suppose we have a an unnormalized density $p(x)$, and $q(x,y)$ is a proposal function such that conditional on the current state $x$, the probability of moving from $x$ to a measurable set $A$ is denoted by $q(x,A)$, we can calculate the Hastings ratio
-\[ r(x,y) = \frac{p(y)q(y,x)}{p(x)q(x,y)}. \]
+Suppose we have a an unnormalized density $\pi(q)$, and $h(q,p)$ is a proposal function such that conditional on the current state $q$, the probability of moving from $q$ to a measurable set $A$ is denoted by $h(x,A)$, we can calculate the Hastings ratio
+\[ r(q,q') = \frac{\pi(q')h(q',q)}{\pi(q)h(q,q')}. \]
 
 Then we accept the move to state $y$ with probability $ \min (1, r(x,y)) $, and stay in the current state otherwise.
 
 \begin{algorithm}
 \caption{Metropolis Hastings Sampler}
-\KwIn{$x_0$ initial state, $p(\cdot)$ unnormalized target density, $q(\cdot,\cdot)$ proposal density}
+\KwIn{$q_0$ initial state, $\pi(\cdot)$ unnormalized target density, $h(\cdot,\cdot)$ proposal density}
 
 
 \For{$i = 1:n$}{
-  	Draw $x_{prop}$ from $q(x_{i-1},\cdot)$ \;  	
-  	Accept $x_{prop}$ with probability $\min(1,r(x_{prop},x_{i-1}))$ \;
+  	Draw $q_{prop}$ from $h(q_{i-1},\cdot)$ \;  	
+  	Accept $q_{prop}$ with probability $\min(1,r(q_{prop},q_{i-1}))$ \;
   	
 }
  
@@ -117,9 +117,9 @@ that provides a differential geometric interpretation of the sampler and conditi
 
 First we give a brief introduction to the HMC,explaining its algorithm and listing its major features and advantages. 
 
-Suppose we have a density $p(x),x \in \mathbb{R}^d$ from which we would like to
-sample. If $p(x)$ is simply the marginal density of some distribution $p(x,y),
-(x,y) \in \mathbb{R}^{d+p}$ in a larger space containing the original domain, then sampling from $p(x,y)$ and keeping only the $x$'s is equivalent to sampling from $p(x)$ directly. These extra variables introduced are called auxillary variables. The auxillary variables methods are known to speed up sampling by introducing extra degrees of freedom in the state space and allows the chain to move more easily across different parts of it. The Swendsen-Wang sampler \cite{wang1990cluster}, the slice sampler\cite{wang1990cluster} are well known examples of this class of methods. See \cite{liang2011advanced,liu2008monte} for more details.
+Suppose we have a density $\pi(q),q \in \mathbb{R}^D$ from which we would like to
+sample. If $\pi(q)$ is simply the marginal density of some distribution $\pi(q,p),
+(q,p) \in \mathbb{R}^{2D}$ in a larger space containing the original domain, then sampling from $\pi(q,p)$ and keeping only the $q$'s is equivalent to sampling from $\pi(q)$ directly. These extra variables introduced are called auxillary variables. The auxillary variables methods are known to speed up sampling by introducing extra degrees of freedom in the state space and allows the chain to move more easily across different parts of it. The Swendsen-Wang sampler \cite{wang1990cluster}, the slice sampler\cite{wang1990cluster} are well known examples of this class of methods. See \cite{liang2011advanced,liu2008monte} for more details.
 
 The Metropolis-Hastings sampler as introduced above is a general algorithm that allows us to sample from any distribution, discrete, continuous or neither, as long as we know its density up to its normalizing constant. The Hamiltonian Monte Carlo (HMC) sampler is a particular class requires the unnormalized density be continuous and differentiable. 
 
@@ -135,11 +135,11 @@ we get that
 
 \[\pi(q,p) \propto  \exp(-H(q,p)) \]
 
-has $P(q)$ as the marginal density, and thus defines an auxiliary variable method. In statistical applications,we usually have $P(x)$ as the unnormalized posterior
+has $\pi(q)$ as the marginal density, and thus defines an auxiliary variable method. In statistical applications,we usually have $\pi(q)$ as the unnormalized posterior
 density, 
 \[U(q) = -\log(\text{prior}(q) \cdot \text{likelihood}(q|data) ), \]
 and 
-\[T(p) = \sum_{i=1}^d \frac{p_i^2}{m_i} \]
+\[T(p) = \sum_{i=1}^D \frac{p_i^2}{m_i} \]
 ,which is equivalent to introducing an independent multivariate Gaussian random variable of
 the same dimension as the original distribution as an auxiliary variable. 
 
@@ -214,9 +214,9 @@ acceptance step in order to preserve the invariant distribution. To explain
 this, let's put HMC in the context of an auxillary variable method. 
 
 First, the joint distribution of the position (original) and momentum(auxillary)
-variables is factored into a product of a conditional distribution $\pi(x,y|E)$ and a
+variables is factored into a product of a conditional distribution $\pi(q,p|E)$ and a
 marginal distribution $\pi(E)$
-\[ \pi(x,y) = \pi(x,y|E)\pi(E) \]
+\[ \pi(q,p) = \pi(q,p|E)\pi(E) \]
 
 Sampling from the joint distribution is done by first sampling from the
 auxillary (energy) distribution $\pi(E)$. In this case randomness comes in only from the
@@ -224,7 +224,7 @@ resampling of the momentum variable, that is, change in the kinetic energy,
 because the potential energy is not dependent on the momentum. Then conditional on the value of the
 sampled energy, sample from the conditional distribution for the joint
 conditional distribution of the position and momentum variable. Leapfrog steps
-are involved only in the sampling from the conditional distribution $\pi(x,y|E)$.
+are involved only in the sampling from the conditional distribution $\pi(q,p|E)$.
 This ``sampling'' is actually deterministic as it consists of simulating a
 trajectory under Hamiltonian dynamics with given initial states. Because
 Hamiltonian flow is reversible and volume-preserving independent of numerical
@@ -1109,16 +1109,16 @@ Suppose $W_{ij} \sim \mathcal{N}(0,\sigma^2), \sigma^{-2} \sim \text{Gamma}(a_0,
 
 Then , $n = |W|$ 
 \[\sigma^{-2}|W,X,y \sim \text{Gamma}(a_1,b_1)\]
-\[a_1 = a_0 + 0.5 n  \]
-\[b_1 = b_0 + 0.5 \sum_{ij} W_{ij}^2 \]
+\[a_1 = a_0 + \frac{1}{2} n  \]
+\[b_1 = b_0 + \frac{1}{2} \sum_{ij} W_{ij}^2 \]
 
 \begin{algorithm}
 \KwIn{Initial variance $\sigma^2_0$, number of MCMC samples $M$}
 
 \For{$ i = 1:M$ }{
 	Sample $W_i \sim p(W|\sigma^2_{i-1},data)$ \;
-	$a_1 = a_0 + 0.5 n $ \; 
-	$b_1 = b_0 + 0.5 \sum_{ij} W_{ij}^2$ \;
+	$a_1 = a_0 + \frac{1}{2} n $ \; 
+	$b_1 = b_0 + \frac{1}{2} \sum_{ij} W_{ij}^2$ \;
 	Update $\sigma^2 \sim \text{Inv-Gamma}(a_1,b_1)$ \;
 }
 \KwRet{$W_{i=1:M}$}
