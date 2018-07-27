@@ -1,6 +1,6 @@
 \documentclass[]{report}
 \usepackage[utf8]{inputenc}
-\usepackage{amsmath,fullpage,amsfonts,amssymb,tikz,geometry,amsthm,pgfplots}
+\usepackage{amsmath,fullpage,amsfonts,amssymb,tikz,geometry,amsthm,pgfplots,relsize,graphicx}
 \usepackage[boxruled]{algorithm2e}
 \geometry{margin=0.5in}
 \usetikzlibrary{matrix}
@@ -32,9 +32,9 @@ Neural network models have seen tremendous success in predictive tasks in machin
 \chapter{Introduction}
 \section{STAN}
 
-STAN has replaced most Bayesian statistical softwares like JAGS and WINBUGS as the recommeneded tool for Bayesian inference requiring Markov Chain Monte Carlo (MCMC)  because of its effectiveness, relative ease to learn, clear and extensive documentation, as well as its large community of users and expert support staff. Roughly based on the NUTS sampler, it has since evolved from the original NUTS sampler and has many more features built in to faciliate sampling and diagnosing sampling issues.
+STAN has replaced most Bayesian statistical softwares like JAGS and WINBUGS as the recommended tool for Bayesian inference requiring Markov Chain Monte Carlo (MCMC)  because of its effectiveness, relative ease to learn, clear and extensive documentation, as well as its large community of users and expert support staff. Roughly based on the NUTS sampler, it has since evolved from the original NUTS sampler and has many more features built in to facilitate sampling and diagnosing sampling issues.
 
-In Chapter 2, after giving a short introduction to MCMC, we will explain the version of No U-TURN sampler (NUTS) implemented in STAN, highlighting its difference from the original implemnted in \cite{hoffman2014no}. Adaptive tuning strategies for the step size parameter and covariance metric will also be discussed. The exhasutive terminal criteiron for NUTS (XHMC) , which has not been exposed in the latest version of STAN yet, has been shown to improve sampling efficiency in correlated distributions.  \cite{betancourt2016identifying}. Experiments comparing its performance against the default termination criterion will be discussed in chapter 4. Finally, we discuss some of the numerical tricks used by STAN that are omitted in the official documentation but can be critical for creating a robust implementation of the samper. 
+In Chapter 2, after giving a short introduction to MCMC, we will give an overview of Hamiltonian Monte Carlo, which the foundation on which NUTS is built. Then we will explain the version of No U-TURN sampler (NUTS) implemented in STAN, highlighting its difference from the original implemnted in \cite{hoffman2014no}. Adaptive tuning strategies for the step size parameter and covariance metric will also be discussed. Termination criteria for the NUTS sampler will be discussed. The exhasutive terminal criteiron for NUTS (XHMC) , which has not been exposed in the latest version of STAN yet, has been shown to improve sampling efficiency in correlated distributions.  \cite{betancourt2016identifying}. Experiments comparing its performance against the default termination criterion will be discussed in chapter 4. Finally, we discuss some of the numerical tricks used by STAN that are omitted in the official documentation but can be critical for creating a robust implementation. 
 
 
 
@@ -42,16 +42,16 @@ In Chapter 2, after giving a short introduction to MCMC, we will explain the ver
 
 \section{Bayesian Neural Network }
 
-Neural network models has become hugely popular under the name of deep learning, attracting a lof of attention from researchers and practictioners alike. Many of its successes come from applications to problems in vision, text, speech, and many other subfields in the field of Aritifical Intelligence. 
+Neural network models has become hugely popular under the name of deep learning, attracting a lof of attention from researchers and practitioners alike. Many of its successes come from applications to problems in vision, text, speech, and many other sub-fields in the field of Artificial Intelligence. 
 
 
-In Chapter 3 we give a brief overview of the bayesian neural network literature and identify areas where we feel could benefit from new developements in NUTS and related sampling techniques. In Neal's and Cho's work, sampling from the posterior distribution was done by alternating between the lower and higher level paramters in a block-gibbs fashion. With the model and data they used, they found that joint sampling offered no improvement over gibbs sampling for sampling the hyperparameter. We found that NUTS is capable of sampling the hyperparameter quite well, is more robust to tuning parameters, and requires much less manual tuning. 
+In Chapter 3 we give a brief overview of the Bayesian neural network literature and identify areas where we feel could benefit from new developments in NUTS and related sampling techniques. In Neal's and Cho's work, sampling from the posterior distribution was done by alternating between the lower and higher level parameters in a block-Gibbs fashion. With the model and data they used, they found that joint sampling offered no improvement over Gibbs sampling for sampling the hyperparameter. We found that NUTS is capable of sampling the hyperparameter quite well, is more robust to tuning parameters, and requires much less manual tuning. 
 
-Then we talk about the choice of prior for neural network models. Originally it was standard to put a hierarhcical prior on the model weights, but in the new wave of Bayesian deep learning literature the standard normal prior is used most of the times. Recently shrinkage priors like the horseshoe prior have been used to automatically regularize the weights. In the paper the authors used variational inference which might miss important features of the posterior distribution. We compared a range of priors, including the shrinkage prior, and found that the standard normal prior performed best in terms of both effective sample size and predictive accuracy. 
+Then we talk about the choice of prior for neural network models. Originally it was standard to put a hierarchical prior on the model weights, but in the new wave of Bayesian deep learning literature the standard normal prior is used most of the times. Recently shrinkage priors like the horseshoe prior have been used to automatically regularize the weights. In the paper the authors used variational inference which might miss important features of the posterior distribution. We compared a range of priors, including the shrinkage prior, and found that the standard normal prior performed best in terms of both effective sample size and predictive accuracy. 
 
-While the use of shrinkage priors should eliminate much of the need for model selection: one would simply fit the largest model possible and let the shrinkage prior eliminate any excessive capacity, in practice sampling from such a model might prove too difficult, for example having too many hidden layers might result in vanishing or exploding gradients(quote). There are also tuning parameters, like the activation function, which can not be chose by shrinkage priors. This necessitates model selection technicques. Model selection by information criterion like AIC and BIC is not backed by theory because neural networks violate one of their regularity conditions, namely that the model must have non-singular Fisher matrix. The Watanabe Information Criterion (WAIC) is designed to overcome this problem for all singular models. We experimented with the WAIC but found that it failed to choose the model that minimizes the test error on the dataset we chose. 
+While the use of shrinkage priors should eliminate much of the need for model selection: one would simply fit the largest model possible and let the shrinkage prior eliminate any excessive capacity, in practice sampling from such a model might prove too difficult, for example having too many hidden layers might result in vanishing or exploding gradients(quote). There are also tuning parameters, like the activation function, which can not be chose by shrinkage priors. This necessitates model selection techniques. Model selection by information criterion like AIC and BIC is not backed by theory because neural networks violate one of their regularity conditions, namely that the model must have non-singular Fisher matrix. The Watanabe Information Criterion (WAIC) is designed to overcome this problem for all singular models. We experimented with the WAIC but found that it failed to choose the model that minimizes the test error on the dataset we chose. 
 
-We also experimented with Stochastic Gradient Hamiltonian Monte Carlo (SGHMC), a version of Hamiltonian Monte Carlo that only uses a fraction of the data to approximate the gradient of the full posterior density function. In (quote: betancourt) the author showed that stochastic gradients causes divergence in high dimensional problems and is not recommended. Our experimentation shows that SGHMC can yield better predictive performance than full HMC but it requires careful tuning and is not robust to the initial tuning parameters. 
+We also experimented with Stochastic Gradient Hamiltonian Monte Carlo (SGHMC), a version of Hamiltonian Monte Carlo that only uses a fraction of the data to approximate the gradient of the full posterior density function. In \cite{betancourt2015fundamental} the author showed that stochastic gradients causes divergence in high dimensional problems and is not recommended. Our experimentation shows that SGHMC can yield better predictive performance than full HMC but it requires careful tuning and is not robust to the initial tuning parameters. 
 
 Initialization strategies where the weights are sampled from the normal distribution whose variance is scaled by the number of incoming units have been widely adopted for improving the final predictive accuracy. It motivates one to use such scaled normal distributions as the prior distribution. Its impact on predictive accuracy and sampling quality will be discussed in Chapter 4. 
 
@@ -124,34 +124,34 @@ sample. If $p(x)$ is simply the marginal density of some distribution $p(x,y),
 The Metropolis-Hastings sampler as introduced above is a general algorithm that allows us to sample from any distribution, discrete, continuous or neither, as long as we know its density up to its normalizing constant. The Hamiltonian Monte Carlo (HMC) sampler is a particular class requires the unnormalized density be continuous and differentiable. 
 
 
-We denote the unnormalized density of the target distribution by $P(x)$, and the normalizing constant by $Z = \int P(x)dx $, and we define the potential energy function $U(x)$ as 
-\[ U(x) =  \exp(-\log(P(x))) \]
-If we now introduce a kinetic energy function $K(y)$, and define
+We denote the unnormalized density of the target distribution by $P(q)$, and the normalizing constant by $Z = \int P(q)dq $, and we define the potential energy function $V(q)$ as 
+\[ V(q) =  -\log P(q) \]
+If we now introduce a kinetic energy function $T(p)$, and define
 the Hamiltonian as the total energy, i.e., sum of the kinetic and potential energy functions, 
 
-\[ H(x,y) = U(x) + K(y) \]
+\[ H(q,p) = V(q) + T(p) \]
 
 we get that 
 
-\[P(x,y) \propto  \exp(-H(x,y)) \]
+\[\pi(q,p) \propto  \exp(-H(q,p)) \]
 
-has $P(x)$ as the marginal density, and thus defines an auxilary variable method. In statistical applications,we usually have $P(x)$ as the unnormalized posterior
+has $P(q)$ as the marginal density, and thus defines an auxiliary variable method. In statistical applications,we usually have $P(x)$ as the unnormalized posterior
 density, 
-\[U(q) = -\log(\text{prior}(x) \cdot \text{likelihood}(x|data) ), \]
+\[U(q) = -\log(\text{prior}(q) \cdot \text{likelihood}(q|data) ), \]
 and 
-\[K(y) = \sum_{i=1}^d \frac{y_i^2}{m_i} \]
+\[T(p) = \sum_{i=1}^d \frac{p_i^2}{m_i} \]
 ,which is equivalent to introducing an independent multivariate Gaussian random variable of
-the same dimension as the original distribution as an auxilary variable. 
+the same dimension as the original distribution as an auxiliary variable. 
 
-Note that there is physical interpretation of the system. The Hamiltonian uniquely determines the motion of a particle, whose position in space at any time is described by the $x$ coordinates, and whose momentum is described by the $y$ coordinates. Its motion can be described by solving a system of ordinary differnetial equations in Hamiltonain dynamics, known as Hamilton's equations:
+Note that there is physical interpretation of the system. The Hamiltonian uniquely determines the motion of a particle, whose position in space at any time is described by the $q$ coordinates, and whose momentum is described by the $p$ coordinates. Its motion can be described by solving a system of ordinary differential equations in Hamiltonian dynamics, known as Hamilton's equations:
 \begin{align}
-    \frac{dx}{dt} &= \frac{\partial H}{\partial y } \\
-    \frac{dy}{dt} &= -\frac{\partial H}{\partial x}
+    \frac{dq}{dt} &= \frac{\partial H}{\partial p } \\
+    \frac{dp}{dt} &= -\frac{\partial H}{\partial q}
 \end{align}
 
 
 
-To simulate the trajectory of a particle given its initial state $(x_0,y_0)$ one
+To simulate the trajectory of a particle given its initial state $(q_0,p_0)$ one
 would have to solve Hamilton's equations. Unfortunately, there are in general no
 explicit solutions for Hamilton's equations except for trivial models. One would
 then have to resort to numerical methods that discretize the Hamiltonian
@@ -159,7 +159,7 @@ dynamics \cite{leimkuhler2004simulating}. The discretization should
 possess some nice properties , including reversibility and volume-preservation, to ensure convergence to the target distribution, as well as  maintain 
 stability and accuracy of the approximation over long trajectories, the lack of which significantly reduces the efficiency of the sampler, irrespective of model-related factors which might affect sampling efficiency, like parametrization or posterior correlation.  
 
-For the simple version of HMC where the momentum variable is independent from the position variable, i.e. $p(y|x)=p(y)$, an easy-to-implement integrator which is both volume-preserving and reversible, with lower approximation error than conventional alternatives for numerically solving like Euler's method, known as the leapforg integrator, exists and works as follows. At time $t$ of the trajectory, given its current position and momentum, $q(t)$ and $p(t)$,and stepsize $\epsilon$, we would update the position and momentum at time $t+\epsilon$ by setting 
+For the simple version of HMC where the momentum variable is independent from the position variable, i.e. $\pi(p|q)=\pi(p)$, an easy-to-implement integrator which is both volume-preserving and reversible, with lower approximation error than conventional alternatives for numerically solving like Euler's method, known as the leapforg integrator, exists and works as follows. At time $t$ of the trajectory, given its current position and momentum, $q(t)$ and $p(t)$,and step size $\epsilon$, we would update the position and momentum at time $t+\epsilon$ by setting 
 
 \begin{align}
     &p(t+\frac{\epsilon}{2}) = p(t) - \frac{\epsilon}{2}\cdot \frac{\partial
@@ -641,19 +641,24 @@ Generalized No U-Turn sampler termination criterion:
 
     \KwIn{initial position $\theta^0$, step size $\epsilon$, joint density $\pi$} 
     Re-sample $r^0 \sim \mathcal{N}(0,\mathbb{I})$ \;
-    Initialize $\theta^{-} = \theta^0 , \theta^{+} = \theta^0 , r^{-1} =r^0 , r^+ = r^0, j =0 ,	\theta^{next} = \theta^0 , s = 1 , w = \pi(\theta^0,r^0)$ \;
+    Initialize $\theta^{-} = \theta^0 , \theta^{+} = \theta^0 , r^{-} =r^0 , r^+ = r^0, r^+_{\#} = M^{-1}p^+,r^-_{\#} = M^{-1}p^-, p_s = p_0 j =0 ,	\theta^{next} = \theta^0 , s = 1 , w = \pi(\theta^0,r^0)$ \;
     \While{$s=1$}{
     Choose a direction $v_j \sim \text{Uniform}(-1,1) $ \;
     \eIf{$v_j = -1$}{
-    		$\theta^-,r^-,-,-,\theta',s',w' \leftarrow \text{G-BuildTree}(\theta^-,r^-,v_j,j,\epsilon)$\;
+    		$\theta^-,r^-,-,-,\theta',s',w',p_{s'} \leftarrow \text{G-BuildTree}(\theta^-,r^-,v_j,j,\epsilon)$\;
     }{
-    		$-,-,\theta^+,r^+,\theta',s',w' \leftarrow \text{G-BuildTree}(\theta^+,r^+,v_j,j,\epsilon)$\;
+    		$-,-,\theta^+,r^+,\theta',s',w',p_{s'} \leftarrow \text{G-BuildTree}(\theta^+,r^+,v_j,j,\epsilon)$\;
     }
-    \If{$s'=1$}{
+    \If{$s'=\text{True}$}{
     		With probability $\min(1,\frac{w'}{w})$, set $\theta^{next} \leftarrow \theta^-$\;
+    		$p_{s} = p_{s} + p_{s'} $\;
+    		$p^\sharp_{+} \leftarrow M^{-1} p_{+} $\;
+		$p^\sharp_{-} \leftarrow M^{-1} p_{-} $\;
+    		
+    		
     }
     $ w = w + w'$\;
-    $ s = s \mathbb{I}[(\theta^+ - \theta^-) \cdot r^- \ge 0 ] \mathbb{I}[(\theta^+ - \theta^-) \cdot r^+ \ge 0 ] $\;
+    $ s = s' \mathbb{I}[(\theta^+ - \theta^-) \cdot p^\sharp_{-} \ge 0 ] \mathbb{I}[(\theta^+ - \theta^-) \cdot p^\sharp_{+}  \ge 0 ] $\;
     $j = j+1 $ \;
     
     }
@@ -665,22 +670,32 @@ Generalized No U-Turn sampler termination criterion:
 Base case: take one step in direction $v$ \;
 $ \theta' , r' \leftarrow \text{Leapfrog}(\theta,r,v\epsilon) $ \;
 $ w' \leftarrow \pi(\theta',r') $ \;
-\KwRet{$\theta^-,r^-,\theta^+,r^+,\theta',s',w'$} \;
+$s' = \text{True}$ \;
+\KwRet{$\theta',r',\theta',r',\theta',s',w',p_{s'}$} \;
 
 }{
-	$\theta^-,r^-,\theta^+,r^+,\theta',s',w \leftarrow \text{G-BuildTree}(\theta,r,v,j-1,\epsilon) $ \;
+	$p_s = 0 $\;
+	$\theta^-,r^-,\theta^+,r^+,\theta',s',w',p_{s'} \leftarrow \text{G-BuildTree}(\theta,r,v,j-1,\epsilon) $ \;
 	
-	\If{$s'=1$}{
+	\If{$s'=\text{True}$}{
+		$p_s = p_s + p_{s'}$\;
 		\eIf{$v=-1$}{
-			$\theta^-,r^-,-,-,\theta",s'',w'' \leftarrow \text{G-BuildTree}(\theta^-,r^-,v,j-1,\epsilon)$ \;
+			$\theta^-,r^-,-,-,\theta'',s'',w'',p_{s''} \leftarrow \text{G-BuildTree}(\theta^-,r^-,v,j-1,\epsilon)$ \;
 		}{
-			$-,-,\theta^+,r^+,\theta'',s'',w'' \leftarrow \text{G-BuildTree}(\theta^+,r^+,v,j-1,\epsilon)$ \;
+			$-,-,\theta^+,r^+,\theta'',s'',w'',p_{s''} \leftarrow \text{G-BuildTree}(\theta^+,r^+,v,j-1,\epsilon)$ \;
 		}
+		\If{$s''=\text{True}$}{
+		
 		With probability $\min(1, \frac{w''}{w'+w''})$ , set $\theta' = \theta''$. \;
-		$ s' \leftarrow s'' \mathbb{I}[(\theta^+ - \theta^- )\cdot r^- \ge 0 ] \mathbb{I}[(\theta^+ - \theta^- )\cdot r^+ \ge 0 ]$ \;
+		$p^\sharp_{+} \leftarrow M^{-1} p_{+} $\;
+		$p^\sharp_{-} \leftarrow M^{-1} p_{-} $\;
+		$ s' \leftarrow s'' \mathbb{I}[(\theta^+ - \theta^- )\cdot p^\sharp_{-} \ge 0 ] \mathbb{I}[(\theta^+ - \theta^- )\cdot p^\sharp_{+} \ge 0 ]$ \;
 		$w' \leftarrow w' + w'' $ \;
+		$p_{s} = p_{s} + p_{s''} $\;
+		
+		}
 	}
-	\KwRet{$\theta^-,r^-,\theta^+,r^+,\theta',s',w' $ }\;
+	\KwRet{$\theta^-,r^-,\theta^+,r^+,\theta',s',w',p_{s'}$}\;
 }
     }
 \caption{Generalized No U-Turn Sampler Update}
@@ -689,12 +704,80 @@ $ w' \leftarrow \pi(\theta',r') $ \;
 
 Exhaustive Hamiltonian Monte Carlo termination criterion:
 
+The Exhaustive Hamiltonian Monte Carlo termination criterion (XHMC) relies on significant amount of differential geometry for its justification. So the paper might read "an exhaustion ,$T_{\delta}(z)$, is the family of integration times in the contangent bundle such that the temporal change of the virial along the resulting Hamiltonian flow is uniformly bounded". Understanding fully the mathematics behind it is beyond the scope of this thesis. From my understanding it is a proxy to to monitor the return of a leapfrog trajectory to a neighbourhood around its initial point after having explored the energy level set. With a smaller threshold meant to push the neighbourhood smaller, hence forcing the exploration to continue for longer. Luckily the numerical quantities that needs to be computed are quite easily understood. In the original paper \cite{betancourt2016identifying}, the author showed improved sampling over the NUTS criterion as indicated by increased effective sample size on correlated distributions. 
+
+The XHMC termination criterion is defined as follows: given a threshold $\delta > 0$, terminates simulation when 
+\[  \Bigl |\frac{1}{|\mathbf{t}|} \sum_{z \in \mathbf{t}} \mathbb{P}[z | \mathbf{t}] \frac{dG}{dt}(z) \Bigr | < \delta \]
+
+where 
+\[ \mathbb{P}[z| \mathbf{t}] = \frac{\exp^{-H(z)}}{\sum_{z' \in \mathbf{t}} \exp^{-H(z')}} \]
+
+The sum can be interpreted as a numerical approximation of an integration over the Hamiltonian flow $\phi_{t}^H(z)$
+
+\[ \lim_{|\mathbf{t}| \rightarrow \infty} \frac{1}{|\mathbf{t}|} \sum_{z \in \mathbf{t}} \mathbb{P}[z | \mathbf{t}] \frac{dG}{dt}(z)  = \lim_{T \rightarrow \infty} \frac{1}{T} \int_0^T dt \frac{dG}{dt} \circ \phi_{t}^H(z) = 0 \]
+
 \begin{align*}
  \frac{dG}{dt} &= \frac{d}{dt}\sum_{i=1}^D q_i p_i \\
  &= \sum_{i=1}^D p_i \frac{dq_i}{dt} + q_i \frac{dp_i}{dt} \\
  &= \sum_{i=1}^D [M^{-1}p]_i p_i - q_i \frac{\partial V}{\partial q_i} \\
  &= 2 T - q \cdot \frac{\partial V}{\partial q} \\
 \end{align*}
+
+\begin{algorithm}
+  	\DontPrintSemicolon
+	\SetKwFunction{FBuildTree}{XHMC-BuildTree}
+
+    \KwIn{initial position $\theta^0$, step size $\epsilon$, joint density $\pi$} 
+    Re-sample $r^0 \sim \mathcal{N}(0,\mathbb{I})$ \;
+    Initialize $\theta^{-} = \theta^0 , \theta^{+} = \theta^0 , r^{-1} =r^0 , r^+ = r^0, j =0 ,	\theta^{next} = \theta^0 , s = 1 , w = \pi(\theta^0,r^0), \text{ave} = \frac{dG}{dt}(q^0,p^0)$ \;
+    \While{$s=1$}{
+    Choose a direction $v_j \sim \text{Uniform}(-1,1) $ \;
+    \eIf{$v_j = -1$}{
+    		$\theta^-,r^-,-,-,\theta',s',w',\text{ave}' \leftarrow \text{XHMC-BuildTree}(\theta^-,r^-,v_j,j,\epsilon)$\;
+    }{
+    		$-,-,\theta^+,r^+,\theta',s',w',\text{ave}' \leftarrow \text{XHMC-BuildTree}(\theta^+,r^+,v_j,j,\epsilon)$\;
+    }
+    \If{$s'=1$}{
+    		With probability $\min(1,\frac{w'}{w})$, set $\theta^{next} \leftarrow \theta^-$\;
+    }
+    $ Update \text{ave} by incorporating \text{ave}' $\;
+    $ w = w + w'$\;
+    $ s = s \mathbb{I}[ \frac{1}{2^j} |\text{ave} | < \delta ] $\;
+    $j = j+1 $ \;
+    
+    }
+
+\KwRet{$\theta^{next}$}
+
+\FBuildTree{$\theta, r, v, j, \epsilon$}{\;
+        \eIf{$j=0$}{
+Base case: take one step in direction $v$ \;
+$ \theta' , r' \leftarrow \text{Leapfrog}(\theta,r,v\epsilon) $ \;
+$ w' \leftarrow \pi(\theta',r') $ \;
+$ \text{ave}' \leftarrow \frac{dG}{dt}(q',p') $\;
+\KwRet{$\theta^-,r^-,\theta^+,r^+,\theta',s',w',\text{ave}'$} \;
+
+}{
+	$\theta^-,r^-,\theta^+,r^+,\theta',s',w',\text{ave}' \leftarrow \text{XHMC-BuildTree}(\theta,r,v,j-1,\epsilon) $ \;
+	
+	\If{$s'=1$}{
+		\eIf{$v=-1$}{
+			$\theta^-,r^-,-,-,\theta",s'',w'',\text{ave}'' \leftarrow \text{XHMC-BuildTree}(\theta^-,r^-,v,j-1,\epsilon)$ \;
+		}{
+			$-,-,\theta^+,r^+,\theta'',s'',w'',\text{ave}'' \leftarrow \text{XHMC-BuildTree}(\theta^+,r^+,v,j-1,\epsilon)$ \;
+		}
+		With probability $\min(1, \frac{w''}{w'+w''})$ , set $\theta' = \theta''$. \;
+		Update $ave$ by incorporating $w'$ and ${ave}'$ \;
+		$ s' \leftarrow s'' \mathbb{I}[(\theta^+ - \theta^- )\cdot r^- \ge 0 ] \mathbb{I}[(\theta^+ - \theta^- )\cdot r^+ \ge 0 ]$ \;
+		$w' \leftarrow w' + w'' $ \;
+	}
+	\KwRet{$\theta^-,r^-,\theta^+,r^+,\theta',s',w',{ave}'$ }\;
+}
+    }
+\caption{Exhaustive Hamiltonian Monte Carlo Sampler Update}
+\end{algorithm}
+
+
 xhmc over gnuts over nuts 
 \section{Adaptive Tuning of Step Size}
 
@@ -812,7 +895,7 @@ drawn may be biased and hence invalid. This is not a diagnostic to be ignored.
 The second diagnostic tool that comes with STAN is the Bayesian fraction of
 missing information (BFMI). It detects a mismatched conditional Hamiltonian
 energy function
-distribution to the marginl Hamiltonian distribution. The leapfrog step is
+distribution to the marginal Hamiltonian distribution. The leapfrog step is
 restricted to exploring a level set determined by the 
 initial positions $(x_i,y_i)$ at the start of the trajectory. Given the previous
 state $x_i$, the only randomness comes from the resampling of the auxillary
@@ -835,6 +918,7 @@ inefficient for sampling.
  
 \section{Other Sampling Diagnostics}
 ess gelman definition, rhat 
+Potential scale reduction : factor by which the scale of the current distribution for $\psi$ might be reduced if the simulations were continued in the limit $n \rightarrow \infty$. This quantity should converge to $1$ as $n \rightarrow \infty$. If $\hat{R}$ is high, $ > 1.1 $, for example, we might we want to continue simulation. 
 
 \begin{align*}
 &B = \frac{n}{m-1} \sum_{j=1}^{m}(\overline{\psi}_{\cdot j} - \overline{\psi}_{\cdot \cdot})^2, \text{ where } 
@@ -944,7 +1028,27 @@ p_Y(y) = p_X(\exp(y)) \cdot \exp(y) \\
 \end{align*}
 
 
+Debug MCMC sampler. Match mean and covariance. Question: how close is close enough?
 
+Suppose we want to sample from a bivariate normal distribution with known mean and covariance matrix. Say $\mathcal{N}(\mu,\Sigma) $, where 
+
+\begin{displaymath}
+\mathlarger{\Sigma} = 
+\begin{bmatrix}
+\sigma^2_1 &\sigma_{12}^2 \\
+\sigma_{21}^2 &\sigma^2_2 \\
+\end{bmatrix}
+\end{displaymath}
+
+Given a chain of $n$ MCMC samples $\{x_i\}_{i=1:n}$ generated by the sampler to be tested, we could estimate  the target mean by $ \frac{1}{n-1} \sum_{i=1}^ n x_i$. Since $E[X-\mu] = 0$, we would expect the generated quantity $\eta= \frac{1}{n-1} \sum_{i=1}^ n x_i -\mu$ to decrease with increasing number of samples. We could monitor $\eta$ by comparing it with its Monte Carlo standard error (MCSE) 
+
+\[ \text{MCSE} = \frac{\hat{\sigma}}{\sqrt{n_{\text{eff}}}} \]
+
+where $\hat{\sigma}$ is the estimated standard deviation. By the Central Limit Theorem one would expect  $\eta \in (-\text{MCSE},\text{MCSE})$ with high probability. 
+
+Similarly we can monitor quantities like $\frac{1}{n-1} \sum_{i=1}^n ({x_i}_1 -\mu_1)^2 - \sigma^2_1,  \frac{1}{n-1}^n \sum_{i=1}^n ({x_i}_1 - \mu_1)({x_i}_2 - \mu_2)^2 $ to assess convergence to the marginal variances and covariance.
+
+One can then construct example models where the mean and covariance are known explicitly, simulate multiple chains and monitor quantities for approximate convergence, in the sense that the empirical estimated quantities differ from their exact quantities by a margin no larger than its MCSE (or its constant multiple .) 
 
 \chapter{Bayesian Neural Networks}
 \section{Neal}
@@ -1288,12 +1392,19 @@ Once we have selected a model, we can make predictions about new data using its 
 If this is a classification problem of $C$ classes we would evaluate $p(y_{new}|D)$ for all $y_{new}=1,\dots, C$, and if a regression problem a number of points on the domain of the output can be evaluated 
 and a prediction made by drawing from the empirical distribution. 
 \section{Relation to STAN and PyTorch}
+
+PyTorch, a deep learning computational framework contains an automatic differentiation module which is optimized for neural network models. It also offers the option of GPU computing, which STAN does not provide. What makes it stand out amongst other popular deep learning framework as a prime candidate for implementing the NUTS sampler is that it has a dynamic computational graph framework, which allows easy implementation of recursion and backpropogation through it, unlike the static computational graph approach adopted by TensorFlow.
+
+There is concern that 
+
 why pytorch better than stan. gpu . float vs double 
 
 
 
 \chapter{experiments}
 \section{model and data}
+
+\includegraphics{mnist1.png}
 show mnist
 
 \section{baseline}
