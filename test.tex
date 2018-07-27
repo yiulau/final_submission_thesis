@@ -94,8 +94,8 @@ Then we accept the move to state $y$ with probability $ \min (1, r(x,y)) $, and 
 
 
 \For{$i = 1:n$}{
-  	Draw $q_{prop}$ from $h(q_{i-1},\cdot)$ \;  	
-  	Accept $q_{prop}$ with probability $\min(1,r(q_{prop},q_{i-1}))$ \;
+  	Draw $q_{\text{prop}}$ from $h(q_{i-1},\cdot)$ \;  	
+  	Accept $q_{\text{prop}}$ with probability $\min(1,r(q_{\text{prop}},q_{i-1}))$ \;
   	
 }
  
@@ -247,7 +247,7 @@ Hamiltonian dynamics. More precisely, we do $L$ leapfrog steps of stepsize
 $\epsilon$, both of which are important tuning parameters to the algorithm.
 At the end of the trajectory we get $(q(t+L \epsilon),p(t+L \epsilon)) =
 (\tilde{q}, \tilde{p})$, which becomes the proposed state for the chain and
-is used in the calculation of the Hastings ratio. The proposed state is then accepted with probability $\min (1, \exp(H(t+L\epsilon0)-H(t)))$. 
+is used in the calculation of the Hastings ratio. The proposed state is then accepted with probability $\min (1, \exp(H(t+L\epsilon)-H(t)))$. 
 
 Here we state some facts about Hamiltonian dynamics that would help us
 understand why proposals generated from the simulation of Hamiltonian dynamics would
@@ -264,7 +264,7 @@ correct invariant and
 convergence properties \cite{robert2013monte}. 
 
 Second, the Hamiltonian flow $T_s$ is a volume-preserving mapping. That is, 
-\[ Vol(T_s(A)) = Vol(A) \]
+\[ \text{Vol}(T_s(A)) = \text{Vol}(A) \]
 where $A$ is a measurable set in the augmented parameter space (e.g.
 $\mathbb{R}^{2d}$) which contains
 the support of 
@@ -543,48 +543,48 @@ multinomial sampling over slice sampling
 \begin{algorithm}
 \KwIn{number of leapfrog steps $L$, initial position $q_0$ }
 Sample initial momentum $p_0$ \;
-$q_l,q_r, q_{prop} \leftarrow q_0$\;
-$p_l,p_r, p_{prop} \leftarrow p_0$ \;
-$\log w_{prop} = H(q_{prop},p_{prop}) $ \;
+$q_-,q_+, q_{\text{prop}} \leftarrow q_0$\;
+$p_-,p_+, p_{\text{prop}} \leftarrow p_0$ \;
+$\log w_{\text{prop}} = H(q_{\text{prop}},p_{\text{prop}}) $ \;
 
 \For{$i = 1:L$}{
-	$\log w_{old} = \log w_{prop} $\;
+	$\log w_{\text{old}} = \log w_{\text{prop}} $\;
 	Sample $v \sim \text{Uniform}(\{-1,1\}) $  \;
 	\eIf{$v=-1$}{
-		$q_l,p_l \leftarrow \text{Leapfrog}(q_l,p_l,-\epsilon) $\;
-		$\log w_{prop} = H(q_l,p_l) $\;
+		$q_-,p_- \leftarrow \text{Leapfrog}(q_-,p_-,-\epsilon) $\;
+		$\log w_{\text{prop}} = H(q_-,p_-) $\;
 	}{
-		$q_r,p_r \leftarrow \text{Leapfrog}(q_r,p_r,\epsilon) $\;
-		$\log w_{prop} = H(q_r,p_r) $\;
+		$q_+,p_+ \leftarrow \text{Leapfrog}(q_+,p_+,\epsilon) $\;
+		$\log w_{\text{prop}} = H(q_+,p_+) $\;
 	}
-	With probability $ \min(1,\frac{w_{prop}}{w_{old}}) $ accept $(q,p)$ as $(q_{prop},p_{prop})$\;
-	$q_i,p_i \leftarrow q_{prop},p_{prop} $\;
+	With probability $ \min(1,\frac{w_{\text{prop}}}{w_{\text{old}}}) $ accept $(q,p)$ as $(q_{\text{prop}},p_{\text{prop}})$\;
+	$q_i,p_i \leftarrow q_{\text{prop}},p_{\text{prop}} $\;
 }
 \caption{Windowed HMC update step}
 \end{algorithm}
 
 
 \begin{algorithm}
-    \KwIn{initial position $q^0$, step size $\epsilon$, joint density $\pi$} 
-    Re-sample $p^0 \sim \mathcal{N}(0,\mathbb{I})$ \;
-    Initialize $q^{-} = q^0 , q^{+} = q^0 , p^{-1} =p^0 , p^+ = p^0, j =0 ,	q^{next} = q^0 , s = 1 , w = \pi(q^0,p^0)$ \;
+    \KwIn{initial position $q_0$, step size $\epsilon$, joint density $\pi$} 
+    Re-sample $p_0 \sim \mathcal{N}(0,\mathbb{I})$ \;
+    Initialize $q_{-} = q_0 , q_{+} = q_0 , p_{-} =p_0 , p_+ = p_0, j =0 ,	q_{\text{next}} = q_0 , s = 1 , w = \pi(q_0,p_0)$ \;
     \While{$s=1$}{
-    Choose a direction $v_j \sim \text{Uniform}(-1,1) $ \;
+    Choose a direction $v_j \sim \text{Uniform}(\{-1,1\}) $ \;
     \eIf{$v_j = -1$}{
-    		$q^-,p^-,-,-,q',s',w' \leftarrow \text{BuildTree}(q^-,p^-,v_j,j,\epsilon)$\;
+    		$q_-,p_-,-,-,q',s',w' \leftarrow \text{BuildTree}(q_-,p_-,v_j,j,\epsilon)$\;
     }{
-    		$-,-,q^+,p^+,q',s',w' \leftarrow \text{BuildTree}(q^+,p^+,v_j,j,\epsilon)$\;
+    		$-,-,q_+,p_+,q',s',w' \leftarrow \text{BuildTree}(q_+,p_+,v_j,j,\epsilon)$\;
     }
     \If{$s'=1$}{
-    		With probability $\min(1,\frac{w'}{w})$, set $\theta^{next} \leftarrow q^-$\;
+    		With probability $\min(1,\frac{w'}{w})$, set $q_{\text{next}} \leftarrow q_-$\;
     }
     $ w = w + w'$\;
-    $ s = s \mathbb{I}[(q^+ - q^-) \cdot p^- \ge 0 ] \mathbb{I}[(q^+ - q^-) \cdot p^+ \ge 0 ] $\;
+    $ s = s \mathbb{I}[(q_+ - q_-) \cdot p_- \ge 0 ] \mathbb{I}[(q_+ - q_-) \cdot p_+ \ge 0 ] $\;
     $j = j+1 $ \;
     
     }
 
-\KwRet{$q^{next}$}
+\KwRet{$q_{\text{next}}$}
 \caption{No U-Turn Sampler Update with Unity Covariance Metric}
 \end{algorithm}
 
@@ -596,22 +596,22 @@ $\log w_{prop} = H(q_{prop},p_{prop}) $ \;
 Base case: take one step in direction $v$ \;
 $ q' , p' \leftarrow \text{Leapfrog}(q,p,v\epsilon) $ \;
 $ w' \leftarrow \pi(q',p') $ \;
-\KwRet{$q^-,p^-,q^+,p^+,q',s',w'$} \;
+\KwRet{$q_-,p_-,q_+,p_+,q',s',w'$} \;
 
 }{
-	$q^-,p^-,q^+,p^+,q',s',w \leftarrow \text{BuildTree}(q,p,v,j-1,\epsilon) $ \;
+	$q_-,p_-,q_+,p_+,q',s',w \leftarrow \text{BuildTree}(q,p,v,j-1,\epsilon) $ \;
 	
 	\If{$s'=1$}{
 		\eIf{$v=-1$}{
-			$q^-,p^-,-,-,q'',s'',w'' \leftarrow \text{BuildTree}(q^-,p^-,v,j-1,\epsilon)$ \;
+			$q_-,p_-,-,-,q'',s'',w'' \leftarrow \text{BuildTree}(q_-,p_-,v,j-1,\epsilon)$ \;
 		}{
-			$-,-,q^+,p^+,q'',s'',w'' \leftarrow \text{BuildTree}(q^+,p^+,v,j-1,\epsilon)$ \;
+			$-,-,q_+,p_+,q'',s'',w'' \leftarrow \text{BuildTree}(q_+,p_+,v,j-1,\epsilon)$ \;
 		}
 		With probability $\min(1, \frac{w''}{w'+w''})$ , set $q' = p''$. \;
-		$ s' \leftarrow s'' \mathbb{I}[(q^+ - q^- )\cdot p^- \ge 0 ] \mathbb{I}[(q^+ - q^- )\cdot p^+ \ge 0 ]$ \;
+		$ s' \leftarrow s'' \mathbb{I}[(q_+ - q_- )\cdot p^- \ge 0 ] \mathbb{I}[(q_+ - q_- )\cdot p_+ \ge 0 ]$ \;
 		$w' \leftarrow w' + w'' $ \;
 	}
-	\KwRet{$q^-,p^-,q^+,p^+,q',s',w' $ }\;
+	\KwRet{$q_-,p_-,q_+,p_+,q',s',w' $ }\;
 }
 \caption{BuildTree 1}
 \end{algorithm}
@@ -647,33 +647,33 @@ Generalized No U-Turn sampler termination criterion:
   	\DontPrintSemicolon
 	\SetKwFunction{FBuildTree}{G-BuildTree}
 
-    \KwIn{initial position $q^0$, step size $\epsilon$, joint density $\pi$} 
-    Re-sample $p^0 \sim \mathcal{N}(0,\mathbb{I})$ \;
-    Initialize $q^{-} = q^0 , q^{+} = q^0 , p^{-} =p^0 , p^+ = p^0, p^+_{\#} = M^{-1}p^+,p^-_{\#} = M^{-1}p^-, p_s = p_0 j =0 ,	q^{next} = q^0 , s = 1 , w = \pi(q^0,p^0)$ \;
+    \KwIn{initial position $q_0$, step size $\epsilon$, joint density $\pi$} 
+    Re-sample $p_0 \sim \mathcal{N}(0,\mathbb{I})$ \;
+    Initialize $q_{-} = q_0 , q_{+} = q_0 , p_{-} =p_0 , p_+ = p_0, p_+^{\#} = M^{-1}p_+,p_-^{\#} = M^{-1}p_-, p_s = p_0, j =0 ,	q_{\text{next}} = q_0 , s = 1 , w = \pi(q_0,p_0)$ \;
     \While{$s=1$}{
-    Choose a direction $v_j \sim \text{Uniform}(-1,1) $ \;
+    Choose a direction $v_j \sim \text{Uniform}(\{-1,1\}) $ \;
     \eIf{$v_j = -1$}{
-    		$q^-,p^-,-,-,q',s',w',p_{s'} \leftarrow \text{G-BuildTree}(q^-,p^-,v_j,j,\epsilon)$\;
+    		$q_-,p_-,-,-,q',s',w',p_{s'} \leftarrow \text{G-BuildTree}(q_-,p_-,v_j,j,\epsilon)$\;
     }{
-    		$-,-,q^+,p^+,q',s',w',p_{s'} \leftarrow \text{G-BuildTree}(q^+,p^+,v_j,j,\epsilon)$\;
+    		$-,-,q_+,p_+,q',s',w',p_{s'} \leftarrow \text{G-BuildTree}(q_+,p_+,v_j,j,\epsilon)$\;
     }
     \If{$s'=\text{True}$}{
-    		With probability $\min(1,\frac{w'}{w})$, set $\theta^{next} \leftarrow q^-$\;
+    		With probability $\min(1,\frac{w'}{w})$, set $q_{\text{next}} \leftarrow q_-$\;
     		$p_{s} = p_{s} + p_{s'} $\;
-    		$p^\sharp_{+} \leftarrow M^{-1} p_{+} $\;
-		$p^\sharp_{-} \leftarrow M^{-1} p_{-} $\;
+    		$p_+^\# \leftarrow M^{-1} p_{+} $\;
+		$p_-^\# \leftarrow M^{-1} p_{-} $\;
     		
     		
     }
     $ w = w + w'$\;
-    $ s = s' \mathbb{I}[(q^+ - q^-) \cdot p^\sharp_{-} \ge 0 ] \mathbb{I}[(q^+ - q^-) \cdot p^\sharp_{+}  \ge 0 ] $\;
+    $ s = s' \mathbb{I}[(q_+ - q_-) \cdot p_-^\# \ge 0 ] \mathbb{I}[(q_+ - q_-) \cdot p_+^\#  \ge 0 ] $\;
     $j = j+1 $ \;
     
     }
 
-\KwRet{$\theta^{next}$}
+\KwRet{$q_{\text{next}}$}
 
-\FBuildTree{$\theta, r, v, j, \epsilon$}{\;
+\FBuildTree{$q, p, v, j, \epsilon$}{\;
         \eIf{$j=0$}{
 Base case: take one step in direction $v$ \;
 $ q' , p' \leftarrow \text{Leapfrog}(q,p,v\epsilon) $ \;
@@ -683,27 +683,27 @@ $s' = \text{True}$ \;
 
 }{
 	$p_s = 0 $\;
-	$q^-,p^-,q^+,p^+,q',s',w',p_{s'} \leftarrow \text{G-BuildTree}(q,p,v,j-1,\epsilon) $ \;
+	$q_-,p_-,q_+,p_+,q',s',w',p_{s'} \leftarrow \text{G-BuildTree}(q,p,v,j-1,\epsilon) $ \;
 	
 	\If{$s'=\text{True}$}{
 		$p_s = p_s + p_{s'}$\;
 		\eIf{$v=-1$}{
-			$q^-,p^-,-,-,q'',s'',w'',p_{s''} \leftarrow \text{G-BuildTree}(q^-,p^-,v,j-1,\epsilon)$ \;
+			$q_-,p_-,-,-,q'',s'',w'',p_{s''} \leftarrow \text{G-BuildTree}(q_-,p_-,v,j-1,\epsilon)$ \;
 		}{
-			$-,-,q^+,p^+,q'',s'',w'',p_{s''} \leftarrow \text{G-BuildTree}(q^+,p^+,v,j-1,\epsilon)$ \;
+			$-,-,q_+,p_+,q'',s'',w'',p_{s''} \leftarrow \text{G-BuildTree}(q_+,p_+,v,j-1,\epsilon)$ \;
 		}
 		\If{$s''=\text{True}$}{
 		
-		With probability $\min(1, \frac{w''}{w'+w''})$ , set $\theta' = \theta''$. \;
-		$p^\sharp_{+} \leftarrow M^{-1} p_{+} $\;
-		$p^\sharp_{-} \leftarrow M^{-1} p_{-} $\;
-		$ s' \leftarrow s'' \mathbb{I}[(q^+ - q^- )\cdot p^\sharp_{-} \ge 0 ] \mathbb{I}[(q^+ - q^- )\cdot p^\sharp_{+} \ge 0 ]$ \;
+		With probability $\min(1, \frac{w''}{w'+w''})$ , set $q' = q''$. \;
+		$p_+^\# \leftarrow M^{-1} p_{+} $\;
+		$p_-^\# \leftarrow M^{-1} p_{-} $\;
+		$ s' \leftarrow s'' \mathbb{I}[(q_+ - q_- )\cdot p_-^\# \ge 0 ] \mathbb{I}[(q_+ - q_- )\cdot p_+^\# \ge 0 ]$ \;
 		$w' \leftarrow w' + w'' $ \;
 		$p_{s} = p_{s} + p_{s''} $\;
 		
 		}
 	}
-	\KwRet{$q^-,p^-,q^+,p^+,q',s',w',p_{s'}$}\;
+	\KwRet{$q_-,p_-,q_+,p_+,q',s',w',p_{s'}$}\;
 }
     }
 \caption{Generalized No U-Turn Sampler Update}
@@ -722,64 +722,64 @@ where
 
 The sum can be interpreted as a numerical approximation of an integration over the Hamiltonian flow $\phi_{t}^H(z)$
 
-\[ \lim_{|\mathbf{t}| \rightarrow \infty} \frac{1}{|\mathbf{t}|} \sum_{z \in \mathbf{t}} \mathbb{P}[z | \mathbf{t}] \frac{dG}{dt}(z)  = \lim_{T \rightarrow \infty} \frac{1}{T} \int_0^T dt \frac{dG}{dt} \circ \phi_{t}^H(z) = 0 \]
+\[ \lim_{|\mathbf{t}| \rightarrow \infty} \frac{1}{|\mathbf{t}|} \sum_{z \in \mathbf{t}} \mathbb{P}[z | \mathbf{t}] \frac{dG}{dt}(z)  = \lim_{\mathcal{T} \rightarrow \infty} \frac{1}{\mathcal{T}} \int_0^\mathcal{T} dt \frac{dG}{dt} \circ \phi_{t}^H(z) = 0 \]
 
 \begin{align*}
  \frac{dG}{dt} &= \frac{d}{dt}\sum_{i=1}^D q_i p_i \\
  &= \sum_{i=1}^D p_i \frac{dq_i}{dt} + q_i \frac{dp_i}{dt} \\
  &= \sum_{i=1}^D [M^{-1}p]_i p_i - q_i \frac{\partial V}{\partial q_i} \\
- &= 2 T - q \cdot \frac{\partial V}{\partial q} \\
+ &= 2 T(p) - q \cdot \frac{\partial V}{\partial q} \\
 \end{align*}
 
 \begin{algorithm}
   	\DontPrintSemicolon
 	\SetKwFunction{FBuildTree}{XHMC-BuildTree}
 
-    \KwIn{initial position $q^0$, step size $\epsilon$, joint density $\pi$} 
-    Re-sample $p^0 \sim \mathcal{N}(0,\mathbb{I})$ \;
-    Initialize $q^{-} = q^0 , q^{+} = q^0 , p^{-} =p^0 , p^+ = p^0, j =0 ,	q^{next} = q^0 , s = 1 , w = \pi(q^0,p^0), \text{ave} = \frac{dG}{dt}(q^0,p^0)$ \;
+    \KwIn{initial position $q_0$, step size $\epsilon$, joint density $\pi$} 
+    Re-sample $p_0 \sim \mathcal{N}(0,\mathbb{I})$ \;
+    Initialize $q_{-} = q_0 , q_{+} = q_0 , p_{-} =p_0 , p_+ = p_0, j =0 ,	q_{\text{next}} = q_0 , s = 1 , w = \pi(q_0,p_0), {ave} = \frac{dG}{dt}(q_0,p_0)$ \;
     \While{$s=1$}{
     Choose a direction $v_j \sim \text{Uniform}(-1,1) $ \;
     \eIf{$v_j = -1$}{
-    		$q^-,p^-,-,-,q',s',w',\text{ave}' \leftarrow \text{XHMC-BuildTree}(q^-,p^-,v_j,j,\epsilon)$\;
+    		$q_-,p_-,-,-,q',s',w',{ave}' \leftarrow \text{XHMC-BuildTree}(q_-,p_-,v_j,j,\epsilon)$\;
     }{
-    		$-,-,q^+,p^+,q',s',w',\text{ave}' \leftarrow \text{XHMC-BuildTree}(q^+,p^+,v_j,j,\epsilon)$\;
+    		$-,-,q_+,p_+,q',s',w',{ave}' \leftarrow \text{XHMC-BuildTree}(q_+,p_+,v_j,j,\epsilon)$\;
     }
     \If{$s'=1$}{
-    		With probability $\min(1,\frac{w'}{w})$, set $\theta^{next} \leftarrow q^-$\;
+    		With probability $\min(1,\frac{w'}{w})$, set $q_{\text{next}} \leftarrow q_-$\;
     }
-    $ Update \text{ave} by incorporating \text{ave}' $\;
+     Update ${ave}$ by incorporating ${ave}' $\;
     $ w = w + w'$\;
-    $ s = s \mathbb{I}[ \frac{1}{2^j} |\text{ave} | < \delta ] $\;
+    $ s = s \mathbb{I}[ \frac{1}{2^j} |{ave} | \ge \delta ] $\;
     $j = j+1 $ \;
     
     }
 
-\KwRet{$q^{next}$}
+\KwRet{$q_{\text{next}}$}
 
-\FBuildTree{$q, r, v, j, \epsilon$}{\;
+\FBuildTree{$q, p, v, j, \epsilon$}{\;
         \eIf{$j=0$}{
 Base case: take one step in direction $v$ \;
 $ q' , p' \leftarrow \text{Leapfrog}(q,p,v\epsilon) $ \;
 $ w' \leftarrow \pi(q',p') $ \;
-$ \text{ave}' \leftarrow \frac{dG}{dt}(q',p') $\;
-\KwRet{$q^-,p^-,q^+,p^+,q',s',w',\text{ave}'$} \;
+$ {ave}' \leftarrow \frac{dG}{dt}(q',p') $\;
+\KwRet{$q_-,p_-,q_+,p_+,q',s',w',{ave}'$} \;
 
 }{
-	$q^-,p^-,q^+,p^+,q',s',w',\text{ave}' \leftarrow \text{XHMC-BuildTree}(q,p,v,j-1,\epsilon) $ \;
+	$q_-,p_-,q_+,p_+,q',s',w',{ave}' \leftarrow \text{XHMC-BuildTree}(q,p,v,j-1,\epsilon) $ \;
 	
 	\If{$s'=1$}{
 		\eIf{$v=-1$}{
-			$q^-,p^-,-,-,q'',s'',w'',\text{ave}'' \leftarrow \text{XHMC-BuildTree}(q^-,p^-,v,j-1,\epsilon)$ \;
+			$q_-,p_-,-,-,q'',s'',w'',ave'' \leftarrow \text{XHMC-BuildTree}(q_-,p_-,v,j-1,\epsilon)$ \;
 		}{
-			$-,-,q^+,p^+,q'',s'',w'',\text{ave}'' \leftarrow \text{XHMC-BuildTree}(q^+,p^+,v,j-1,\epsilon)$ \;
+			$-,-,q_+,p_+,q'',s'',w'',{ave}'' \leftarrow \text{XHMC-BuildTree}(q_+,p_+,v,j-1,\epsilon)$ \;
 		}
 		With probability $\min(1, \frac{w''}{w'+w''})$ , set $q' = q''$. \;
 		Update $ave$ by incorporating $w'$ and ${ave}'$ \;
-		$ s' \leftarrow s'' \mathbb{I}[(q^+ - q^- )\cdot p^- \ge 0 ] \mathbb{I}[(q^+ - q^- )\cdot p^+ \ge 0 ]$ \;
+		$ s' \leftarrow s''  \mathbb{I}[ \frac{1}{2^j} |{ave} | \ge \delta ] $ \;
 		$w' \leftarrow w' + w'' $ \;
 	}
-	\KwRet{$q^-,p^-,q^+,p^+,q',s',w',{ave}'$ }\;
+\KwRet{$q_{-},p_{-},q_{+},p_{+},q',s',w',{ave}'$}\;
 }
     }
 \caption{Exhaustive Hamiltonian Monte Carlo Sampler Update}
@@ -956,6 +956,110 @@ $E[(\psi_i - \psi_{i-1})^2] = 2(1-\rho_t)\text{var}(\psi)$
 
 \section{Numeric tricks/Implementation tricks}
 
+\begin{algorithm}
+	\SetKwFunction{BuildTree}{BuildTree}
+	\DontPrintSemicolon
+
+    \KwIn{initial position $q_0$, step size $\epsilon$, joint density $\pi$} 
+    Re-sample $p_0 \sim \mathcal{N}(0,\mathbb{I})$ \;
+    Initialize $q_{-} = q_0 , q_{+} = q_0 , p_{-} =p_0 , p_+ = p_0, j =0 ,	q_{\text{next}} = q_0 , s = 1 , \log w = H(q_0,p_0)$ \;
+    \While{$s=1$}{
+    Choose a direction $v_j \sim \text{Uniform}(\{-1,1\}) $ \;
+    \eIf{$v_j = -1$}{
+    		$q_-,p_-,-,-,q',s',\log w' \leftarrow \text{BuildTree}(q_-,p_-,v_j,j,\epsilon,\log w)$\;
+    }{
+    		$-,-,q_+,p_+,q',s',\log w' \leftarrow \text{BuildTree}(q_+,p_+,v_j,j,\epsilon,\log w)$\;
+    }
+    \If{$s'=1$}{
+    		With probability $\text{exp}(\min(0,\log w' -\log w))$, set $q_{\text{next}} \leftarrow q_-$\;
+    }
+    $ w = \text{logsumexp}(w , w')$\;
+    $ s = s \mathbb{I}[(q_+ - q_-) \cdot p_- \ge 0 ] \mathbb{I}[(q_+ - q_-) \cdot p_+ \ge 0 ] $\;
+    $j = j+1 $ \;
+    
+    }
+
+\KwRet{$q_{\text{next}}$}\;
+\BuildTree{initial position $q$, initial momentum $p$,integration direction $v$,tree depth $j$,step size $\epsilon$,initial Hamiltonian $H_0$} \;
+\eIf{$j=0$}{
+Base case: take one step in direction $v$ \;
+$ q' , p' \leftarrow \text{Leapfrog}(q,p,v\epsilon,H_0) $ \;
+$ \log w' \leftarrow H(q',p') $ \;
+$ s' = \text{True} \text{ and } \mathbb{I}[\log w' - H_0 > 1000] $\;
+\KwRet{$q_-,p_-,q_+,p_+,q',s',\log w'$} \;
+
+}{
+	$q_-,p_-,q_+,p_+,q',s',\log w' \leftarrow \text{BuildTree}(q,p,v,j-1,\epsilon,H_0) $ \;
+	
+	\If{$s'=1$}{
+		\eIf{$v=-1$}{
+			$q_-,p_-,-,-,q'',s'',w'' \leftarrow \text{BuildTree}(q_-,p_-,v,j-1,\epsilon,H_0)$ \;
+		}{
+			$-,-,q_+,p_+,q'',s'',w'' \leftarrow \text{BuildTree}(q_+,p_+,v,j-1,\epsilon,H_0)$ \;
+		}
+		With probability $\text{exp}(\min(0, \log{w''}-\text{logsumexp}(w',w'')))$ , set $q' = p''$. \;
+		$ s' \leftarrow s'' \mathbb{I}[(q_+ - q_- )\cdot p^- \ge 0 ] \mathbb{I}[(q_+ - q_- )\cdot p_+ \ge 0 ]$ \;
+		$\log w' \leftarrow \text{logsumexp}(w', w'') $ \;
+	}
+	\KwRet{$q_-,p_-,q_+,p_+,q',s',\log w' $ }\;
+}
+\caption{Numerically stable No U-Turn Sampler Update with Unity Covariance Metric }
+\end{algorithm}
+
+\begin{algorithm}
+  	\DontPrintSemicolon
+	\SetKwFunction{FBuildTree}{XHMC-BuildTree}
+
+    \KwIn{initial position $q_0$, step size $\epsilon$, energy function $H$} 
+    Re-sample $p_0 \sim \mathcal{N}(0,\mathbb{I})$ \;
+    Initialize $q_{-} = q_0 , q_{+} = q_0 , p_{-} =p_0 , p_+ = p_0, j =0 ,	q_{\text{next}} = q_0 , s = 1 , \log w = H(q_0,p_0), {ave} = \frac{dG}{dt}(q_0,p_0)$ \;
+    \While{$s=1$}{
+    Choose a direction $v_j \sim \text{Uniform}(-1,1) $ \;
+    \eIf{$v_j = -1$}{
+    		$q_-,p_-,-,-,q',s',\log w',{ave}' \leftarrow \text{XHMC-BuildTree}(q_-,p_-,v_j,j,\epsilon,\log w )$\;
+    }{
+    		$-,-,q_+,p_+,q',s',\log w',{ave}' \leftarrow \text{XHMC-BuildTree}(q_+,p_+,v_j,j,\epsilon,\log w)$\;
+    }
+    \If{$s'=1$}{
+    		With probability $\text{exp}(\min(0,\log w'-\log w)$, set $q_{\text{next}} \leftarrow q_-$\;
+    }
+     Update ${ave}$ by incorporating ${ave}' $\;
+    $ ave, \log w  = \text{stablesum}(ave,\log w,ave',\log w')$\;
+    $ s = s \mathbb{I}[ \frac{1}{2^j} |{ave} | \ge \delta ] $\;
+    $j = j+1 $ \;
+    }
+\KwRet{$q_{\text{next}}$}\;
+
+\FBuildTree{$q, p, v, j, \epsilon,H_0$}{\;
+        \eIf{$j=0$}{
+Base case: take one step in direction $v$ \;
+$ q' , p' \leftarrow \text{Leapfrog}(q,p,v\epsilon) $ \;
+$ \log w' \leftarrow H(q',p') $ \;
+$ {ave}' \leftarrow \frac{dG}{dt}(q',p') $\;
+$ s' = \text{True} \text{ and } \mathbb{I}[\log w' - H_0 > 1000] $\;
+\KwRet{$q_-,p_-,q_+,p_+,q',s',\log w',{ave}'$} \;
+
+}{
+	$q_-,p_-,q_+,p_+,q',s',\log w',{ave}' \leftarrow \text{XHMC-BuildTree}(q,p,v,j-1,\epsilon,H_0) $ \;
+	
+	\If{$s'=1$}{
+		\eIf{$v=-1$}{
+			$q_-,p_-,-,-,q'',s'',\log w'',ave'' \leftarrow \text{XHMC-BuildTree}(q_-,p_-,v,j-1,\epsilon,H_0)$ \;
+		}{
+			$-,-,q_+,p_+,q'',s'',\log w'',{ave}'' \leftarrow \text{XHMC-BuildTree}(q_+,p_+,v,j-1,\epsilon,H_0)$ \;
+		}
+		With probability $\text{exp}(\min(0, \log w'' -\text{logsumexp}(w',w''))$ , set $q' = q''$. \;
+		$ave,\log w \leftarrow \text{stablesum}(ave,\log w,ave',\log w')$ \;
+		$ s' \leftarrow s''  \mathbb{I}[ \frac{1}{2^j} |{ave} | \ge \delta ] $ \;
+	}
+\KwRet{$q_{-},p_{-},q_{+},p_{+},q',s',\log w',{ave}'$}\;
+}
+}
+\caption{Numerically stable Exhaustive Hamiltonian Monte Carlo Sampler Update}
+\end{algorithm}
+
+
+
 $\pi(q,p)  = \exp(H(q,p)) $
 
 $\frac{\pi(q',p')}{\pi(q,p)} )^a > 2^{-a} $
@@ -970,7 +1074,7 @@ Covariance added dimension unity matrix.
 
 \begin{algorithm}
 \DontPrintSemicolon
-\KwIn{current sample counter $t$, current accumulator for mean $m$, current accumulator for $m_2$, current sample $x$}
+\KwIn{current sample counter $t$,accumulator for the mean $m$, accumulator for covariance $m_2$, current sample $x$}
 
 $\delta = x-m$ \;
 $m = m + \frac{\delta}{t} $\;
@@ -998,20 +1102,18 @@ stable sum
 \begin{algorithm}
 \DontPrintSemicolon
 \KwIn{$a_1,\log w_1 , a_2, \log w_2$}
-\KwOut{$a = \frac{a_1 \log w_1 + a_2 \log w_2}{w_1+w_2} ,w = w_1 + w_2$}
+\KwOut{$a = \frac{a_1  w_1 + a_2 w_2}{w_1+w_2} ,\log w = \log (w_1 + w_2)$}
 
 \eIf{$\log w_1 > \log w_2 $}{
 	$e = \exp(\log w_1 - \log w_2 ) $\;
 	$a = \frac{e \cdot a_1 + a_2}{1+e} $\;
-	$w = \log w_2 + \log(1+e) $ \;
+	$\log w = \log w_2 + \log(1+e) $ \;
 }{
 	$e = \exp(\log w_2 - \log w_1 ) $\;
 	$a = \frac{e \cdot a_2 + a_1}{1+e} $\;
-	$w = \log w_1 + \log(1+e) $ \;
+	$\log w = \log w_1 + \log(1+e) $ \;
 }
-
-
-\KwRet{$a,w$}
+\KwRet{$a,\log w$}
 \caption{Stable Sum }
 \end{algorithm}
 
@@ -1022,7 +1124,7 @@ fft variogram
 
 map from unconstrained space to constrained space
 
-Suppose $ X = exp(y) $  
+Suppose $ X = \text{exp}(y) $  
 \begin{align*}
 p_Y(y) = p_X(f^{-1}(y)) \ |\frac{d}{dY} f^{-1}(y) |\\
 p_Y(y) = p_X(\exp(y)) \cdot \exp(y) \\
@@ -1299,19 +1401,19 @@ Equivalent to
 
 The parameter space becomes 
 
-\[(z,r1_l,r2_l,r1_g,r2_g) \]
+\[(z,r_1^l,r_2^l,r_1^g,r_2^g) \]
 Where
 \[ z \sim \mathcal{N}(0,1) \]
-\[ {r_1}_l^j \sim \mathcal{N}^+(0,1) \, \forall j \]
-\[ {r_2}_l^j \sim \text{Inv-gamma}(0.5,0.5) \, \forall j  \]
-\[ {r_1}_g \sim \mathcal{N}^+(0,1)  \]
-\[ {r_2}_g \sim \text{Inv-gamma}(0.5,0.5)   \]
+\[ \{r_1^l\}_j \sim \mathcal{N}^+(0,1) \, \forall j \]
+\[ \{r_2^l\}_j \sim \text{Inv-gamma}(0.5,0.5) \, \forall j  \]
+\[ r_1^g \sim \mathcal{N}^+(0,1)  \]
+\[ r_2^g \sim \text{Inv-gamma}(0.5,0.5)   \]
 
-\[ \lambda =  {r1}_l \cdot {r2}_l \]
-\[ \tau = r1_g \cdot r2_g \]
+\[ \lambda =  r_1^l \cdot r_2^l \]
+\[ \tau = r_1^g \cdot r_2^g \]
 \[\beta = z \cdot \lambda \tau \]
 
-The unconstrained parameter space becomes $(z,\log r1_l,r2_l,\log r1_g,r2_g)$
+Because the local and global $r_1$ parameters are constrained to be positive,the unconstrained parameter space becomes $(z,\log r_1^l,r_2^l,\log r_1^g,r_2^g)$
 
 \section{self normalizing induced initialization}
 selu, gloriot initialization
@@ -1337,13 +1439,13 @@ The model selection procedure above is a special case of cross-validation
 $k\le n$, the dataset is split into $k$ disjoint subsets, then repeatedly one
 subset is used as test set and the remaining sets used as training set. The
 extreme case is leave-one-out cross-validation (LOO-CV), where $k=n$. To
-calculate the log pointwise predictive density, $lppd_{loo-cv}$, we do as
+calculate the log pointwise predictive density, $\text{lppd}_{\text{loo-cv}}$, we do as
 follows. For each split of the $n$ split $\{d_i,d_{-i}\}$, where $d_i$ is the
 $i$th datapoint $\{y_i,x_i\}$, and $d_{-i}$ are the $n-1$ remaining data points.
 Then
-\[ lppd_{loo-cv} = \sum_{i=1}^n \log p_{post(-i)}(d_i) \]
+\[ \text{lppd}_{\text{loo-cv}} = \sum_{i=1}^n \log p_{\text{post}(-i)}(d_i) \]
 where 
-\[p_{post(-i)(d_i)} = \int p(y_i|x_i,\theta) p(\theta |d_{-i}) d\theta \]
+\[p_{\text{post}(-i)(d_i)} = \int p(y_i|x_i,\theta) p(\theta |d_{-i}) d\theta \]
 which is the marginal predictive density of the $i$th data point, with $\theta$
 integrated out with respect to the posterior density of $\theta$ having observed
 the remaining $n-1$ data points. In practice, the integration is performed
@@ -1352,7 +1454,7 @@ $\{\theta_{-i}^1,\dots, \theta_{-i}^S\}$, and they form the estimate
 $\frac{1}{S} \sum_{s=1}^S p(y_i|x_i,\theta_{-i}^s) $.
 
 Then
-\[lppd_{loo-cv} \approx \sum_{i=1}^n \log (\frac{1}{S} \sum_{s=1}^S
+\[\text{lppd}_{\text{loo-cv}} \approx \sum_{i=1}^n \log (\frac{1}{S} \sum_{s=1}^S
 p(y_i|x_i,\theta_{-i}^s))\]
 
 The problem with applying this to model selection for neural networks is the
@@ -1386,18 +1488,18 @@ leave-one-out cross-validation \cite{watanabe2010asymptotic}.
 
 The WAIC can be calculated as follows. Let $\{\theta_1, \dots, \theta_S\}$ be $S$ samples drawn from the posterior distribution $p(\theta|D)$ given all observed data points. Then 
 
-\[WAIC = lppd - p_{WAIC} \]
+\[\text{WAIC} = \text{lppd} - p_{\text{WAIC}} \]
 where 
-\[lppd = \sum_{i=1}^n \log( \frac{1}{S} \sum_{s=1}^S p(y_i|x_i,\theta^s) ) \]
+\[\text{lppd} = \sum_{i=1}^n \log( \frac{1}{S} \sum_{s=1}^S p(y_i|x_i,\theta^s) ) \]
 is the computed log pointwise predictive density.And 
-\[p_{WAIC} = \sum_{i=1}^n V_{s=1}^S(\log p(y_i|x_i, \theta^s)) \]
-is the effective number of parameters, where $V_s=1^S \log(p(y_i|x_i,\theta^s))$ is the empirical variance of the $S$  $\log(p(y_i|x_i,\theta^s))$ for fixed $i$. Note that only $nS$ points need tobe stored to calculate the WAIC. $p_{WAIC}$ can be calculated differently, but here we follow the recommendation of Gelman et al and use the formula above.
+\[p_{\text{WAIC}} = \sum_{i=1}^n V_{s=1}^S(\log p(y_i|x_i, \theta^s)) \]
+is the effective number of parameters, where $V_s=1^S \log(p(y_i|x_i,\theta^s))$ is the empirical variance of the $S$  $\log(p(y_i|x_i,\theta^s))$ for fixed $i$. Note that only $nS$ points need tobe stored to calculate the WAIC. $p_{\text{WAIC}}$ can be calculated differently, but here we follow the recommendation of Gelman et al and use the formula above.
 
 WAIC can also be calculated by importance sampling, using the variational distribution as the proposal distribution \cite{yamada2012information}.
 
-Once we have selected a model, we can make predictions about new data using its marginal posterior predictive distribution. That is, given a new data point $\{x_{new}\}$, we can find its marginal posterior predictive density $p(y_{new}|D)$ as 
-\[ p(y_{new}|D) = \int p(y_{new}|x_{new},\theta) p(\theta|D) d\theta \]
-If this is a classification problem of $C$ classes we would evaluate $p(y_{new}|D)$ for all $y_{new}=1,\dots, C$, and if a regression problem a number of points on the domain of the output can be evaluated 
+Once we have selected a model, we can make predictions about new data using its marginal posterior predictive distribution. That is, given a new data point $\{x_{\text{new}}\}$, we can find its marginal posterior predictive density $p(y_{\text{new}}|D)$ as 
+\[ p(y_{\text{new}}|D) = \int p(y_{\text{new}}|x_{\text{new}},\theta) p(\theta|D) d\theta \]
+If this is a classification problem of $C$ classes we would evaluate $p(y_{\text{new}}|D)$ for all $y_{\text{new}}=1,\dots, C$, and if a regression problem a number of points on the domain of the output can be evaluated 
 and a prediction made by drawing from the empirical distribution. 
 \section{Relation to STAN and PyTorch}
 
