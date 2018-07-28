@@ -9,3 +9,9 @@
 *.out
 
 *.log
+
+*.bbl
+
+*.blg
+
+*.dvi
