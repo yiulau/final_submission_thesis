@@ -485,16 +485,15 @@ definition epsilon L, stepsize jitter, advantage over MH , 0.65 rule , geometric
 \section{No U-Turn Sampler}
 
 
-There exists an extension of the basic HMC sampler that increases the acceptance
-rate by proposing a trajectory instead of proposing just a state at the end
+There exists an extension of the basic HMC sampler that seeks to increase the acceptance
+rate by, conditioning on an initial state, proposing a trajectory instead of proposing just a state at the end
 of the trajectory. Two trajectories are proposed, one containing the initial state; one
-
-of the two trajectories is chosen then a state is sampled from the chosen
+of the two trajectories is chosen, then a state is sampled from the chosen
 trajectory. The HMC update step is then much more likely to propose and accept
 a state different from the initial state. This is Neal's window
 method \cite{neal1992improved}. 
 
-First we select a window size $W < L$, then sample randomly $s \in \{0, 1,2 , \dots , W -1 \}$. Take the current $(q,p)$ as $(q_s, p_s)$, we geneerate the sequence $[(q_0,p_0),(q_1, p_1), \dots (q_L,p_L)]$ deterministically by applying forward leapfrog steps (original leapfrog step with stepsize $\epsilon$) for $(q_i,p_i), i > s $, and backward leapfrog steps (stepsize equal to $-\epsilon$. ). 
+First we select a window size $W < L$, then sample randomly $s \in \{0, 1,2 , \dots , W -1 \}$. Take the current $(q,p)$ as $(q_s, p_s)$, we generate the sequence $[(q_0,p_0),(q_1, p_1), \dots (q_L,p_L)]$ deterministically by applying forward leapfrog steps (original leapfrog step with step size $\epsilon$) for $(q_i,p_i), i > s $, and backward leapfrog steps (step size equal to $-\epsilon$. ). 
 Then the acceptance window is a sequence of $W$ $(q_i,p_i)$ pairs at the end of the trajectory, more specifically,
 
 \[ \{(q_{L-W+1},p_{L-W+1}), \dots , (q_L,p_L)\} \]
@@ -511,10 +510,7 @@ Once a window has been chosen, we select a pair among the $W$ pairs in the windo
 \[ \frac{\pi(q_i,p_i)}{\sum_{j=0}^{W-1} \pi(q_j,p_j)} \]
 It shows that even when we don't accept the proposal window near the end of the trajectory (acceptance window), there is still a probability of moving the chain away from its current state. This method generates a Markov Chain that leaves the target distribution invariant, and has been applied by Neal in neural network models to increase acceptance probability of the HMC sampler\cite{neal1992improved}. The two reasons for discussing the Window method are first that it has been shown to
 significantly improve sampling from BNN models and second that a special case of
-the method is incorporated in the No U-Turn sampler implemented in STAN. 
-
-multinomial sampling over slice sampling
-
+the method is incorporated in the No U-Turn sampler implemented in STAN. The important idea to retain is the conceptualization of proposing a new sample given current sample as a two stage process, the first being to sample a trajectory containing the initial state, then sample the next state given the sampled trajectory.
 
 \begin{algorithm}
 \KwIn{number of leapfrog steps $L$, initial position $q_0$ }
@@ -688,9 +684,9 @@ $s' = \text{True}$ \;
 
 Exhaustive Hamiltonian Monte Carlo termination criterion:
 
-The Exhaustive Hamiltonian Monte Carlo termination criterion (XHMC) relies on significant amount of differential geometry for its justification. So the paper might read "an exhaustion ,$T_{\delta}(z)$, is the family of integration times in the contangent bundle such that the temporal change of the virial along the resulting Hamiltonian flow is uniformly bounded". Understanding fully the mathematics behind it is beyond the scope of this thesis. From my understanding it is a proxy to to monitor the return of a leapfrog trajectory to a neighbourhood around its initial point after having explored the energy level set. With a smaller threshold meant to push the neighbourhood smaller, hence forcing the exploration to continue for longer. Luckily the numerical quantities that needs to be computed are quite easily understood. In the original paper \cite{betancourt2016identifying}, the author showed improved sampling over the NUTS criterion as indicated by increased effective sample size on correlated distributions. 
+The Exhaustive Hamiltonian Monte Carlo termination criterion (XHMC) relies on significant amount of differential geometry for its justification. For example one can easily finds parts of the paper that read "an exhaustion ,$T_{\delta}(z)$, is the family of integration times in the contangent bundle such that the temporal change of the virial along the resulting Hamiltonian flow is uniformly bounded". Understanding fully the mathematics behind it is beyond the scope of this thesis. From my understanding it is a proxy to to monitor the return of a leapfrog trajectory to a neighbourhood around its initial point after having explored the energy level set. With a smaller threshold meant to push the neighbourhood smaller, hence forcing the exploration to continue for longer. Luckily the numerical quantities that needs to be computed are quite easily understood. In the original paper \cite{betancourt2016identifying}, the author showed improved sampling over the NUTS criterion as indicated by increased effective sample size on correlated distributions. 
 
-The XHMC termination criterion is defined as follows: given a threshold $\delta > 0$, terminates simulation when 
+The exhaustive termination criterion is defined as follows: given a threshold $\delta > 0$, terminates expansion of the trajectory when 
 \[  \Bigl |\frac{1}{|\mathbf{t}|} \sum_{z \in \mathbf{t}} \mathbb{P}[z | \mathbf{t}] \frac{dG}{dt}(z) \Bigr | < \delta \]
 
 where 
@@ -762,36 +758,30 @@ $ {ave}' \leftarrow \frac{dG}{dt}(q',p') $\;
 \end{algorithm}
 
 
-xhmc over gnuts over nuts 
 \section{Adaptive Tuning of Step Size}
 
-Setting the stepsize that makes the leapfrog mapping stable.
+Setting the step size that makes the leapfrog mapping stable.
 
 Analysis: For one dimensional potential energy function $V(q) = \frac{q^2}{2\sigma^2}$,
 that is, normal distributed with variance $\sigma^2$. Writing out the matrix that encodes the linear mapping from $(q(t),p(t))$ to $(q(t+\epsilon),p(t+\epsilon))$ gives that the mapping is stable if $\epsilon < 2 \sigma$, and diverges otherwise. 
 
-For the general multivariate $q$ with arbitrary potential energy function, equivalent to a general density fucntion, we approximate the potential energy function with a second order taylor expansion, so that the $q^2$ term in the taylor expansion of $V(q)$ has coefficient $\frac{1}{2} \frac{\partial^2 V}{\partial q^2}$  
+For the general multivariate $q$ with arbitrary potential energy function, equivalent to a general density function, we approximate the potential energy function with a second order Taylor expansion, so that the $q^2$ term in the Taylor expansion of $V(q)$ has coefficient $\frac{1}{2} \frac{\partial^2 V}{\partial q^2}$  
 By matching the two expressions we get 
 \[ \sigma \approx ( \frac{\partial^2 V}{\partial q^2})^{-1/2} \]
 
-So by setting $\epsilon$ to that value, we are exactly in the middle of the domain of allowable stepsizes, equivalent to half of the boundary limit.
-Care has to be taken to note evalue the second derivative using values of the current parameters, because then the leapfrog steps are no longer reversible (i.e. get different stepsizes at two ends of a trajectory. So when you reverse direction at the other end you don't return to  the starting point). 
+So by setting $\epsilon$ to that value, we are exactly in the middle of the domain of allowable step sizes, equivalent to half of the boundary limit.
+Care has to be taken to note evaluate the second derivative using values of the current parameters, because then the leapfrog steps are no longer reversible (i.e. get different step sizes at two ends of a trajectory. So when you reverse direction at the other end you don't return to  the starting point). 
 
-This is only useful if you are doing a sort of blocks gibbs sampling, where you use HMC to sample from the low-level paramters while keeping the hyperparameters fixed, then sample the hyperparameters while keep the parameters fixed. 
-
-Might be much more difficult to select stepsize if we don't do this. Try to use Riemmanian Monte Carlo to overcome skewness of joint distribution of hyperparameters and parameters. 
-
-same as nuts paper 
+This is only useful if you are doing a sort of blocks-Gibbs sampling, where you use HMC to sample from the low-level parameters while keeping the hyperparameters fixed, then sample the hyperparameters while keep the low-level parameters fixed. 
 
 
-
-Now we describe how the stepsizes are automatically tuned in STAN. First, keep
-in mind that the stepsize is adapted only during the warmup phase and stays
+Now we describe how the step sizes are automatically tuned in STAN. First, keep
+in mind that the step size is adapted only during the warm-up phase and stays
 fixed during the sampling phase. This ensures the correctness of the algorithm
-as the induced Markov chain resulted from an adaptive stepsize may not be
-reversible. One way of manual tuning is try to find the stepsize
+as the induced Markov chain resulted from an adaptive step size may not be
+reversible. One way of manual tuning is try to find the step size
 $\epsilon'$ that would result in an acceptance probability of $0.65$. The
-acceptance probabiilty is an averaged quantity, calculated as an expectation
+acceptance probability is an average quantity, calculated as an expectation
 over a chain. That is, we try to optimize $\epsilon \in \mathbb{R}$ with respect
 to the function 
 \[ h(\epsilon) = E_\pi[f(X)|\epsilon]  = \lim_{T \rightarrow \infty} \frac{1}{T}
@@ -800,17 +790,17 @@ to the function
 where $f(X_t)$ denotes the acceptance probability for iteration $t$. The
 second equality comes from the convergence of the MCMC sampler. This is a
 stochastic optimization problem, and STAN uses the dual averaging scheme of
-Nesterov compute the stepsize. The dual averaging scheme works in general as
-follows, supose we are trying to find $x\in \mathbb{R}$ such that $h(x) =
+Nesterov  to adapt the step size. The dual averaging scheme works in general as
+follows, suppose we are trying to find $x\in \mathbb{R}$ such that $h(x) =
 E[H_t|x] = 0$ then we perform the updates 
 
 \[x_{t+1}  = \mu - \frac{\sqrt{t}}{\gamma} \frac{1}{t+t_0} \sum_{i=1}^tH_i;
 \bar{x}_{t+1} = \eta_t x_{t+1} + (1-\eta_t) \bar{x}_t \]
 
 where $\mu$ is the target that the $x_t$'s are shrunk towards, $\gamma > 0$ a
-paramater that controls the amount of shrinkage, $t_0 \ge 0$ a parameter that
-stablizes the early iterations, and $\eta_t = t^{-\kappa},\kappa>0$ is a
-stepsize schedule ensuring convergence. Since $\epsilon>0$, this is technically
+parameter that controls the amount of shrinkage, $t_0 \ge 0$ a parameter that
+stabilizes the early iterations, and $\eta_t = t^{-\kappa},\kappa>0$ is a
+step size schedule ensuring convergence. Since $\epsilon>0$, this is technically
 a constrained optimization problem, but it can be easily converted into an
 unconstrained problem by optimizing for $\log(\epsilon)$ instead. 
 
@@ -865,24 +855,26 @@ bfmi , divergence ( talk about example 8 school) , tree depth ,
 
 First we describe how it uses
 divergence to diagnose $\epsilon$'s that are too large. First, a large constant
-is selected $Th = 1000$, then after each proposal $(x_i,y_i)$, we compare the
-energy value $H(x_i,y_i)$ with that of the previous state $H(x_{i-1},y_{i-1})$,
-if $|H(x_i,y_i) - H(x_{i-1},y_{i-1})|> Th$ then a divergence is flagged and the
-proposal rejected. At the end of the sampling stage, the total number of
-divergence indicates potential problem with the chosen stepsize. Typically the
-only resposne available is to reduce the stepsize and slow down sampling,
-although persistent divergence may call for reparametrization as the parameter
-space may have many sharp edges and steep wells that no stepsizes are small
-enough to navigate the space. The existence of divergence implies the samples
-drawn may be biased and hence invalid. This is not a diagnostic to be ignored.
+is selected $Th = 1000$, then after each proposal $(q_i,p_i)$, we compare the
+energy value $H(q_i,p_i)$ with that of the previous state $H(q_{i-1},p_{i-1})$,
+if $|H(q_i,p_i) - H(q_{i-1},p_{i-1})|> Th$ then a divergence is flagged and the
+proposal rejected. This necessarily slows down the the sampler and increases the overall correlation between successive samples. But a divergence should not be interpreted as simply a rejected proposal. The presence of a divergence should call into question the correctness of the samples; the sample
+drawn may be biased and hence invalid.
+ At the end of the sampling stage, the total number of
+divergence indicates potential problem with the chosen step size. Typically the
+only response available is to reduce the step size and slow down sampling.
+If the problem persists, it may call for reparametrization as the parameter
+space may have many sharp edges and steep wells that no step sizes are small
+enough to navigate the space.  This is not a diagnostic to be ignored. The recommended practice is zero tolerance for divergent transitions. Even a low number (say $\le 5 $ ) can cause biased samples.
+
 
 The second diagnostic tool that comes with STAN is the Bayesian fraction of
 missing information (BFMI). It detects a mismatched conditional Hamiltonian
 energy function
 distribution to the marginal Hamiltonian distribution. The leapfrog step is
 restricted to exploring a level set determined by the 
-initial positions $(q_i,p_i)$ at the start of the trajectory. Given the previous
-state $q_i$, the only randomness comes from the resampling of the auxillary
+initial positions $(q_i,p_i)$ at the start of the trajectory. Given the previous 
+state $q_i$, the only randomness comes from the resampling of the auxiliary
 momentum distribution. Since the goal is
 to explore the entire parameter space, we want the two energy distributions to
 closely match each other. BFMI allows us to measure that match. Formally it is defined as 
@@ -890,13 +882,13 @@ closely match each other. BFMI allows us to measure that match. Formally it is d
 where $\pi$ is the marginal distribution of $q$ and $\pi_{E|q}$ and $\pi_{H}$
 are the conditional and marginal distributions of the Hamiltonian energy
 function $H$ respectively. In practice the expectations must be estimated, but
-it is easily done by evaluting the energy function at the values coming from the
-generated Markov chain. Suppose $N+1$ samples are drawn, 
+it is easily done by evaluating the energy function at the values from the
+generated Markov chain. Suppose $N+1$ samples are drawn, the estimated BFMI 
 
-\[ \hat{BFMI} = \frac{\sum_{n=1}^N(H_n-H_{n-1})^2}{\sum_{n=0}(H_n-\bar{H})^2} \]
+\[ \text{E-BFMI} = \frac{\sum_{n=1}^N(H_n-H_{n-1})^2}{\sum_{n=0}(H_n-\bar{H})^2} \]
 where $H_n = H(q_n,p_n)$ and $\overline{H}=\frac{1}{N+1}\sum_{n=0}^N H_n$. From basic
 probability we have $0 \le BFMI \le 1 $ and the optimal value is when it is
-1. A low value of $\hat{BFMI}$ suggests that the auxillary momentum distribution is
+1. A low value of $\text{E-BFMI}$ suggests that the auxiliary momentum distribution is
 inefficient for sampling. 
 
  
@@ -1139,12 +1131,14 @@ One can then construct example models where the mean and covariance are known ex
 \chapter{Bayesian Neural Networks}
 \section{Neal}
 
-Deep learning, a field in machine learning studying multilayered neural network models, has become quite successful in artificial intelligence tasks and a lot of research has been, and is currently underwayto improve our understanding of these models and apply them better and to more fields. See \cite{Goodfellow-et-al-2016-Book,lecun2015deep} a general introduction into the methodology and application of deep learning, and \cite{schmidhuber2015deep} for an in-depth literature review. It is futile to attempt a complete overview of the field because it is too vast but we will provide some pointers that reflect what the author finds important and some motivations. 
+Deep Learning, a field in machine learning studying multilayered neural network models, has become quite successful in artificial intelligence tasks and a lot of research has been, and is being done to improve our understanding of these models and to apply them better and to more fields. See \cite{Goodfellow-et-al-2016-Book,lecun2015deep} for a general introduction into the methodology and application of deep learning, and \cite{schmidhuber2015deep} for an in-depth literature review. 
 
-Before there was deep learning, a term which only came about in the mid 2000s, there were Neural Networks \cite{bishop1995neural,ripley2007pattern}, which were also hugely popular in the 90s, but ultimately could not scale up. The main reason for this was the difficulty of training neural networks of more than one or two hidden layers. Traditional optimization techniques like stochastic gradient descent with backpropogation did not improve empirical test error for networks with more layers,not until ideas like pre-training to initialize optimization were experimented could we fit "deep" neural networks with more than 2 hidden layers. This restarted the field, now rebranded as Deep learning, and innovations like using the rectified linear units as activation functions \cite{nair2010rectified} to allow training deep networks without pre-training, and using GPUs to speed up practical training process \cite{krizhevsky2012imagenet}, as well as the creation of numerical libraries like Theano \cite{bergstra2010theano}, Caffe \cite{jia2014caffe}, Tensorflow\cite{tensorflow2015-whitepaper}, to name a few, that make building and training neural network models much easier by automating the backpropogation step with symbolic differentiation \cite{bahrampour2015comparative} and handles the transition between CPU and GPU computation modes. 
+Before there was deep learning, a term which only came about in the mid 2000s, there were Neural Networks \cite{bishop1995neural,ripley2007pattern}, which were also hugely popular in the 90s, but eventually the enthusiasim for neural networks cooled down because they were perceived to be too computationally intensive and difficult to scale up. The main reason for this was the difficulty of training neural networks of more than one or two hidden layers. Traditional optimization techniques like stochastic gradient descent with backpropogation did not improve empirical test error for networks with more layers,not until ideas like pre-training to initialize optimization were experimented could we fit "deep" neural networks with more than 2 hidden layers. This rebooted the field, now rebranded as Deep Learning, and innovations like using the rectified linear units as activation functions \cite{nair2010rectified} to allow training deep networks without pre-training, and using GPUs to speed up the training process \cite{krizhevsky2012imagenet}, as well as the creation of software libraries like Theano \cite{bergstra2010theano}, Caffe \cite{jia2014caffe}, Tensorflow\cite{tensorflow2015-whitepaper}, and PyTorch \cite{paszke2017automatic}, just to name a few, that make building and training neural network models much easier by automating the backpropogation step with symbolic differentiation \cite{bahrampour2015comparative} and handles the transition between CPU and GPU computation modes. 
 
-Suppose we have $n$ observed datapoints $\{y_i,x_i\}$ where $X_i \in
-\mathcal{R}^p$ is a $p$-dimensional vector, then a neural network models the
+First we describe one of the most popular neural network models, the feedforward networks.
+
+Suppose we have $n$ observed data points $\{y_i,x_i\}$ where $X_i \in
+\mathcal{R}^p$ is a $p$-dimensional vector, then a feedforward neural network models the
 data as follows:
 
 \[y_i = \prod_{j=1}^Lg_j(V_jf_j(W_j))x_i \]
