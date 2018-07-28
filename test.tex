@@ -367,7 +367,7 @@ MCMC sampling in general as well.
 In general the momentum distribution can be tuned by first exploring the density
 with a simple HMC sampler with standard Gaussian momentum distribution, then use
 the samples to estimate the covariance matrix of the target distribution, the
-inverse of which could be set as the covariance. 
+inverse of which could be set as the covariance.  For reasons of memory and time constraints it might be beneficial to use only the diagonal covariance. 
 
 There are several reasons why HMC is better than random-walk Metropolis. First,
 it avoids random walks in the parameter space. Random walks are inefficient because successive
@@ -515,9 +515,9 @@ the method is incorporated in the No U-Turn sampler implemented in STAN. The imp
 
 The No-U-Turn Sampler \cite{hoffman2014no} can be considered a two-in-one, where the windowed HMC sampler is extended to automatically adjust the trajectory length during sampling. 
 
-Starting with an initial state $(q_0,p_0)$ in the phase space. Similar to the Windowed HMC sampler, the NUTS starts by randomly integrating forward or backward by length $\ell$. For each subsequent integration step, the NUTS doubles the integration length. After each integration step, a termination criterion is computed to determine if the trajectory expansion should continue. Exapnsion stops when either end of the trajecory starts doubling back on itself. 
+Starting with an initial state $(q_0,p_0)$ in the phase space. Similar to the Windowed HMC sampler, the NUTS starts by randomly integrating forward or backward by length $\ell$. For each subsequent integration step, the NUTS doubles the integration length. After each integration step, a termination criterion is computed to determine if the trajectory expansion should continue. Expansion stops when either end of the trajectory starts doubling back on itself. Compared to static HMC, where the number of leapfrog steps $L$ is fixed across the chain, NUTS can be considered a dynamic version of HMC, where the number of leapfrog steps can vary across iterations and is generally dependent on the geometry of the Hamiltonian flow trajectory in the phase space. 
 
-The reason for doubling the integration lengths is because the algorithm needs to compute a termination criterion at the end of each trajectory. Computing the termination criteria at the ends of the trajectory is necessary for the correctness of the sampler because it maintains reversibiity. Suppose $T(\mathbf{t}|z) $ is the transition probability of a trajectory given initial state $z$, and $\mathcal{L}^L_{z,z'}$ is the set of all trajectories of length $L$ containing the points $z$ and $z'$. Computing the termination criteria after each integration step ensures
+The reason for doubling the integration lengths is because the algorithm needs to compute a termination criterion at the end of each trajectory. Computing the termination criteria at the ends of the trajectory is necessary for the correctness of the sampler because it maintains reversibility. Suppose $T(\mathbf{t}|z) $ is the transition probability of a trajectory given initial state $z$, and $\mathcal{L}^L_{z,z'}$ is the set of all trajectories of length $L$ containing the points $z$ and $z'$. Computing the termination criteria after each integration step ensures
 
 \[T(\mathbf{t}|z) = T(\mathbf{t}|z') , \forall \mathbf{t} \in \mathcal{L}^L_{z,z'} . \]
 
@@ -526,7 +526,9 @@ It is important to remember that conceptually what we are doing when moving from
 \[T(z'|z) = \sum_{\mathbf{t}} T(z'|\mathbf{t}) T(\mathbf{t}|z) \]
 
 This step acts as a checking mechanism to make sure that, starting from any state of the trajectory, the expansion could reach any other state in the trajectory. To do this care must be taken when doubling the trajectory. The algorithm for expanding the trajectory works by recursively doubling binary trees, where states in the trajectory are leaves in the tree. Each doubling of the trajectory is equivalent to appending a binary tree of the same size to the current tree. Only the two ends of the new tree need to be checked for the termination criterion all the subtrees have been checked by recursion.
-It means that, although in theory one can randomly integrate back and worth, adding one state to the tracjectory at a time like the windowed HMC, to do this would necessitate  computing the termination criterion $O(L^2)$ times, whereas with the doubling only $O(\log L)$ times are required. 
+It means that, although in theory one can randomly integrate back and worth, adding one state to the trajectory at a time like the windowed HMC, to do this would necessitate  computing the termination criterion $O(L^2)$ times, whereas with the doubling only $O(\log L)$ times are required. 
+
+
 
 \begin{algorithm}
 \KwIn{number of leapfrog steps $L$, initial position $q_0$ }
@@ -614,13 +616,15 @@ $ w' \leftarrow \pi(q',p') $ \;
 
 \includegraphics[scale=0.5]{cropped_nuts_image}
 
-$x^Ty > 0 $ equivalent vectors form an acute angle.
+Even though the No-U-Turn sampler is named after its termination criterion, which can be described broadly as terminating whenever the trajectory starts to make a u-turn, the criterion itself is a rather crude heuristics that is not justified by any theory. The main advance of the paper is the devise of a correct and efficient way to construct dynamic leapfrog trajectories by recursively building binary trees. The termination criterion can be further improved, and STAN indeed adopts NUTS criteria more general than the original and others where the u-turn aspect is done away with. 
+
+First we look further into the No-U-Turn termination criterion. From linear algebra, we know that $x^Ty > 0 $ can be interpreted to say that those two vectors form an acute angle. Then the No-U-Turn criterion 
 
 \[p_{+}^T (q_+ -q_-) < 0 \Leftrightarrow p_+^T (q_- - q_+) > 0 \]
 
 \[p_{-}^T (q_+ -q_-) < 0 \Leftrightarrow -p_-^T (q_+ - q_-) > 0 \]
 
-Generalized No U-Turn sampler termination criterion:
+can be explained visually by figures (a) and (b). Figure (a) shows when the trajectory does not satisfy the terminating criterion and expansion continues. Figure (b) shows when the criterion is satisfied and expansion stops. This idea is generalized in \cite{betancourt2013generalizing}, where the dot product 
 \begin{align*}
  p_{+}^T (q_{+} -q_{-})  
  &=p_{+}^T \int_{t=0}^{T} M^{-1}p(t) dt   \\
@@ -631,6 +635,7 @@ Generalized No U-Turn sampler termination criterion:
  &=  p^{\#}_{+} \sum_{z \sim \mathbf{t}} p(z) \\
 \end{align*}
  
+is rewritten to accommodate variations of the HMC sampler where matrices other than the identity are set as the mass matrix. It is in fact the version of the terminating criterion implemented currently in STAN. Note that in this implementation the criterion is no longer dependent on the position variables $q$. The algorithm for this version of NUTS needs to be adjusted slightly to include a term accumulating the sum of $p$ variables across the subtrees. Pseudocode is provided below.
 \begin{algorithm}
   	\DontPrintSemicolon
 	\SetKwFunction{FBuildTree}{G-BuildTree}
@@ -698,9 +703,7 @@ $s' = \text{True}$ \;
 \end{algorithm}
 
 
-Exhaustive Hamiltonian Monte Carlo termination criterion:
-
-The Exhaustive Hamiltonian Monte Carlo termination criterion (XHMC) relies on significant amount of differential geometry for its justification. For example one can easily finds parts of the paper that read "an exhaustion ,$T_{\delta}(z)$, is the family of integration times in the contangent bundle such that the temporal change of the virial along the resulting Hamiltonian flow is uniformly bounded". Understanding fully the mathematics behind it is beyond the scope of this thesis. From my understanding it is a proxy to to monitor the return of a leapfrog trajectory to a neighbourhood around its initial point after having explored the energy level set. With a smaller threshold meant to push the neighbourhood smaller, hence forcing the exploration to continue for longer. Luckily the numerical quantities that needs to be computed are quite easily understood. In the original paper \cite{betancourt2016identifying}, the author showed improved sampling over the NUTS criterion as indicated by increased effective sample size on correlated distributions. 
+The Exhaustive Hamiltonian Monte Carlo (XHMC) termination criterion  relies on a significant amount of differential geometry for its justification. For example one can easily finds parts of the paper that read "an exhaustion ,$T_{\delta}(z)$, is the family of integration times in the contangent bundle such that the temporal change of the virial along the resulting Hamiltonian flow is uniformly bounded". Understanding fully the mathematics behind it is beyond the scope of this thesis. From my understanding it is a proxy to to monitor the return of a leapfrog trajectory to a neighbourhood around its initial point after having explored the energy level set. With a smaller threshold meant to push the neighbourhood smaller, hence forcing the exploration to continue for longer. Luckily the numerical quantities that needs to be computed are quite easily understood. In the original paper \cite{betancourt2016identifying}, the author showed improved sampling over the NUTS criterion as indicated by increased effective sample size on correlated distributions. 
 
 The exhaustive termination criterion is defined as follows: given a threshold $\delta > 0$, terminates expansion of the trajectory when 
 \[  \Bigl |\frac{1}{|\mathbf{t}|} \sum_{z \in \mathbf{t}} \mathbb{P}[z | \mathbf{t}] \frac{dG}{dt}(z) \Bigr | < \delta \]
