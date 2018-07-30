@@ -1462,14 +1462,19 @@ There is concern that single precision might not be enough to maintain accuracy 
 \chapter{Experiments}
 \section{Model and Data}
 
+In the experiments that follow we would focus entirely on classification, because that is where neural networks model are employed most and have achieved the most success. MNIST \cite{lecun-mnisthandwrittendigit-2010} is a benchmark dataset that is arguably the most popular one in the machine learning literature. It consists of 60000 images of digits from zero to nine. Each image is of dimension $ 28 \times 28 = 784 $, which already is high enough that it exceeds the memory and time constraint for HMC sampling for a moderate number of hidden units, even in the simplest neural networks with one hidden layer. Therefore, we chose a simplified version of MNIST where both the dimension and number of samples are reduced. We compare below the original MNIST and the simplified digits images. The simplified digits has dimension $8 \times 8 = 64 $ and the number of samples is reduced to $1797$. While the shapes of the digits could still be made out in the simplified images, the reduced definition blurs classes together so that a 4 might look like a 9 and so on so forth. This should make prediction harder than the original.
 \includegraphics{mnist1.png}
-show mnist
 
-\section{baseline}
-early stopping committee of nn 
+
+
+All of the experiments that follow, unless stated otherwise, use a neural network with one hidden layer and the hyperbolic tangent function as activation function. We omit separate biases weights to simplify the presentation. It does not reduce the representational capacity of the model by too much because one of the hidden units can act as the bias by learning to represent a constant. The simplified model has two groups of weights,namely the input-to-hidden weights of dimension $N_{\text{in}} \times N_{\text{hidden}}$, and the hidden-to-output weights of dimension $N_{\text{hidden}} \times N_{\text{out}} $, where $N_{\text{in}},N_{\text{hidden}},N_{\text{out}}$, are the number of input covariates, hidden units and output units respectively. For example, for the simplified MNIST digits dataset described above, we have $N_{\text{in}} = 64 $ and $N_{\text{out}} = 10 $.
+
+\section{Baseline}
+
+In the first experiment we compare the Bayesian framework to an early stopping committee of neural networks, a frequentist framework observed to serve as a good baseline. Early stopping is an optimization technique whereby training is stopped when the predictive accuracy on a holdout validate set ceases to improve. A group of neural networks initialized with different random seeds, after training by early stopping,  would then combine their predictions by simple averaging. 
+
 bnn show better predictive performance 
 though single early stopping sometimes perform at about the same predictive performance inconsistent across seeds 
-cannot be explained away by 
 \section{gnuts v xhmc}
 xhmc better min ess 
 variable num transitions after warmup
