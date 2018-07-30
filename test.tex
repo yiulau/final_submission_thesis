@@ -1322,10 +1322,11 @@ relies on the assumption that the gradient of the log target density is normally
 
 
 
-\section{sparsity inducing priors}
+\section{Priors}
 
-Horseshoe prior \cite{piironen2017sparsity}
+The horseshoe prior was first proposed by quote as a Bayesian counterpart to the frequentist Lasso estimator in high-dimensional statistics. Like the lasso, it shrinks estimates for irrelevant covariates to zero. Compared to alternatives like the Bayesian Lasso \cite{park2008bayesian},  and the spike-and-slab prior \cite{mitchell1988bayesian}, it has the advantage of admitting full HMC sampling because it contains no discrete parameters.
 
+It proceeds as follows: 
 \[ \mathbf{\beta} = (\beta_1,\cdots,\beta_D)\]
 
 \begin{align*}
@@ -1333,8 +1334,9 @@ Horseshoe prior \cite{piironen2017sparsity}
  &\lambda_j \sim C^+(0,1),\, j = 1,\dots , D, \\
 \end{align*}
 
+where $C^+(0,1)$ is a half-Cauchy distribution with mean zero and variance one. The horseshoe prior is usually applied to regression problems where the number of samples were significantly fewer than the number of covariates and can be useful for models that require regularization, like neural networks \cite{ghosh2017model}.
 
-Regularized horseshoe prior 
+However, the horseshoe prior sometimes causes divergent behaviour during sampling. The regularized horseshoe prior \cite{piironen2017sparsity} fixes this problem and is described below:
 
 \begin{align*}
 &\beta_j | \lambda_j, \tau, c \sim \mathcal{N}(0,\tau^2 \tilde{\lambda}_j^2) ,\, \tilde{\lambda}_j^2 = \frac{c^2 \lambda_j^2}{c^2 + \tau^2 \lambda_j^2} \\
@@ -1342,39 +1344,38 @@ Regularized horseshoe prior
 &c^2 \sim \text{Inv-gamma}(2,8) ,
 \end{align*}
 
-Relation to student-t distribution. 
-
-Cauchy distribution equivalent to student-t distribution of degree 1. Also, if $x \sim t_{\nu}(0,1) $ 
+We note that the Cauchy distribution is equivalent to Student-t distribution of degree 1. A thick-tailed prior like the Student-t is known to cause divergent problems. Therefore, it is often written as a Gaussian-Inverse Gamma mixture to reduce posterior correlation. That is, $x \sim t_{\nu}(0,1) $ is 
 equivalent to 
-\[ x \sim \mathcal{N}(0,\sigma^2)\]
-\[\sigma^2 \sim \text{Inv-gamma}(0.5,0.5) \]
+\begin{align*}
+& x \sim \mathcal{N}(0,\sigma^2)\\
+&\sigma^2 \sim \text{Inv-gamma}(0.5,0.5) \\
+\end{align*}
+We can further reduce correlation by using a non-centered parametrization:
+\begin{align*}
+& x = z * \sigma \\
+& z \sim \mathcal{N}^+(0,1)\\
+&\sigma^2 \text{Inv-gamma}(0.5,0.5) \\
+\end{align*}
+The joint parameter space then becomes $(z,r_1^l,r_2^l,r_1^g,r_2^g) $,
+where
+\begin{align*}
+& z \sim \mathcal{N}(0,1) \\
+& \{r_1^l\}_j \sim \mathcal{N}^+(0,1) \, \forall j \\
+& \{r_2^l\}_j \sim \text{Inv-gamma}(0.5,0.5) \, \forall j  \\
+& r_1^g \sim \mathcal{N}^+(0,1)  \\
+& r_2^g \sim \text{Inv-gamma}(0.5,0.5)   \\
+& \lambda =  r_1^l \cdot r_2^l \\
+& \tau = r_1^g \cdot r_2^g \\
+& \beta = z \cdot \lambda \tau \\
+\end{align*}
 
-Equivalent to 
-\[ x = z * \sigma \]
-\[ z \sim \mathcal{N}^+(0,1)\]
-\[\sigma^2 \text{Inv-gamma}(0.5,0.5) \]
-
-The parameter space becomes 
-
-\[(z,r_1^l,r_2^l,r_1^g,r_2^g) \]
-Where
-\[ z \sim \mathcal{N}(0,1) \]
-\[ \{r_1^l\}_j \sim \mathcal{N}^+(0,1) \, \forall j \]
-\[ \{r_2^l\}_j \sim \text{Inv-gamma}(0.5,0.5) \, \forall j  \]
-\[ r_1^g \sim \mathcal{N}^+(0,1)  \]
-\[ r_2^g \sim \text{Inv-gamma}(0.5,0.5)   \]
-
-\[ \lambda =  r_1^l \cdot r_2^l \]
-\[ \tau = r_1^g \cdot r_2^g \]
-\[\beta = z \cdot \lambda \tau \]
-
-Because the local and global $r_1$ parameters are constrained to be positive,the unconstrained parameter space becomes $(z,\log r_1^l,r_2^l,\log r_1^g,r_2^g)$
+Because the local and global $r_1$ parameters are constrained to be positive,the final unconstrained parameter space is $(z,\log r_1^l,r_2^l,\log r_1^g,r_2^g)$
 
 \section{self normalizing induced initialization}
-selu, gloriot initialization
+In the neural network literature, the initialization of weights has been observed to influence the final predictive performance of the optimized model. Conventional initializations like the normal distribution, $\text{Uniform}(0,1) $ were replaced by scaled distributions whose scale is dependent on the model structure. For example,
+\[ W \sim \text{Uniform}(\frac{-1}{\sqrt{N_{in}}},\frac{1}{\sqrt{N_{\text{in}}}}) \]
 
-\[ W \sim \text{Uniform}(\frac{-1}{\sqrt{N_{in}}},\frac{1}{\sqrt{N_{in}}}) \]
-
+where $N_\text{in}$ is the number of incoming units from the previous layer. This motivates us to consider priors of this form. Experiment results will be discussed in Chapter 4.
 \section{model selection}
 In a neural network model there are multiple hyperparameters that has to be selected be
 the user. These include the number of hidden layers, the number of hidden
@@ -1453,16 +1454,13 @@ If this is a classification problem of $C$ classes we would evaluate $p(y_{\text
 and a prediction made by drawing from the empirical distribution. 
 \section{Relation to STAN and PyTorch}
 
-PyTorch, a deep learning computational framework contains an automatic differentiation module which is optimized for neural network models. It also offers the option of GPU computing, which STAN does not provide. What makes it stand out amongst other popular deep learning framework as a prime candidate for implementing the NUTS sampler is that it has a dynamic computational graph framework, which allows easy implementation of recursion and backpropogation through it, unlike the static computational graph approach adopted by TensorFlow.
+PyTorch \cite{paszke2017automatic} is a deep learning computational framework which contains an automatic differentiation module optimized for neural network models. It also offers the option of GPU computing, which STAN does not provide. What makes it stand out amongst other popular deep learning framework as a prime candidate for implementing the NUTS sampler is that it has a dynamic computational graph framework, which allows easy implementation of recursion and allows backpropogation through it, unlike the static computational graph approach adopted by TensorFlow.
 
-There is concern that 
-
-why pytorch better than stan. gpu . float vs double 
+There is concern that single precision might not be enough to maintain accuracy of the Hamiltonian during integration, therefore we carried out some experiments comparing the performance of single and double precision numbers on a neural network test problem. Results will be discussed in Chapter 4.
 
 
-
-\chapter{experiments}
-\section{model and data}
+\chapter{Experiments}
+\section{Model and Data}
 
 \includegraphics{mnist1.png}
 show mnist
