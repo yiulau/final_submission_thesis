@@ -1208,7 +1208,7 @@ It's still useful to monitor the convergence of the log posterior and of the E-B
 
 
 \section{gibbs vs joint sampling}
-Hi
+
 In Neal's work he separated the model parameters into groups, and put independent Gaussian-Inv-Gamma priors on each of them. For example, let $W_{ij}$ let be the an entry in the weight matrix connecting the input covariates to the hidden units in the first layer. Then, the prior is 
 
 \[W_{ij} \sim \mathcal{N}(0,\sigma^2), \sigma^{-2} \sim \text{Gamma}(a_0,b_0) \]
@@ -1239,10 +1239,9 @@ A quick note on the parameterization used for the hierarchical prior. The non-ce
 We experimented with joint sampling under both parametrizations and found that non-centered parametrization is necessary for meaningful inference. The HMC also performs better than the Block-Gibbs sampler.
 
 \section{SGHMC}
-tried on mnist
-The idea of simulating Hamilotnian dynamics without the metropolis acceptance step was first experimented in the statistics/machine learning literature by Neal \cite{neal1993bayesian} in a batch MCMC sampler for the posterior distribution of a BNN. He found that with careful selection of the leapfrog stepsize, the biased samples achieve similar predictive performance as the full MCMC samples. Therefore, it seems to reason that for predictive tasks .e.g. regression or classificaiton where observations are abundant, we could 
-use a validation set (predictive performance) to select tuning parameters, hoping to achieve trade off a bit of bias for better predictive performance. 
-Tie in with stochastic gradient descent hamiltonian monte carlo
+The idea of simulating Hamilotnian dynamics without the Metropolis acceptance step was first experimented in the statistics/machine learning literature by Neal \cite{neal1993bayesian} in a batch MCMC sampler for the posterior distribution of a BNN. He found that,with careful selection of the leapfrog step size, the biased samples achieve similar predictive performance as the full MCMC samples. Therefore, it seems to reason that for predictive tasks e.g. regression or classificaiton where observations are abundant, we could 
+use a validation set (predictive performance) to select tuning parameters, hoping to trade off a bit of bias for better predictive performance. 
+
 Another trick that helps to speed up the HMC sampler is data subsampling, also denoted partial gradient in Neal's thesis \cite{neal2012bayesian}.
 Assuming there are $n$ data points, the potential energy function $V(q)$ can be written as 
 \[ V(q) = -\log( \pi(q) \pi(q|data) = -\log(\pi(q)) -\log \pi(q|data) = -\log(\pi(q)) - \sum_{i=1}^n \log \pi(q|data_i) \]
@@ -1250,24 +1249,26 @@ where $\pi(q)$ is the prior density function and $\pi(q|data)$ is the likelihood
 \[ \sum_{i=1}^n \log \pi(q|data_i) \approx \frac{n}{k} \sum_{i \in I} \log \pi(q|data_i) \]
 where $I$ is a subset of $\{1,\dots, n\}$ of size $\frac{k}{n}$. 
 More pratically, if we divide the datapoints into $M$ equally sized subsets. Then for any such subset $S$, the potential energy function can be approximated by 
-\[ V(q) \approx    -\log(\pi(q)) + M \sum_{i \in S} \log(\pi(q|data_i)) \]
+\[ V(q) \approx    -\log(\pi(q)) + M \sum_{i \in S} \log(\pi(q|data_i)) \] Data subsampling and omission of the Metropolis acceptance step are two key features of the stochastic gradient MCMC literature. In an overivew the stochastic gradient MCMC literature 
+the authors summarized it as follows:
+ "If the stationary distribution is not the target distribution, a Metropolis-Hastings (MH) correction can often be applied. Unfortunately, such correction steps require a costly computation on the entire
+dataset. Even if one can compute the MH correction, if the dynamics do not nearly lead to the correct stationary distribution, then the rejection rate can be high even for short simulation periods h. Furthermore, for many stochastic gradient MCMC samplers, computing the probability of the reverse path is infeasible, obviating the use of MH. As such, a focus in the literature is on defining dynamics with the right target distribution, especially in large-data scenarios where MH corrections are computationally burdensome or infeasible.
+"\cite{ma2015complete}
 
-This is similar to the way optimization is usually performed on modern neural network models. 
 In Deep Learning, neural networks are usually fitted by stochastic gradient descent (SGD) \cite{ngiam2011optimization}.
-This is exactly the same as regular gradient descent \cite{wright1999numerical}, except at each weight update a random subset(batch) of datapoints are sampled to be the  observations, and the sequence of stepsizes over the optimiztion process must decay while satisfying the property
+This is a first order method like regular gradient descent \cite{wright1999numerical}, except at each weight update a random subset(batch) of datapoints are sampled to be the  observations, and the sequence of stepsizes over the optimiztion process must decay while satisfying the property
 
 \[ \sum_{t=1}^\infty \epsilon_t = \infty , \sum_{t=1}^\infty \epsilon_t^2 < \infty \]
 
-Theory from the stochastic optimization literature \cite{robbins1951stochastic} guarantees convergence to a local minimum. However, as per the norm in the optimization literature, the convergence property is usually only provable for easier classes of problems (.e.g. convex, quadratic functions) to which the likelihood of neural network models does not belong. Nonetheless, SGD has the advantage of easy implementation and low memory requirement (O(p)), and hence remains the dominant optimization method in deep learning.  
+Theory from the stochastic optimization literature \cite{robbins1951stochastic} guarantees convergence to a local minimum. However, as per the norm in the optimization literature, the convergence property is usually only provable for easier classes of problems (.e.g. convex, quadratic functions) to which the likelihood of neural network models does not belong. Nonetheless, SGD has the advantage of easy implementation and low memory requirement ($O(D)$), and hence remains the predominant optimization method in deep learning.  
 
 The success of SGD lies in being able to avoid evaluating the full likelihood, which has contribution from each data point, at each update. The problems that neural network models tend to be fitted are usually in the high-sample-size, high-dimensional regime, hence a full evaluation would slow down the algorithm significantly. A stochastic gradient extension to MCMC was first experimented by \cite{welling2011bayesian}, where the author proposed to use the following updates :
 
-\[q_{t+1} = q_t + \frac{\epsilon_t}{2} ( \nabla \log p(q_t) + \frac{N}{n} \sum_{i \in D} \nabla \log \pi(x_i|q_t) ) + \eta_t , \eta \sim \mathcal{N}(0,\epsilon_t) \]
+\[q_{t+1} = q_t + \frac{\epsilon_t}{2} ( \nabla \log p(q_t) + \frac{N}{n} \sum_{i \in \mathcal{D}} \nabla \log \pi(x_i|q_t) ) + \eta_t , \eta \sim \mathcal{N}(0,\epsilon_t) \]
 
-where $D$ is a random subset of $\{1,2, \dots, N\}$ of size $n$ sampled at each update of $q$. We assume there are $N$ observations in total. The stepsizes are assumed to decay following the constraint stated above for SGD. The authors recommended setting $\epsilon_t = a(b+t)^{-\gamma} $ with $\gamma \in (0.5,1]$.  
+where $\mathcal{D}$ is a random subset of $\{1,2, \dots, N\}$ of size $n$ sampled at each update of $q$. We assume there are $N$ observations in total. The step sizes are assumed to decay following the constraint stated above for SGD. The authors recommended setting $\epsilon_t = a(b+t)^{-\gamma} $ with $\gamma \in (0.5,1]$.  
 
-The author proved that as the stepsizes $\epsilon_t$ goes to $0$ the samples $\{q_t\}$ converge tothe Langevin dynamics targeting the posterior distribution. Of course, in practice we set lower bound on $\epsilon_t$ and stop decreasing the stepsize once it is small enough. Also, the fact the we are not doing the acceptance-rejection step means there will be a bias in our posterior samples, which unlike the samples drawn from a Metropolis-Hastings sampler, does not decrese to $0$ as we sample from the chain longer.
-
+The author proved that as the step sizes $\epsilon_t$ goes to $0$ the samples $\{q_t\}$ converge tothe Langevin dynamics targeting the posterior distribution. Of course, in practice we set lower bound on $\epsilon_t$ and stop decreasing the stepsize once it is small enough. Also, the fact the we are not doing the acceptance-rejection step means there will be a bias in our posterior samples, which unlike the samples drawn from a Metropolis-Hastings sampler, does not decrese to $0$ as we sample from the chain longer.
 
 
 Simulating from the discrete approximation to a Langevin dynamics is the basis
@@ -1276,7 +1277,7 @@ includes an acceptance-rejection step at each update. This can also be seen as a
 special case of HMC where only one leapfrog step is used ($L=1$). It has been
 demonstrated that HMC is much more efficient than LMC because it avoids random
 walk. (Show $O(D^{4/3})$ vs $O(D^{5/4})$ kind of results). This inspires
-Stochastic Gradient Hamilotian Monte Carlo (SGHMC) ,
+Stochastic Gradient Hamilotian Monte Carlo (SGHMC), 
 which extends HMC the way SGLD extends LMC. 
 
 
@@ -1288,17 +1289,8 @@ Applying MCMC methods to large datasets often involve 2 problems. First, evaluat
 Asympotic normality is also assumed for the application of stochastic gradient mcmc methods to neural network models \cite{welling2011bayesian,chen2014stochastic,ahn2012bayesian,ding2014bayesian,ma2015complete}. Even though neural networks are singular models where the conditions for the central limit theorem do not hold, these methods have shown good predictive performance on a variety of datasets. This is opposite of what one would expect and merits further investigation.
 
 
+Now we introduce the Stochastic gradient Hamiltonian Monte Carlo (SGHMC) \cite{chen2014stochastic}
 
-
-
-
-
-Now we review some important samplers in the stochastic gradient MCMC
-literature. Stochastic Gradient Langevin Dynamics (SGLD) was first introduced by
-\cite{welling2011bayesian}. 
-Stochastic gradient Hamiltonian Monte Carlo
-Got rid of the metropolis acceptance step. No longer sampling from the exact
-distribution.
 
 \begin{algorithm}
     \caption{Stochastic Gradient HMC}
@@ -1310,7 +1302,7 @@ distribution.
         
         \For{$i = 1:L$}{
         $q^{i} = q^{i-1} + v^{i-1}$ \;
-        Sample $z \sim \mathcal{N}(0,2(\alpha-\hat{\beta} \eta)$ \;
+        Sample $z \sim \mathcal{N}(0,2(\alpha-\hat{\beta} \eta))$ \;
         Sample minibatch and calculate $\nabla \tilde{V}(q)$  \;
         $v^{i} = -\eta \nabla \tilde{V}(q) - \alpha v^{i-1} + z$ \;
         }
@@ -1320,49 +1312,17 @@ distribution.
         }
 \end{algorithm}
 
-\cite{chen2014stochastic}
-
-Problem is you are not saving that much computation time if you now end up with a second-order method, and if you want to sample exactly from the target distribution you still have to evaluate the Hastings ratio using the entire dataset.
-
-There is a tendency in the stochastic gradient MCMC literature to omit the Metropolis correction step.
-
-In an overivew the stochastic gradient MCMC literature 
-the authors summarized it as follows:
- "If the stationary distribution is not the target distribution, a Metropolis-Hastings (MH) correction can often be applied. Unfortunately, such correction steps require a costly computation on the entire
-dataset. Even if one can compute the MH correction, if the dynamics do not nearly lead to the correct stationary distribution, then the rejection rate can be high even for short simulation periods h. Furthermore, for many stochastic gradient MCMC samplers, computing the probability of the reverse path is infeasible, obviating the use of MH. As such, a focus in the literature is on defining dynamics with the right target distribution, especially in large-data scenarios where MH corrections are computationally burdensome or infeasible.
-"\cite{ma2015complete}
-
-\cite{ding2014bayesian} 
 
 
-Perhaps if we can quantify the bias somehow we can make it work.
+
 
 
 Stochastic gradient Hamiltonian Monte Carlo \cite{chen2014stochastic}
 relies on the assumption that the gradient of the log target density is normally distributed, which in turn comes from assuming independence of the observations $x$ and appealing to the central limit theorem.
 
-Same CLT assumption about the gradient is made in
-the SGLD paper \cite{welling2011bayesian}.
 
-Some more theory behind SGLD and SGHMC \cite{ma2015complete}
-Stochastic gradient thermostat : an improvement on SGHMC by getting rid of the need to estimate a covariance matrix. 
-
-
-
-
-stochastic gradient quasi netwon langevin dynamics requires extra tuning paramters with little guidance on how to tune them \cite{csimcsekli2016stochastic}
-
-preconditioned sgld introduces bias\cite{li2015preconditioned}.
-
-
-Important points to retain: connection to sgd with momentum. dont know how to
-set $C$ matrix. noise of gradient $B$ not actually estimated in any of the
-examples in the paper claiming as stepsizes goes to zero the noise goes to zero
-as well. The estimation can be done using along diagonal approximation, or  
-low-rank approximations. 
 
 \section{sparsity inducing priors}
-horseshoe priors for model selection.
 
 Horseshoe prior \cite{piironen2017sparsity}
 
@@ -1373,7 +1333,6 @@ Horseshoe prior \cite{piironen2017sparsity}
  &\lambda_j \sim C^+(0,1),\, j = 1,\dots , D, \\
 \end{align*}
 
-Talk about parametrization ncp 
 
 Regularized horseshoe prior 
 
@@ -1417,19 +1376,19 @@ selu, gloriot initialization
 \[ W \sim \text{Uniform}(\frac{-1}{\sqrt{N_{in}}},\frac{1}{\sqrt{N_{in}}}) \]
 
 \section{model selection}
-In a neural network model there are multiple hyperparameters left to be tuned be
+In a neural network model there are multiple hyperparameters that has to be selected be
 the user. These include the number of hidden layers, the number of hidden
-variables in each layer, the choice of activation functions, the use of
-convolutional layers in the case of convolutional neural networks, the prior
-distribution on the weights of the network. Each different combination of these
-hyperparameters constitute a model choice. In the neural network literature,
+units in each layer, the choice of activation function, the use of
+convolutional layers in the case of convolutional neural networks, and the prior
+distribution on the weights of the network, just to name a few. Each different combination of these
+hyperparameters constitute a model choice. In the neural network literature
 usually a holdout test set is used to estimate the test error. The full dataset with observations
 $\{\textbf{y},\textbf{x}\}$ is split randomly into a training set
-$\{\textbf{y}_{train}, \textbf{x}_{train}\}$ and a test set $\{\textbf{y}_{test},
-\textbf{x}_{test} \}$. Each model is fit on the training set and its predictive
+$\{\textbf{y}_{\text{train}}, \textbf{x}_{\text{train}}\}$ and a test set $\{\textbf{y}_{\text{test}},
+\textbf{x}_{\text{test}} \}$. Each model is fitted on the training set and its predictive
 performance evaluated on the test set.
 
-The model selection procedure above is a special case of cross-validation. Suppose there are $n$ data points, in $k$-fold cross validation,
+The model selection procedure above is a special case of cross-validation. Suppose there are $n$ data points. In $k$-fold cross validation,
 $k\le n$, the dataset is split into $k$ disjoint subsets, then repeatedly one
 subset is used as test set and the remaining sets used as training set. The
 extreme case is leave-one-out cross-validation (LOO-CV), where $k=n$. To
