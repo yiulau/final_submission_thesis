@@ -1,6 +1,6 @@
 \documentclass[]{report}
 \usepackage[utf8]{inputenc}
-\usepackage{amsmath,fullpage,amsfonts,amssymb,tikz,geometry,amsthm,pgfplots,relsize,graphicx}
+\usepackage{amsmath,fullpage,amsfonts,amssymb,tikz,booktabs,geometry,amsthm,pgfplots,relsize,graphicx}
 \usepackage[boxruled]{algorithm2e}
 \geometry{margin=0.5in}
 \usetikzlibrary{matrix}
@@ -65,7 +65,7 @@ Initialization strategies where the weights are sampled from a normal distributi
 Bayesian Inference can be simply summarized by the specification of a likelihood and a prior function. Suppose $q \in \mathbb{R}^D$ is the parameter of the likelihood function for observed data $X \sim \pi(x|q)$, we can
 model our uncertainty about it with a prior function $\pi(q)$. Upon observing the data, we can perform Bayesian inference by using information provided by the posterior distribution 
 
-\[ \pi(q | x ) \propto \pi(x | q) \pi(q) \]
+\[ \pi(q | x ) \propto \pi(x | q) \pi(q) .\]
 
 Examples: MAP, marginal posterior estimation, credible intervals. The exact calculation of the normalizing constant $Z = \int \pi(x | q) \pi(q) dq $ is possible for certain convenient functions only, and we must rely on Markov Chain Monte Carlo (MCMC) to calculate posterior quantities. 
 
@@ -113,7 +113,7 @@ The Metropolis-Hastings sampler introduced above is a general algorithm that all
 
 
 We denote the unnormalized density of the target distribution by $\pi(q)$, and the normalizing constant by $Z = \int\pi(q)dq $, and we define the potential energy function $V(q)$ as 
-\[ V(q) =  -\log \pi(q) \]
+\[ V(q) =  -\log \pi(q) .\]
 If we now introduce a kinetic energy function $T(p)$, and define
 the Hamiltonian as the total energy, i.e., sum of the kinetic and potential energy functions, 
 
@@ -127,17 +127,15 @@ has $\pi(q)$ as the marginal density, and thus defines an auxiliary variable met
 density, 
 \[V(q) = -\log(\text{prior}(q) \cdot \text{likelihood}(q|data) ), \]
 and 
-\[T(p) = \sum_{i=1}^D \frac{p_i^2}{m_i} \]
-,which is equivalent to introducing an independent multivariate Gaussian random variable of
+\[T(p) = \sum_{i=1}^D \frac{p_i^2}{m_i}, \]
+which is equivalent to introducing an independent multivariate Gaussian random variable of
 the same dimension as the original distribution as an auxiliary variable. 
 
 Note that there is a physical interpretation of the system. The Hamiltonian uniquely determines the motion of a particle, whose position in space at any time is described by the $q$ coordinates, and whose momentum is described by the $p$ coordinates. Its motion can be described by solving a system of ordinary differential equations in Hamiltonian dynamics, known as Hamilton's equations:
-\begin{align}
+\begin{align*}
     \frac{dq}{dt} &= \frac{\partial H}{\partial p } \\
-    \frac{dp}{dt} &= -\frac{\partial H}{\partial q}
-\end{align}
-
-
+    \frac{dp}{dt} &= -\frac{\partial H}{\partial q}.
+\end{align*}
 To simulate the trajectory of a particle given its initial state $(q_0,p_0)$ one
 would have to solve Hamilton's equations. Unfortunately, there are in general no
 explicit solutions for Hamilton's equations except for trivial models. One would
@@ -147,17 +145,15 @@ possess some nice properties , including reversibility and volume-preservation, 
 stability and accuracy of the approximation over long trajectories, the lack of which significantly reduces the efficiency of the sampler, irrespective of model-related factors which might affect sampling efficiency, like parametrization or posterior correlation.  
 
 For the simple version of HMC where the momentum variable is independent from the position variable, i.e. $\pi(p|q)=\pi(p)$, an easy-to-implement integrator which is both volume-preserving and reversible, with lower approximation error than conventional alternatives for numerically solving like Euler's method, known as the leapfrog integrator, exists and works as follows. At time $t$ of the trajectory, given its current position and momentum, $q(t)$ and $p(t)$,and step size $\epsilon$, we would update the position and momentum at time $t+\epsilon$ by setting 
-
-\begin{align}
+\begin{align*}
     &p(t+\frac{\epsilon}{2}) = p(t) - \frac{\epsilon}{2}\cdot \frac{\partial
     U}{\partial
     q}q(t) \\
     &q(t+\epsilon) = q(t) + \epsilon  \frac{\partial K}{\partial p}(p(t+\epsilon/2))
     \\
     &p(t+\epsilon) = p(t + \frac{\epsilon}{2}) - \frac{\epsilon} {2} \cdot \frac{\partial U}{\partial
-    q}(q(t+\epsilon))
-\end{align}
-
+    q}(q(t+\epsilon)).
+\end{align*}
 One leapfrog step consists of first a half-step update for momentum, a full-step
 for position, then another half-step for momentum. Since the update for momentum
 at time $t+\epsilon$ and time $t+\epsilon + \frac{\epsilon}{2}$ both involve
@@ -168,9 +164,8 @@ $q(t+\epsilon)$, when $L$ leapfrog steps are used performed sequentially with
 p(t+\epsilon + \frac{\epsilon}{2})  
 &= p(t+\epsilon) - \frac{\epsilon}{2} \frac{\partial U}{\partial q }(q(t+\epsilon)) \\
 &= p(t+\frac{\epsilon}{2}) - \frac{\epsilon}{2} \frac{\partial U}{\partial q }(q(t+\epsilon)) - \frac{\epsilon}{2} \frac{\partial U}{\partial q }(q(t+\epsilon)) \\
-&= p(t+\frac{\epsilon}{2}) - \epsilon \frac{\partial U}{\partial q }(q(t+\epsilon))
+&= p(t+\frac{\epsilon}{2}) - \epsilon \frac{\partial U}{\partial q }(q(t+\epsilon)).
 \end{align}
-
 Note, however, we still need $p(t+\frac{\epsilon}{2})$ to perform the full
 steps, so that at least one half step has to be made for the momentum. Also, in
 this alternative implementation of the leapfrog integrator, momentum $p$ is
@@ -203,7 +198,7 @@ this, let's put HMC in the context of an auxillary variable method.
 First, the joint distribution of the position (original) and momentum(auxillary)
 variables is factored into a product of a conditional distribution $\pi(q,p|E)$ and a
 marginal distribution $\pi(E)$
-\[ \pi(q,p) = \pi(q,p|E)\pi(E) \]
+\[ \pi(q,p) = \pi(q,p|E)\pi(E) .\]
 
 Sampling from the joint distribution is done by first sampling from the
 auxillary (energy) distribution $\pi(E)$. In this case randomness comes in only from the
@@ -274,7 +269,7 @@ correct invariant and
 convergence properties \cite{robert2013monte}. 
 
 Second, the Hamiltonian flow $T_s$ is a volume-preserving mapping. That is, 
-\[ \text{Vol}(T_s(A)) = \text{Vol}(A) \]
+\[ \text{Vol}(T_s(A)) = \text{Vol}(A), \]
 where $A$ is a measurable set in the augmented parameter space (e.g.
 $\mathbb{R}^{2d}$) which contains
 the support of 
@@ -321,7 +316,7 @@ From the theory of auxiliary variable sampling we see that there are infinitely
 many marginal distributions for the momentum variable $p$ that would give the
 same target marginal distribution for the original parameter $q$. For example,
 if we restrict 
-\[ p \sim \mathcal{N}(0,M) \]
+\[ p \sim \mathcal{N}(0,M), \]
 where the mass matrix $M$ is positive definite then any choice of $M$ on the support gives a
 different kinetic energy and, by extension,a different Hamiltonian function. In the HMC
 literature, the focus has been on Gaussian kinetic energies, 
@@ -498,16 +493,16 @@ Then the acceptance window is a sequence of $W$ $(q_i,p_i)$ pairs at the end of 
 
 \[ \{(q_{L-W+1},p_{L-W+1}), \dots , (q_L,p_L)\} \]
 
-And the rejection window the $W$ pairs 
-\[ \{(q_0,p_0), \dots, (q_{W-1},p_{W-1})\} \]
+And the rejection window is the $W$ pairs 
+\[ \{(q_0,p_0), \dots, (q_{W-1},p_{W-1})\}. \]
 
-Set the probability of accepting the acceptance window as 
+Then we set the probability of accepting the acceptance window as 
 
-\[ \min (1, \frac{\sum_{i\in A} \pi(q_i,p_i)}{\sum_{j \in R} \pi(q_j,p_j) }) = \min (1, \frac{\sum_{i=L-W+1}^L \pi(q_i,p_i)}{\sum_{i=0}^{W-1}\pi(q_i,p_i)}) \]
+\[ \min (1, \frac{\sum_{i\in A} \pi(q_i,p_i)}{\sum_{j \in R} \pi(q_j,p_j) }) = \min (1, \frac{\sum_{i=L-W+1}^L \pi(q_i,p_i)}{\sum_{i=0}^{W-1}\pi(q_i,p_i)}), \]
 where $A,R$ are the set of indices for pairs belonging to the acceptance window and rejection windows respectively. We are essentially choosing the acceptance window with probability equal to the ratio of the sum of probabilities of each pair in the acceptance window to the sum of probability of pairs in the rejection sequence. 
 
 Once a window has been chosen, we select a pair among the $W$ pairs in the window with probability weighted by $\pi(q_i,p_i)$. That is, suppose the rejection window is chosen, we chose the new state to be $(q_i,p_i)$, $i \in {0,\dots,W-1}$ with probability 
-\[ \frac{\pi(q_i,p_i)}{\sum_{j=0}^{W-1} \pi(q_j,p_j)} \]
+\[ \frac{\pi(q_i,p_i)}{\sum_{j=0}^{W-1} \pi(q_j,p_j)}. \]
 It shows that even when we don't accept the proposal window near the end of the trajectory (acceptance window), there is still a probability of moving the chain away from its current state. This method generates a Markov Chain that leaves the target distribution invariant, and has been applied by Neal in neural network models to increase acceptance probability of the HMC sampler\cite{neal1992improved}. The two reasons for discussing the Window method are first that it has been shown to
 significantly improve sampling from BNN models and second that a special case of
 the method is incorporated in the No U-Turn sampler implemented in STAN. The important idea to retain is the conceptualization of proposing a new sample given the current sample as a two stage process, the first being to sample a trajectory containing the initial state, then sample the next state given the sampled trajectory.
@@ -520,11 +515,9 @@ Starting with an initial state $(q_0,p_0)$ in the phase space. Similar to the Wi
 The reason for doubling the integration lengths is because the algorithm needs to compute a termination criterion at the end of each trajectory. Computing the termination criteria at the ends of the trajectory is necessary for the correctness of the sampler because it maintains reversibility. Suppose $T(\mathbf{t}|z) $ is the transition probability of a trajectory given initial state $z$, and $\mathcal{L}^L_{z,z'}$ is the set of all trajectories of length $L$ containing the points $z$ and $z'$. Computing the termination criteria after each integration step ensures
 
 \[T(\mathbf{t}|z) = T(\mathbf{t}|z') , \forall \mathbf{t} \in \mathcal{L}^L_{z,z'} . \]
-
 It is important to remember that conceptually what we are doing when moving from an initial state $z$ to a final state $z'$ while exploring the energy level set is a two-stage process: first sample a trajectory containing the initial state, then sample the final state given the trajectory.  Thus, the transition probability is 
 
-\[T(z'|z) = \sum_{\mathbf{t}} T(z'|\mathbf{t}) T(\mathbf{t}|z) \]
-
+\[T(z'|z) = \sum_{\mathbf{t}} T(z'|\mathbf{t}) T(\mathbf{t}|z). \]
 This step acts as a checking mechanism to make sure that, starting from any state of the trajectory, the expansion could reach any other state in the trajectory. To do this care must be taken when doubling the trajectory. The algorithm for expanding the trajectory works by recursively doubling binary trees, where states in the trajectory are leaves in the tree. Each doubling of the trajectory is equivalent to appending a binary tree of the same size to the current tree. Only the two ends of the new tree need to be checked for the termination criterion all the subtrees have been checked by recursion.
 It means that, although in theory one can randomly integrate back and worth, adding one state to the trajectory at a time like the windowed HMC, to do this would necessitate  computing the termination criterion $O(L^2)$ times, whereas with the doubling only $O(\log L)$ times are required. 
 
@@ -608,10 +601,6 @@ $ w' \leftarrow \pi(q',p') $ \;
 
 \[ \sum_{z} T(z'| z) \pi(z) \mathbb{I}(z \in \mathbf{t}) = \pi(z') \mathbb{I}(z' \in \mathbf{t}) \]
 
-
-
-
-
 \section{NUTS Termination Criteria}
 
 \includegraphics[scale=0.5]{cropped_nuts_image}
@@ -619,11 +608,10 @@ $ w' \leftarrow \pi(q',p') $ \;
 Even though the No-U-Turn sampler is named after its termination criterion, which can be described broadly as terminating whenever the trajectory starts to make a u-turn, the criterion itself is a rather crude heuristics that is not justified by any theory. The main advance of the paper is the devise of a correct and efficient way to construct dynamic leapfrog trajectories by recursively building binary trees. The termination criterion can be further improved, and STAN indeed adopts NUTS criteria more general than the original and others where the u-turn aspect is done away with. 
 
 First we look further into the No-U-Turn termination criterion. From linear algebra, we know that $x^Ty > 0 $ can be interpreted to say that those two vectors form an acute angle. Then the No-U-Turn criterion 
-
-\[p_{+}^T (q_+ -q_-) < 0 \Leftrightarrow p_+^T (q_- - q_+) > 0 \]
-
-\[p_{-}^T (q_+ -q_-) < 0 \Leftrightarrow -p_-^T (q_+ - q_-) > 0 \]
-
+\begin{align*}
+&p_{+}^T (q_+ -q_-) < 0 \Leftrightarrow p_+^T (q_- - q_+) > 0 \\
+&p_{-}^T (q_+ -q_-) < 0 \Leftrightarrow -p_-^T (q_+ - q_-) > 0 \\
+\end{align*}
 can be explained visually by figures (a) and (b). Figure (a) shows when the trajectory does not satisfy the terminating criterion and expansion continues. Figure (b) shows when the criterion is satisfied and expansion stops. This idea is generalized in \cite{betancourt2013generalizing}, where the dot product 
 \begin{align*}
  p_{+}^T (q_{+} -q_{-})  
@@ -633,8 +621,7 @@ can be explained visually by figures (a) and (b). Figure (a) shows when the traj
  &= p^{\#}_{+}  \int_{t=0}^{T} p(t)dt \\
  &\approx p^{\#}_{+} \sum_{i=0}^n p(t_{k_i}) \\
  &=  p^{\#}_{+} \sum_{z \sim \mathbf{t}} p(z) \\
-\end{align*}
- 
+\end{align*} 
 is rewritten to accommodate variations of the HMC sampler where matrices other than the identity are set as the mass matrix. It is in fact the version of the terminating criterion implemented currently in STAN. Note that in this implementation the criterion is no longer dependent on the position variables $q$. The algorithm for this version of NUTS needs to be adjusted slightly to include a term accumulating the sum of $p$ variables across the subtrees. Pseudocode is provided below.
 \begin{algorithm}
   	\DontPrintSemicolon
@@ -706,20 +693,19 @@ $s' = \text{True}$ \;
 The Exhaustive Hamiltonian Monte Carlo (XHMC) termination criterion  relies on a significant amount of differential geometry for its justification. For example one can easily finds parts of the paper that read "an exhaustion ,$T_{\delta}(z)$, is the family of integration times in the contangent bundle such that the temporal change of the virial along the resulting Hamiltonian flow is uniformly bounded". Understanding fully the mathematics behind it is beyond the scope of this thesis. From my understanding it is a proxy to to monitor the return of a leapfrog trajectory to a neighbourhood around its initial point after having explored the energy level set. With a smaller threshold meant to push the neighbourhood smaller, hence forcing the exploration to continue for longer. Luckily the numerical quantities that needs to be computed are quite easily understood. In the original paper \cite{betancourt2016identifying}, the author showed improved sampling over the NUTS criterion as indicated by increased effective sample size on correlated distributions. 
 
 The exhaustive termination criterion is defined as follows: given a threshold $\delta > 0$, terminates expansion of the trajectory when 
-\[  \Bigl |\frac{1}{|\mathbf{t}|} \sum_{z \in \mathbf{t}} \mathbb{P}[z | \mathbf{t}] \frac{dG}{dt}(z) \Bigr | < \delta \]
-
+\[  \Bigl |\frac{1}{|\mathbf{t}|} \sum_{z \in \mathbf{t}} \mathbb{P}[z | \mathbf{t}] \frac{dG}{dt}(z) \Bigr | < \delta, \]
 where 
-\[ \mathbb{P}[z| \mathbf{t}] = \frac{\exp^{-H(z)}}{\sum_{z' \in \mathbf{t}} \exp^{-H(z')}} \]
-
+\[ \mathbb{P}[z| \mathbf{t}] = \frac{\exp^{-H(z)}}{\sum_{z' \in \mathbf{t}} \exp^{-H(z')}}. \]
 The sum can be interpreted as a numerical approximation of an integration over the Hamiltonian flow $\phi_{t}^H(z)$
 
-\[ \lim_{|\mathbf{t}| \rightarrow \infty} \frac{1}{|\mathbf{t}|} \sum_{z \in \mathbf{t}} \mathbb{P}[z | \mathbf{t}] \frac{dG}{dt}(z)  = \lim_{\mathcal{T} \rightarrow \infty} \frac{1}{\mathcal{T}} \int_0^\mathcal{T} dt \frac{dG}{dt} \circ \phi_{t}^H(z) = 0 \]
+\[ \lim_{|\mathbf{t}| \rightarrow \infty} \frac{1}{|\mathbf{t}|} \sum_{z \in \mathbf{t}} \mathbb{P}[z | \mathbf{t}] \frac{dG}{dt}(z)  = \lim_{\mathcal{T} \rightarrow \infty} \frac{1}{\mathcal{T}} \int_0^\mathcal{T} dt \frac{dG}{dt} \circ \phi_{t}^H(z) = 0. \]
 
+For HMC samplers the virial can be simplified as follows:
 \begin{align*}
  \frac{dG}{dt} &= \frac{d}{dt}\sum_{i=1}^D q_i p_i \\
  &= \sum_{i=1}^D p_i \frac{dq_i}{dt} + q_i \frac{dp_i}{dt} \\
  &= \sum_{i=1}^D [M^{-1}p]_i p_i - q_i \frac{\partial V}{\partial q_i} \\
- &= 2 T(p) - q \cdot \frac{\partial V}{\partial q} \\
+ &= 2 T(p) - q \cdot \frac{\partial V}{\partial q}.\\
 \end{align*}
 
 \begin{algorithm}
@@ -932,8 +918,6 @@ s_j^2 = \frac{1}{n-1} \sum_{i=1}^n (\psi_{ij} - \overline{\psi}_{\cdot j } )^2.\
 & \hat{\text{var}}^+(\psi|y) = \frac{n-1}{n} W + \frac{1}{n} B \\
 & \hat{R} = \sqrt{\frac{\hat{\text{var}}^+(\psi|y)}{W}}. \\
 \end{align*}
-
-
 The Effective Sample Size (ESS) takes into account the autocorrelation inherent in MCMC samples and can be interpreted to represent the equivalent number of independent draws that a set of MCMC draws can replace, for example in calculating expectations and various posterior quantities. The ESS has been defined  differently in the literature (quote), the Stan implementation requires multiple chains and has the advantage that it mitigates the danger of overestimating the ESS when the chain has not converged. It is defined as 
 \[n_{\text{eff}}  = \frac{mn}{1 + 2 \sum_{t=1}^\infty \rho_t}, \]
 
@@ -956,7 +940,7 @@ Below we list a number of numerical "tricks" that are nonetheless essential for 
 First, there is the logsumexp function, which enables numerical stable addition of probability functions on the log scale. While users of traditonal MCMC samplers like the Random Walk Metropolis Hastings should be familiar with the idea of computing the Hastings ratio on the log scale to avoid division of probabilities, the NUTS expansion requires updating the probability of the current state by adding the probability from the new subtree. So, instead of doing 
 \[ w = w + w' \] 
 we would instead have
-\[ \log w = \text{logsumexp}(\log w, \log w' ) \]
+\[ \log w = \text{logsumexp}(\log w, \log w' ). \]
 
 \begin{algorithm}
 \DontPrintSemicolon
@@ -1121,7 +1105,6 @@ p_Y(y) = p_X(f^{-1}(y)) \ |\frac{d}{dY} f^{-1}(y) |\\
 p_Y(y) = p_X(\exp(y)) \cdot \exp(y) \\
 \log p_Y(y) = \log p_X(\exp(y)) + y \\
 \end{align*}
-
 When calculating the ESS, the variogram $V_t$ involves a summation term of the form $\sum_{n=t+1}^N (\theta_{n} - \theta_{n-t})^2$, which can be time-consuming when carried by brtute force. From discrete mathematics we know that the Fast Fourrier Transform (FFT) can be used to speed up calculation for sums of the form 
 
 \[ \sum_{n=t+1}^N \theta_n \theta_{n-t}.  \]
@@ -1133,7 +1116,6 @@ We can rewrite the sum into a linear combination of the desired form:
  &= \sum_{n=t+1}^N \theta_n^2 -2 \sum_{n=t+1}^N \theta_n \theta_{n-t} + \sum_{n=t+1}^N \theta_{n-t}^2 \\ 
   &= \sum_{n=t+1}^N  \theta_n^2 \cdot 1  -2 \sum_{n=t+1}^N \theta_n \theta_{n-t} + \sum_{n=t+1}^N 1 \cdot \theta_{n-t}^2 \\
 \end{align*}
-
 Finally we discuss a useful heuristics for debugging MCMC samplers. Suppose we have coded a sampler and it seems to run smoothly without a hitch, one might want to use it to sample from a distribution with known mean and covariance, and see if the MCMC samples converge to them in the first and second moments. However, since the empirical mean and covariance will never match exactly the true values, how should we decide if the estimates are close enoguh?
 
 
@@ -1207,7 +1189,7 @@ It's still useful to monitor the convergence of the log posterior and of the E-B
 
 
 
-\section{gibbs vs joint sampling}
+\section{Sampling for the Hyperparameter}
 
 In Neal's work he separated the model parameters into groups, and put independent Gaussian-Inv-Gamma priors on each of them. For example, let $W_{ij}$ let be the an entry in the weight matrix connecting the input covariates to the hidden units in the first layer. Then, the prior is 
 
@@ -1333,7 +1315,6 @@ It proceeds as follows:
  &\beta_j \sim \mathcal{N}(0,\tau^2\lambda^2) \\
  &\lambda_j \sim C^+(0,1),\, j = 1,\dots , D, \\
 \end{align*}
-
 where $C^+(0,1)$ is a half-Cauchy distribution with mean zero and variance one. The horseshoe prior is usually applied to regression problems where the number of samples were significantly fewer than the number of covariates and can be useful for models that require regularization, like neural networks \cite{ghosh2017model}.
 
 However, the horseshoe prior sometimes causes divergent behaviour during sampling. The regularized horseshoe prior \cite{piironen2017sparsity} fixes this problem and is described below:
@@ -1341,20 +1322,19 @@ However, the horseshoe prior sometimes causes divergent behaviour during samplin
 \begin{align*}
 &\beta_j | \lambda_j, \tau, c \sim \mathcal{N}(0,\tau^2 \tilde{\lambda}_j^2) ,\, \tilde{\lambda}_j^2 = \frac{c^2 \lambda_j^2}{c^2 + \tau^2 \lambda_j^2} \\
 &\lambda_j \sim C^+(0,1),\, j = 1,\dots,D\\
-&c^2 \sim \text{Inv-gamma}(2,8) ,
+&c^2 \sim \text{Inv-gamma}(2,8) .
 \end{align*}
-
 We note that the Cauchy distribution is equivalent to Student-t distribution of degree 1. A thick-tailed prior like the Student-t is known to cause divergent problems. Therefore, it is often written as a Gaussian-Inverse Gamma mixture to reduce posterior correlation. That is, $x \sim t_{\nu}(0,1) $ is 
 equivalent to 
 \begin{align*}
 & x \sim \mathcal{N}(0,\sigma^2)\\
-&\sigma^2 \sim \text{Inv-gamma}(0.5,0.5) \\
+&\sigma^2 \sim \text{Inv-gamma}(0.5,0.5). \\
 \end{align*}
 We can further reduce correlation by using a non-centered parametrization:
 \begin{align*}
 & x = z * \sigma \\
 & z \sim \mathcal{N}^+(0,1)\\
-&\sigma^2 \text{Inv-gamma}(0.5,0.5) \\
+&\sigma^2 \text{Inv-gamma}(0.5,0.5). \\
 \end{align*}
 The joint parameter space then becomes $(z,r_1^l,r_2^l,r_1^g,r_2^g) $,
 where
@@ -1366,17 +1346,26 @@ where
 & r_2^g \sim \text{Inv-gamma}(0.5,0.5)   \\
 & \lambda =  r_1^l \cdot r_2^l \\
 & \tau = r_1^g \cdot r_2^g \\
-& \beta = z \cdot \lambda \tau \\
+& \beta = z \cdot \lambda \tau . \\
 \end{align*}
-
 Because the local and global $r_1$ parameters are constrained to be positive,the final unconstrained parameter space is $(z,\log r_1^l,r_2^l,\log r_1^g,r_2^g)$
 
-\section{self normalizing induced initialization}
+
+Here we would briefly introduce the Automatic Relevance Determination (ARD) priors. It is a general way of assigning priors to the neural network weights that, along with a proper choice of prior, should allow the NN's to regulate excess hidden units, and hence obviating the need for fixing the number of hidden units.
+
+An ARD prior puts independent priors of the same distribution on the group of weights entering each hidden unit.
+Suppose $W_{i\ell}$ are the weights connecting into the $i$th hidden unit in the $\ell$'th layer of a NN. For example, if there are $n$ incoming units connecting to $m$ hidden units and if the prior in question is Gaussian Inv-Gamma,then we have 
+\begin{align*}
+& W_{i\ell} \in \mathbb{R}^n , \forall i \in \{1,\dots,m\}\\ 
+& W_{i\ell} \sim \mathcal{N}(0,\sigma^2) \\
+& \sigma_i^2  \sim \text{Inv-Gamma}(a_0,b_0), \forall i \in \{1,\dots,m\} . \\
+\end{align*}
+\section{Scaled Initialization}
 In the neural network literature, the initialization of weights has been observed to influence the final predictive performance of the optimized model. Conventional initializations like the normal distribution, $\text{Uniform}(0,1) $ were replaced by scaled distributions whose scale is dependent on the model structure. For example,
 \[ W \sim \text{Uniform}(\frac{-1}{\sqrt{N_{in}}},\frac{1}{\sqrt{N_{\text{in}}}}) \]
 
 where $N_\text{in}$ is the number of incoming units from the previous layer. This motivates us to consider priors of this form. Experiment results will be discussed in Chapter 4.
-\section{model selection}
+\section{Model Selection}
 In a neural network model there are multiple hyperparameters that has to be selected be
 the user. These include the number of hidden layers, the number of hidden
 units in each layer, the choice of activation function, the use of
@@ -1469,13 +1458,25 @@ In the experiments that follow we would focus entirely on classification, becaus
 
 All of the experiments that follow, unless stated otherwise, use a neural network with one hidden layer and the hyperbolic tangent function as activation function. We omit separate biases weights to simplify the presentation. It does not reduce the representational capacity of the model by too much because one of the hidden units can act as the bias by learning to represent a constant. The simplified model has two groups of weights,namely the input-to-hidden weights of dimension $N_{\text{in}} \times N_{\text{hidden}}$, and the hidden-to-output weights of dimension $N_{\text{hidden}} \times N_{\text{out}} $, where $N_{\text{in}},N_{\text{hidden}},N_{\text{out}}$, are the number of input covariates, hidden units and output units respectively. For example, for the simplified MNIST digits dataset described above, we have $N_{\text{in}} = 64 $ and $N_{\text{out}} = 10 $.
 
-\section{Baseline}
+\section{Comparison with Early Stopping Committees}
 
 In the first experiment we compare the Bayesian framework to an early stopping committee of neural networks, a frequentist framework observed to serve as a good baseline. Early stopping is an optimization technique whereby training is stopped when the predictive accuracy on a holdout validate set ceases to improve. A group of neural networks initialized with different random seeds, after training by early stopping,  would then combine their predictions by simple averaging. 
 
+\begin{table}[]
+\centering
+\begin{tabular}{@{}rlllll@{}}
+\multicolumn{1}{l}{}                            & \multicolumn{5}{c}{Test error} \\ \midrule
+Method\textbackslash{}Number of ensemble points & 2    & 5   & 50  & 1000 & 2000 \\ \midrule
+Early Stopping Committee of NNs                 & 0.1  & 0.5 & 0.5 & 0.13 & 0.3  \\ \midrule
+BNN                                             & \multicolumn{5}{c}{0.2}        \\ \bottomrule
+\end{tabular}
+\caption{Compare the predictive accuracy of the Bayesian Neural Network with Early Stopping Committees of different sizes.}
+\label{my-label}
+\end{table}
+
 bnn show better predictive performance 
 though single early stopping sometimes perform at about the same predictive performance inconsistent across seeds 
-\section{gnuts v xhmc}
+\section{GNUTS v.s. XHMC}
 In the following experiment we compare the generalized NUTS termination criterion and the exhaustive termination criterion (XHMC). We found that XHMC usually gives higher min ESS on account of not prematurely terminating expansion as GNUTS does. Note the higher number of average leapfrog steps taken compared to GNUTS.  However, the increased ESS does not translate the to a huge improvement in predictive accuracy. 
 
 \section{Gibbs Sampling v.s. Joint Sampling for Hyperparameter }
@@ -1487,7 +1488,7 @@ which is equivalent to a student-t prior of degree 1 on $W_{ij}$. Both centered 
 
 Focusing only on the variance parameter $\sigma^2$, we see that the CP encounters many divergent transitions during sampling and results in a too low ESS for meaningful inference. In comparison the NCP gives no divergent transitions and has a reasonable ESS relative to the total number of samples. Compared to the  estimates generated by Gibbs sampling, joint sampling estimates have slightly lower effective sample size, but it does not seem to affect predictive accuracy. 
 
-\section{sghmc}
+\section{SGHMC}
 The SGHMC has several extra tuning parameters other than the step size $\epsilon$ and number of leapfrogs $L$ that it inherits from the original HMC sampler. To reduce the number of parameters to tune, we fix these parameters (list them here) at the default values used in the experiments though they are not sufficiently motivated. The parameters remain to be tuned are these. We found that the SGHMC can perform similarly to the HMC although it requires having the right tuning parameter. Because the Metropolis acceptance step is omitted, there is no mechanism to avoid the chain from diverging into a low probability zone in the parameter space. 
 
 
@@ -1495,26 +1496,42 @@ The SGHMC has several extra tuning parameters other than the step size $\epsilon
 \section{Scaled Priors}
 In this experiment, we compared the two normal priors with fixed variances. One is fixed at 1, the other is set to $\frac{1}{N_{\text{hidden}}}$. While we found no difference in their ESS's, the predictive accuracy from the standard normal prior is clearly better. 
 
-\section{adapt cov}
+\section{Covariance Adaptation}
 Here we explore whether its necessary or indeed useful to condition the HMC by the full covariance matrix of the target distribution. We experimented with a number of different priors and found that not only is adapting the full matrix more time consuming, it also slows sampling to a halt and destroys any hope of meaningful inference. We attribute this result to the singular nature of neural network models.
 
-\section{num layers}
+\section{Number of Layers}
 Now we fix the prior to be a standard normal distribution and vary the number of layers. We found no evidence of increasing sampling difficulty with increased number of layers. 
 
-\section{float v double}
+\section{Float v.s. Double Precision}
 The following two experiments compare single and double precision for HMC sampling on this neural network model. The first experiment looks at the stability of the leapfrog trajectory. First, a number of points from the posterior distribution are collected by a sampler in double precision, they are each augmented by an independent momentum drawn from a standard normal distribution. Then the list of $(q_i,p_i)$ points are cast into single precision. The two sets of points are then integrated forward for a fixed number of iterations with a reasonably conservative step size and we compare the difference in Hamiltonian between the start and end point of the trajectory.
 
 The second experiment looks at the difference in test error. 
 
 In both experiments we don't find a significant difference between the two, suggesting that the transition to single precision should not harm predictive accuracy and correctness. 
-\section{HMC v NUTS}
-better sampling performance by nuts >> better prediction 
-\section{waic}
-fails to predict best number of units . maybe bad mixing . talk about loo. psis
-\section{sparsity inducing priors}
-none of them predicts as well as normal prior 
-horsehose type maybe  due to poor mixing 
-but even gaussian inv gamma don't seem to do so well either
+\section{Static  v.s. Dynmaic HMC}
+In the following experiment ran a static HMC sampler over a grid of tuning parameter values, and compare the samples generated by the best combination with those generated by a dynamic HMC (NUTS). 
+
+
+\section{WAIC for Model Selection}
+Next, we would test the WAIC's ability to select the number of hidden units in a single hidden-layer neural network model. The true test error is estimated by a holdout test set. Different numbers of hidden units are tested and their WAIC computed by dynamic HMC. We found that the model with the lowest WAIC does not match those selected by holdout test error. 
+
+The failure of the WAIC to select the best model might be explained by the poor mixing of the importance sampler when estimating the WAIC, which was noted in a review of predictive checks for Bayesian inference \cite{vehtari2017practical} . 
+\section{Priors}
+
+The horseshoe prior can be applied two ways on the weights in a layer. The first is to consider the weights as one long vector and assign the prior as one would in a regression problem. The second is an ARD-type approach, where a local variance is assigned for each hidden unit and one global variance for the entire layer. More specifically, suppose the layer in question has $n$ input units and $m$ hidden units. Then, the horseshoe ARD prior can be defined as follows 
+\begin{align*}
+& W_{i,\cdot} \sim \mathcal{N}(0,\lambda_i^2\tau^2) , \forall i \sim \{1,\dots, m \} \\
+& \lambda_i^2 \sim C^+(0,1) \\
+& \tau^2 \sim C^+(0,1), \\
+\end{align*}
+where $ W_{i,\cdot}  $ are the weights entering the $i$'th hidden unit. This is how the horseshoe prior was used for model selection in \cite{ghosh2017model}. Similarly we can define the regularized horseshoe ARD prior as 
+\begin{align*}
+& W_{i,\cdot} \sim \mathcal{N}(0,\tilde{\lambda}_i^2\tau^2) , \, \tilde{\lambda}_j^2 = \frac{c^2 \lambda_j^2}{c^2 + \tau^2 \lambda_j^2}  \forall i \sim \{1,\dots, m \} \\
+& \lambda_i^2 \sim C^+(0,1) \\
+& \tau^2 \sim C^+(0,1) \\
+&c^2 \sim \text{Inv-gamma}(2,8).\\
+\end{align*}
+We found that while the regularized horseshoe prior performs better than the original horseshoe prior in terms of having zero divergent transitions, none of the horseshoe priors can be said to induce great sampling efficiency, as both result in models whose posterior distribution are difficult to sample, resulting in low ESS. What's more is that even the Normal Inv-Gamma prior does not give better predictive performance than the standard normal prior, which we have already seen in earlier experiments comparing Gibbs sampling to joint sampling for the hyperparameter. 
 
 \section{Conclusion}
 \chapter{Conclusion}
