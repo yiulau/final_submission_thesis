@@ -1477,18 +1477,18 @@ BNN                                             & \multicolumn{5}{c}{0.2}       
 bnn show better predictive performance 
 though single early stopping sometimes perform at about the same predictive performance inconsistent across seeds 
 \section{GNUTS v.s. XHMC}
-In the following experiment we compare the generalized NUTS termination criterion and the exhaustive termination criterion (XHMC). We found that XHMC usually gives higher min ESS on account of not prematurely terminating expansion as GNUTS does. Note the higher number of average leapfrog steps taken compared to GNUTS.  However, the increased ESS does not translate the to a huge improvement in predictive accuracy. 
+In the following experiment we compare the generalized NUTS termination criterion and the exhaustive termination criterion (XHMC). We found that XHMC is capable of generating as efficiently as GNUTS. 
 
 \begin{table}[]
 \centering
 \begin{tabular}{@{}llll@{}}
 \toprule
           & Test Error & Min ESS & Median ESS \\ \midrule
-XHMC 0.1  & 0.1        & 12      & 13         \\ \midrule
-XHMC 0.2  & 0.1        & 21      & 24         \\ \midrule
-XHMC 0.5  & 0.12       & 244     & 244        \\ \midrule
-XHMC 0.05 & 0.4        & 24      & 241        \\ \midrule
-GNUTS     & 0.12       & 231     & 233        \\ \bottomrule
+XHMC $\delta=0.01$  & 25.6       & 681     & 1330       \\ \midrule
+XHMC$\delta=0.05$  & 25.8       & 738     & 1346       \\ \midrule
+XHMC $\delta=0.1$ & 28.6       & 396     & 1351       \\ \midrule
+XHMC $\delta=0.2$ & 23.4       & 822    & 1324        \\ \midrule
+GNUTS     & 26.0       & 682     & 1369       \\ \bottomrule
 \end{tabular}
 \caption{XHMC vs GNUTS}
 \label{my-label}
@@ -1508,10 +1508,10 @@ Focusing only on the variance parameter $\sigma^2$, we see that the CP encounter
 \centering
 \begin{tabular}{@{}lllll@{}}
 \toprule
-              & test error & sigma2 ess & min ess & medium ess \\ \midrule
-Gibbs sampler & 0.1        & 22         & 23      & 2334       \\ \midrule
-Joint- CP     & 0.134      & 234        & 234     & 41         \\ \midrule
-Joint - NCP   & 0.123      & 21         & 143     & 123        \\ \bottomrule
+              & test error & sigma2 ess & Min ESS & Median ESS \\ \midrule
+Gibbs sampler & 88.4        & 4.38         & 1.29      & 45.3       \\ \midrule
+Joint- CP     & 25.8      & 4.86       & 4.69     & 1037         \\ \midrule
+Joint - NCP   & 28.4      & 504         & 434     & 1333        \\ \bottomrule
 \end{tabular}
 \caption{Gibbs vs Joint}
 \label{my-label}
@@ -1520,16 +1520,121 @@ Joint - NCP   & 0.123      & 21         & 143     & 123        \\ \bottomrule
 \section{SGHMC}
 The SGHMC has several extra tuning parameters other than the step size $\epsilon$ and number of leapfrogs $L$ that it inherits from the original HMC sampler. To reduce the number of parameters to tune, we fix these parameters (list them here) at the default values used in the experiments though they are not sufficiently motivated. The parameters remain to be tuned are these. We found that the SGHMC can perform similarly to the HMC although it requires having the right tuning parameter. Because the Metropolis acceptance step is omitted, there is no mechanism to avoid the chain from diverging into a low probability zone in the parameter space. 
 
+\begin{table}[]
+\begin{minipage}{0.5\linewidth}
+\centering
+\begin{tabular}{@{}lllll@{}}
+\toprule
+\multicolumn{5}{c}{Test error}                  \\ \midrule
+     & eta = 0.1 & eta = 1 & eta = 0.5 & eta =3 \\ \midrule
+L=1  & 0.1       & 0.2     & 0.12      & 0.2    \\ \midrule
+L=2  & 0.21      & 0.12    & 0.213     & 0.123  \\ \midrule
+L =3 & 0.24      & 0.123   & 0.24      & 0.21   \\ \midrule
+L=4  & 0.42      & 0.4     & 0.21      & 0.21   \\ \bottomrule
+\end{tabular}
+\caption{My caption ep = 2}
+\end{minipage}
+\begin{minipage}{0.5\linewidth}
+\centering
+\begin{tabular}{@{}lllll@{}}
+\toprule
+\multicolumn{5}{c}{Test error}                  \\ \midrule
+     & eta = 0.1 & eta = 1 & eta = 0.5 & eta =3 \\ \midrule
+L=1  & 0.1       & 0.2     & 0.12      & 0.2    \\ \midrule
+L=2  & 0.21      & 0.12    & 0.213     & 0.123  \\ \midrule
+L =3 & 0.24      & 0.123   & 0.24      & 0.21   \\ \midrule
+L=4  & 0.42      & 0.4     & 0.21      & 0.21   \\ \bottomrule
+\end{tabular}
+\caption{My caption ep = 1}
+\end{minipage}
+\begin{minipage}{0.5\linewidth}
+\centering
+\begin{tabular}{@{}lllll@{}}
+\toprule
+\multicolumn{5}{c}{Test error}                  \\ \midrule
+     & eta = 0.1 & eta = 1 & eta = 0.5 & eta =3 \\ \midrule
+L=1  & 0.1       & 0.2     & 0.12      & 0.2    \\ \midrule
+L=2  & 0.21      & 0.12    & 0.213     & 0.123  \\ \midrule
+L =3 & 0.24      & 0.123   & 0.24      & 0.21   \\ \midrule
+L=4  & 0.42      & 0.4     & 0.21      & 0.21   \\ \bottomrule
+\end{tabular}
+\caption{My caption ep = 3}
+\end{minipage}
+\begin{minipage}{0.5\linewidth}
+\centering
+\begin{tabular}{@{}lllll@{}}
+\toprule
+\multicolumn{5}{c}{Test error}                  \\ \midrule
+     & eta = 0.1 & eta = 1 & eta = 0.5 & eta =3 \\ \midrule
+L=1  & 0.1       & 0.2     & 0.12      & 0.2    \\ \midrule
+L=2  & 0.21      & 0.12    & 0.213     & 0.123  \\ \midrule
+L =3 & 0.24      & 0.123   & 0.24      & 0.21   \\ \midrule
+L=4  & 0.42      & 0.4     & 0.21      & 0.21   \\ \bottomrule
+\end{tabular}
+\caption{My caption ep = 4}
+\end{minipage}
+\end{table}
 
 
 \section{Scaled Priors}
 In this experiment, we compared the two normal priors with fixed variances. One is fixed at 1, the other is set to $\frac{1}{N_{\text{hidden}}}$. While we found no difference in their ESS's, the predictive accuracy from the standard normal prior is clearly better. 
 
+\begin{table}[]
+\begin{minipage}{0.5\linewidth}
+\centering
+\begin{tabular}{@{}llll@{}}
+\toprule
+            & Test Error & Min ESS & Median ESS \\ \midrule
+Hidden units = 35 & 23.4 (64.2)        & 358 (683)     & 1348 (1337)       \\ \midrule
+Hidden units = 50 & 22.8 (65.0)        & 952 (66)      & 1358 (1348)         \\ \midrule
+Hidden units = 65 & 22.0 (69.6)      & 610 (660)      & 1352 (1324)        \\ \bottomrule
+\end{tabular}
+\caption{My caption scaled}
+\end{minipage}
+\begin{minipage}{0.5\linewidth}
+\centering
+\begin{tabular}{@{}llll@{}}
+\toprule
+            & Test error & min ess & median ess \\ \midrule
+num unit 14 & 0,1        & 0.2     & 0212       \\ \midrule
+num unit 20 & 0,2        & 22      & 22         \\ \midrule
+num unit 40 & 0,2        & 12      & 124        \\ \bottomrule
+\end{tabular}
+\caption{My caption unscaled}
+\end{minipage}
+\end{table}
+
 \section{Covariance Adaptation}
 Here we explore whether its necessary or indeed useful to condition the HMC by the full covariance matrix of the target distribution. We experimented with a number of different priors and found that not only is adapting the full matrix more time consuming, it also slows sampling to a halt and destroys any hope of meaningful inference. We attribute this result to the singular nature of neural network models.
 
+\begin{table}[]
+\centering
+\begin{tabular}{@{}lllll@{}}
+\toprule
+                     & Test error & min ess & median ess & compute time \\ \midrule
+normal               & 0,1 (3)    & 0.2 (3) & 0212 (3)   & 12 (3)       \\ \midrule
+normal inv gamma     & 0,2 (0.3)  & 22 (3)  & 22 (3)     & 12 (3)       \\ \midrule
+normal inv gamma ard & 0,2 (0.3)  & 12 (3)  & 124 (3)    & 12 (2)       \\ \bottomrule
+\end{tabular}
+\caption{My caption}
+\label{my-label}
+\end{table}
+
 \section{Number of Layers}
 Now we fix the prior to be a standard normal distribution and vary the number of layers. We found no evidence of increasing sampling difficulty with increased number of layers. 
+
+\begin{table}[]
+\centering
+\begin{tabular}{@{}lllll@{}}
+\toprule
+            & Test Error & Min ESS & Median ESS & Dimension \\ \midrule
+Num Layers = 2 & 16.4    & 284 & 1596       & 12        \\ \midrule
+Num Layers = 3  & 16.8  & 246 & 1418     & 12        \\ \midrule
+Num Layers = 4  & 49.8  & 402 & 1310    & 12        \\ \bottomrule
+\end{tabular}
+\caption{Numb Layers}
+\label{my-label}
+\end{table}
 
 \section{Float v.s. Double Precision}
 The following two experiments compare single and double precision for HMC sampling on this neural network model. The first experiment looks at the stability of the leapfrog trajectory. First, a number of points from the posterior distribution are collected by a sampler in double precision, they are each augmented by an independent momentum drawn from a standard normal distribution. Then the list of $(q_i,p_i)$ points are cast into single precision. The two sets of points are then integrated forward for a fixed number of iterations with a reasonably conservative step size and we compare the difference in Hamiltonian between the start and end point of the trajectory.
@@ -1537,14 +1642,68 @@ The following two experiments compare single and double precision for HMC sampli
 The second experiment looks at the difference in test error. 
 
 In both experiments we don't find a significant difference between the two, suggesting that the transition to single precision should not harm predictive accuracy and correctness. 
+
+\begin{table}[]
+\begin{minipage}{0.5\linewidth}
+\centering
+\begin{tabular}{@{}rll@{}}
+\toprule
+\multicolumn{1}{l}{} & Float & \multicolumn{1}{r}{Double} \\ \midrule
+Normal               & 0,1   & 12                         \\ \midrule
+normal inv gamma     & 0,12  & 12                         \\ \bottomrule
+\end{tabular}
+\caption{stability}
+\end{minipage}
+\begin{minipage}{0.5\linewidth}
+\centering
+\begin{tabular}{@{}rll@{}}
+\toprule
+\multicolumn{1}{l}{} & Float & \multicolumn{1}{r}{Double} \\ \midrule
+Normal               & 0,1   & 12                         \\ \midrule
+normal inv gamma     & 0,12  & 12                         \\ \bottomrule
+\end{tabular}
+\caption{test error}
+\end{minipage}
+\end{table}
+
 \section{Static  v.s. Dynmaic HMC}
 In the following experiment ran a static HMC sampler over a grid of tuning parameter values, and compare the samples generated by the best combination with those generated by a dynamic HMC (NUTS). 
 
+\begin{table}[]
+\centering
+\begin{tabular}{@{}llll@{}}
+\toprule
+        & Test Error & Min ESS & Median ESS \\ \midrule
+L = 10   & 22.8 (22.2)    & 704 (283) & 1061(765)       \\ \midrule
+L = 50   & 27.0 (24.2)  & 36 (196)  & 379 (1533)     \\ \midrule
+L = 100    & 28.6 (23.8)  & 126 (254)  & 823 (1256)    \\ \midrule
+L = 200     & 22.2 (24.0)    & 713 (340)      & 1196 (1204)         \\ \midrule
+L = 500    & 23.8  (23.4)       & 345 (693)      & 1245  (1252)        \\ \midrule
+Dynamic & 1          & 2       & 2          \\ \bottomrule 
+\end{tabular}
+\caption{My caption}
+\label{my-label}
+\end{table}
 
 \section{WAIC for Model Selection}
 Next, we would test the WAIC's ability to select the number of hidden units in a single hidden-layer neural network model. The true test error is estimated by a holdout test set. Different numbers of hidden units are tested and their WAIC computed by dynamic HMC. We found that the model with the lowest WAIC does not match those selected by holdout test error. 
 
 The failure of the WAIC to select the best model might be explained by the poor mixing of the importance sampler when estimating the WAIC, which was noted in a review of predictive checks for Bayesian inference \cite{vehtari2017practical} . 
+
+
+\begin{table}[]
+\centering
+\begin{tabular}{@{}lllll@{}}
+\toprule
+               & WAIC & Test Error & Min ESS & Median ESS      \\ \midrule
+Num Unit= 35    & $3.05 \times 10^4$  & 23.4    & 358 & 1348   \\ \midrule
+Num Units = 50  & $4.35 \times 10^4$   & 20.4  & 714  & 1342                \\ \midrule
+Num Units = 75 &$ 6.36 \times 10^4$   & 21.2  & 883  & 1351                 \\ \midrule
+Num Units = 90 &$ 7.57 \times 10^4$  & 21.2   & 562  & 1359                 \\ \bottomrule
+\end{tabular}
+\caption{WAIC}
+\label{my-label}
+\end{table}
 \section{Priors}
 
 The horseshoe prior can be applied two ways on the weights in a layer. The first is to consider the weights as one long vector and assign the prior as one would in a regression problem. The second is an ARD-type approach, where a local variance is assigned for each hidden unit and one global variance for the entire layer. More specifically, suppose the layer in question has $n$ input units and $m$ hidden units. Then, the horseshoe ARD prior can be defined as follows 
@@ -1561,6 +1720,19 @@ where $ W_{i,\cdot}  $ are the weights entering the $i$'th hidden unit. This is 
 &c^2 \sim \text{Inv-gamma}(2,8).\\
 \end{align*}
 We found that while the regularized horseshoe prior performs better than the original horseshoe prior in terms of having zero divergent transitions, none of the horseshoe priors can be said to induce great sampling efficiency, as both result in models whose posterior distribution are difficult to sample, resulting in low ESS. What's more is that even the Normal Inv-Gamma prior does not give better predictive performance than the standard normal prior, which we have already seen in earlier experiments comparing Gibbs sampling to joint sampling for the hyperparameter. 
+\begin{table}[]
+\centering
+\begin{tabular}{@{}rrrrrrrr@{}}
+\toprule
+              & Normal & Normal Inv-Gamma & Normal ARD     & RHS     & RHS ARD & HS  & HS ARD \\ \midrule
+Test Error    & 23.4    & 26.8    & 24.0& 37.8    & 30.8      & 41.0       & 33.6               \\ \midrule
+Min ESS       & 358      & 440   & 574  & 151  & 334     & 4       & 349              \\ \midrule
+Median ESS    & 1348      & 1298  & 1220  & 911 & 1356     & 80      & 1354             \\ \midrule
+\end{tabular}
+\caption{Priors}
+\label{my-label}
+\end{table}
+
 
 \section{Conclusion}
 \chapter{Conclusion}
