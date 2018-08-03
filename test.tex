@@ -1233,7 +1233,7 @@ where $\pi(q)$ is the prior density function and $\pi(q|data)$ is the likelihood
 \[ \sum_{i=1}^n \log \pi(q|data_i) \approx \frac{n}{k} \sum_{i \in I} \log \pi(q|data_i) \]
 where $I$ is a subset of $\{1,\dots, n\}$ of size $\frac{k}{n}$. 
 More pratically, if we divide the datapoints into $M$ equally sized subsets. Then for any such subset $S$, the potential energy function can be approximated by 
-\[ V(q) \approx    -\log(\pi(q)) + M \sum_{i \in S} \log(\pi(q|data_i)) \] Data subsampling and omission of the Metropolis acceptance step are two key features of the stochastic gradient MCMC literature. In an overivew the stochastic gradient MCMC literature 
+\[ V(q) \approx    -\log(\pi(q)) + M \sum_{i \in S} \log(\pi(q|data_i)) = \tilde{V}(q) \] Data subsampling and omission of the Metropolis acceptance step are two key features of the stochastic gradient MCMC literature. In an overivew the stochastic gradient MCMC literature 
 the authors summarized it as follows:
  "If the stationary distribution is not the target distribution, a Metropolis-Hastings (MH) correction can often be applied. Unfortunately, such correction steps require a costly computation on the entire
 dataset. Even if one can compute the MH correction, if the dynamics do not nearly lead to the correct stationary distribution, then the rejection rate can be high even for short simulation periods h. Furthermore, for many stochastic gradient MCMC samplers, computing the probability of the reverse path is infeasible, obviating the use of MH. As such, a focus in the literature is on defining dynamics with the right target distribution, especially in large-data scenarios where MH corrections are computationally burdensome or infeasible.
@@ -1466,7 +1466,7 @@ In the first experiment we compare a Bayesian neural network to an early stoppin
 \begin{table}[]
 \centering
 \begin{tabular}{@{}rlllll@{}}
-\multicolumn{1}{l}{}                            & \multicolumn{5}{c}{Test Error} \\ \midrule
+\multicolumn{1}{l}{}                            & \multicolumn{5}{c}{Test Error$\%$} \\ \midrule
 Method\textbackslash{}Number of ensemble points & 2    & 5   & 10  & 100 & 1000 \\ \midrule
 Early Stopping Committee of NNs                 & 91.2  & 88.6 & 47.0 & 51.6 & 19.2  \\ \midrule
 BNN                                             & \multicolumn{5}{c}{23.4}        \\ \bottomrule
@@ -1482,7 +1482,7 @@ In the following experiment we compare the generalized NUTS termination criterio
 \centering
 \begin{tabular}{@{}llll@{}}
 \toprule
-          & Test Error & Min ESS & Median ESS \\ \midrule
+          & Test Error$\%$ & Min ESS & Median ESS \\ \midrule
 XHMC $\delta=0.01$  & 25.6       & 681     & 1330       \\ \midrule
 XHMC$\delta=0.05$  & 25.8       & 738     & 1346       \\ \midrule
 XHMC $\delta=0.1$ & 28.6       & 396     & 1351       \\ \midrule
@@ -1507,7 +1507,7 @@ Focusing only on the variance parameter $\sigma^2$, we see that the CP encounter
 \centering
 \begin{tabular}{@{}lllll@{}}
 \toprule
-              & Test Error & $\sigma^2$ ESS & Min ESS & Median ESS \\ \midrule
+              & Test Error$\%$ & $\sigma^2$ ESS & Min ESS & Median ESS \\ \midrule
 Gibbs sampler & 88.4        & 4.38         & 1.29      & 45.3       \\ \midrule
 Joint sampler- CP     & 25.8      & 4.86       & 4.69     & 1037         \\ \midrule
 Joint sampler - NCP   & 28.4      & 504         & 434     & 1333        \\ \bottomrule
@@ -1537,7 +1537,7 @@ We found that while the regularized horseshoe prior performs better than the ori
 \begin{tabular}{@{}rrrrrrrr@{}}
 \toprule
               & Normal & Normal-Inv-Gamma & Normal ARD     & RHS     & RHS ARD & HS  & HS ARD \\ \midrule
-Test Error    & 23.4    & 26.8    & 24.0& 37.8    & 30.8      & 41.0       & 33.6               \\ \midrule
+Test Error$\%$    & 23.4    & 26.8    & 24.0& 37.8    & 30.8      & 41.0       & 33.6               \\ \midrule
 Min ESS       & 358      & 440   & 574  & 151  & 334     & 4       & 349              \\ \midrule
 Median ESS    & 1348      & 1298  & 1220  & 911 & 1356     & 80      & 1354             \\ \midrule
 \end{tabular}
@@ -1555,7 +1555,7 @@ The SGHMC has several extra tuning parameters other than the step size $\epsilon
 \centering
 \begin{tabular}{@{}lllll@{}}
 \toprule
-\multicolumn{5}{c}{Test Error}                  \\ \midrule
+\multicolumn{5}{c}{Test Error$\%$}                  \\ \midrule
      & $\eta = 0.1$ & $\eta = 0.01$ & $\eta = 0.001$ & $\eta =0.0001$ \\ \midrule
      
 $L=10$  & NA       & NA     & 72.2      & 84.4    \\ \midrule
@@ -1569,7 +1569,7 @@ $L =200 $ & 46.8      & 37.2   & 92.4      & 87   \\ \bottomrule
 \centering
 \begin{tabular}{@{}lllll@{}}
 \toprule
-\multicolumn{5}{c}{Test error}                  \\ \midrule
+\multicolumn{5}{c}{Test error$\%$}                  \\ \midrule
      & $\eta = 0.1$ & $\eta = 0.01$ & $\eta = 0.001$ & $\eta =0.0001$ \\ \midrule
 $L=10$  & NA       & NA     & 68.8     & 84.2    \\ \midrule
 $L=50$  & 14.8      & 93.8    & 97.2     & 91.4  \\ \midrule
@@ -1582,7 +1582,7 @@ $L=200 $ & 45.6      & 35.6     & 94      & 85.6   \\ \bottomrule
 \centering
 \begin{tabular}{@{}lllll@{}}
 \toprule
-\multicolumn{5}{c}{Test Error}                  \\ \midrule
+\multicolumn{5}{c}{Test Error$\%$}                  \\ \midrule
      & $\eta = 0.1$ & $\eta = 0.01 $& $\eta = 0.001$ & $\eta =0.0001$ \\ \midrule
 $L=10$  & NA       & NA     & 68.8      & 89.8    \\ \midrule
 $L=50$  & 15.4      & 95.4    & 97.8     & 95  \\ \midrule
@@ -1595,7 +1595,7 @@ $L=200 $ & 54.6      & 46.2     & 97.0      & 88.0   \\ \bottomrule
 \centering
 \begin{tabular}{@{}lllll@{}}
 \toprule
-\multicolumn{5}{c}{Test Error}                  \\ \midrule
+\multicolumn{5}{c}{Test Error$\%$}                  \\ \midrule
      & $\eta = 0.1 $ & $\eta = 0.01$ & $\eta = 0.001$ & $\eta =0.0001$ \\ \midrule
 $L=10$  & NA       & NA     & 71.6      & 88.0    \\ \midrule
 $L=50$  & 15.4      & 93.4    & 96.8     & 88.2  \\ \midrule
@@ -1615,7 +1615,7 @@ In this experiment, we compared the two normal priors with fixed variances. One 
 \begin{minipage}{0.5\linewidth}
 \begin{tabular}{@{}llll@{}}
 \toprule
-            & Test Error & Min ESS & Median ESS \\ \midrule
+            & Test Error$\%$ & Min ESS & Median ESS \\ \midrule
 Hidden units = 35 & 23.4 (64.2)        & 358 (683)     & 1348 (1337)       \\ \midrule
 Hidden units = 50 & 22.8 (65.0)        & 952 (66)      & 1358 (1348)         \\ \midrule
 Hidden units = 65 & 22.0 (69.6)      & 610 (660)      & 1352 (1324)        \\ \bottomrule
@@ -1632,7 +1632,7 @@ Here we explore whether its necessary or indeed useful to condition the HMC by t
 \centering
 \begin{tabular}{@{}lllll@{}}
 \toprule
-                     & Test Error & Min ESS & median ESS & Compute Time \\ \midrule
+                     & Test Error$\%$ & Min ESS & median ESS & Compute Time \\ \midrule
 Normal               & 67.0 (24.4) [20.6]   & 5 (563) [708] & 17 (1331) [1324]  & 36596 (10165) [11569]     \\ \midrule
 Normal-Inv-Gamma     & 86.2 (22.4) [26.0]  & 4 (453) [378]  & 1271 (1348) [1271]    & 38095 (9234) [9158]     \\ \midrule
 Normal-Inv-Gamma ARD & 91.2 (23.2) [27.2]  & 4 (370) [140]  & 8 (1295) [1332]    & 74326 (34940) [33212]     \\ \bottomrule
@@ -1648,7 +1648,7 @@ Now we fix the prior to be a standard normal distribution and vary the number of
 \centering
 \begin{tabular}{@{}lllll@{}}
 \toprule
-            & Test Error & Min ESS & Median ESS & Dimension \\ \midrule
+            & Test Error$\%$ & Min ESS & Median ESS & Dimension \\ \midrule
 Num Layers = 2 & 16.4    & 284 & 1596       & 12        \\ \midrule
 Num Layers = 3  & 16.8  & 246 & 1418     & 12        \\ \midrule
 Num Layers = 4  & 49.8  & 402 & 1310    & 12        \\ \bottomrule
@@ -1658,34 +1658,21 @@ Num Layers = 4  & 49.8  & 402 & 1310    & 12        \\ \bottomrule
 \end{table}
 
 \section{Float v.s. Double Precision}
-The following two experiments compare single and double precision for HMC sampling on this neural network model. The first experiment looks at the stability of the leapfrog trajectory. First, a number of points from the posterior distribution are collected by a sampler in double precision, they are each augmented by an independent momentum drawn from a standard normal distribution. Then the list of $(q_i,p_i)$ points are cast into single precision. The two sets of points are then integrated forward for a fixed number of iterations with a reasonably conservative step size and we compare the difference in Hamiltonian between the start and end point of the trajectory.
+The following two experiments compare single and double precision for HMC sampling on a neural network model. The first experiment looks at the stability of the leapfrog trajectory. First, a number of points from the posterior distribution are generated by a sampler in double precision, which are then each augmented by an independent momentum drawn from a standard normal distribution. Then the list of $(q_i,p_i)$ points are cast into single precision. The two sets of points are then integrated forward for a fixed number of iterations with a reasonably conservative step size and we compare the difference in Hamiltonian between the start and end point of the trajectory. We found that for the normal prior the final states in trajectory differ in energy by less than $10^{-5}$ and for the normal-inv-gamma prior the difference on the order $10^{-2}$, which translates to at most a difference of 1 $\%$ in the final acceptance rate.
 
-The second experiment looks at the difference in test error. 
+The second experiment looks at the differences in test error. 
 
-In both experiments we don't find a significant difference between the two, suggesting that the transition to single precision should not harm predictive accuracy and correctness. 
+
 
 \begin{table}[]
-\begin{minipage}{0.5\linewidth}
 \centering
 \begin{tabular}{@{}rll@{}}
 \toprule
 \multicolumn{1}{l}{} & Float & \multicolumn{1}{r}{Double} \\ \midrule
-Normal               & 0,1   & 12                         \\ \midrule
-Normal-Inv-Gamma     & 0,12  & 12                         \\ \bottomrule
+Normal               & 27.6   & 25.8                         \\ \midrule
+Normal-Inv-Gamma     & 23.2  & 28.8                         \\ \bottomrule
 \end{tabular}
-\caption{stability}
-\end{minipage}
-\begin{minipage}{0.5\linewidth}
-\centering
-\begin{tabular}{@{}rll@{}}
-\toprule
-\multicolumn{1}{l}{} & Float & \multicolumn{1}{r}{Double} \\ \midrule
-Normal               & 0,1   & 12                         \\ \midrule
-Normal-Inv-Gamam     & 0,1   & 12                         \\ \midrule
-Normal-Inv-Gamma ARD & 0,12  & 12                         \\ \bottomrule
-\end{tabular}
-\caption{test error}
-\end{minipage}
+\caption{Difference in test error ($\%$) between single and double precision.}
 \end{table}
 
 \section{Static  v.s. Dynmaic HMC}
@@ -1695,7 +1682,7 @@ The step sizes and covariance metrics are tuned automatically as in previous exp
 \centering
 \begin{tabular}{@{}llll@{}}
 \toprule
-        & Test Error & Min ESS & Median ESS \\ \midrule
+        & Test Error$\%$ & Min ESS & Median ESS \\ \midrule
 $L = 10 $  & 22.8 (22.2)    & 704 (283) & 1061(765)       \\ \midrule
 $L = 50 $  & 27.0 (24.2)  & 36 (196)  & 379 (1533)     \\ \midrule
 $L = 100  $  & 28.6 (23.8)  & 126 (254)  & 823 (1256)    \\ \midrule
@@ -1715,7 +1702,7 @@ Next, we would test the WAIC's ability to select the number of hidden units in a
 \centering
 \begin{tabular}{@{}lllll@{}}
 \toprule
-               & WAIC & Test Error & Min ESS & Median ESS      \\ \midrule
+               & WAIC & Test Error$\%$ & Min ESS & Median ESS      \\ \midrule
 Number of Hidden Units= 35    & $3.05 \times 10^4$  & 23.4    & 358 & 1348   \\ \midrule
 Number of Hidden Units = 50  & $4.35 \times 10^4$   & 20.4  & 714  & 1342                \\ \midrule
 Number of Hidden Units = 75 &$ 6.36 \times 10^4$   & 21.2  & 883  & 1351                 \\ \midrule
