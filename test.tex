@@ -1640,11 +1640,7 @@ Here we explore whether its necessary or indeed useful to condition the HMC by t
 \footnotesize
 \begin{tabular}{@{}lllll@{}}
 \toprule
-<<<<<<< HEAD
                      & Test Error$\%$ & Min ESS & median ESS & Compute Time \\ \midrule
-=======
-                     & Test Error & Min ESS & Median ESS &  Time (s) \\ \midrule
->>>>>>> 219554f67cecd0897363db7818c85edd95405ce5
 Normal               & 67.0 (24.4) [20.6]   & 5 (563) [708] & 17 (1331) [1324]  & 36596 (10165) [11569]     \\ \midrule
 Normal-Inv-Gamma     & 86.2 (22.4) [26.0]  & 4 (453) [378]  & 1271 (1348) [1271]    & 38095 (9234) [9158]     \\ \midrule
 Normal-Inv-Gamma ARD & 91.2 (23.2) [27.2]  & 4 (370) [140]  & 8 (1295) [1332]    & 74326 (34940) [33212]     \\ \bottomrule
@@ -1676,10 +1672,7 @@ The following two experiments compare single and double precision for HMC sampli
 The second experiment looks at the differences in test error. 
 
 
-<<<<<<< HEAD
-=======
 In both experiments we did not find a significant difference between the two, suggesting that the transition to single precision should not harm predictive accuracy and correctness. 
->>>>>>> 219554f67cecd0897363db7818c85edd95405ce5
 
 \begin{table}[]
 \centering
@@ -1723,13 +1716,8 @@ We found that the model with the lowest WAIC does not match those selected by ho
 \centering
 \begin{tabular}{@{}lllll@{}}
 \toprule
-<<<<<<< HEAD
                & WAIC & Test Error$\%$ & Min ESS & Median ESS      \\ \midrule
-Number of Hidden Units= 35    & $3.05 \times 10^4$  & 23.4    & 358 & 1348   \\ \midrule
-=======
-               & WAIC & Test Error & Min ESS & Median ESS      \\ \midrule
 Number of Hidden Units = 35    & $3.05 \times 10^4$  & 23.4    & 358 & 1348   \\ \midrule
->>>>>>> 219554f67cecd0897363db7818c85edd95405ce5
 Number of Hidden Units = 50  & $4.35 \times 10^4$   & 20.4  & 714  & 1342                \\ \midrule
 Number of Hidden Units = 75 &$ 6.36 \times 10^4$   & 21.2  & 883  & 1351                 \\ \midrule
 Number of Hidden Units = 90 &$ 7.57 \times 10^4$  & 21.2   & 562  & 1359                 \\ \bottomrule
