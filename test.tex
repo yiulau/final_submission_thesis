@@ -17,7 +17,37 @@
 \date{}
 \begin{document}
 
-\maketitle
+\begin{titlepage}
+    \begin{center}
+        \vspace*{1cm}
+        \Large
+        \textbf{Exploring Dynamic Hamiltonian Monte Carlo for Bayesian Neural Networks}
+        \normalsize
+         
+        \vspace{1.5cm}
+        
+        \textbf{Yiu Sing Lau} \\
+        Master of Science \\
+        Department of Mathematics and Statistics 
+        
+        \vspace{1.5cm}
+        McGill University \\
+        Montreal, Quebec
+        August 2018
+
+        
+        \vfill
+        
+        A thesis submitted to McGill University in partial fulfillment of the requirements of  the degree of Master of Science\\
+        
+        \vspace{0.8cm}
+        
+        
+        
+        
+        
+    \end{center}
+\end{titlepage}
 
 \renewcommand{\abstractname}{ACKNOWLEDGEMENTS}
 \begin{abstract}
@@ -189,16 +219,16 @@ deviate from the correct trajectory, on which the energy should be preserved.
 Reducing the step size would mitigate the problem but it comes with increased
 computational costs. Namely,this necessitates the introduction of a Metropolis
 acceptance step in order to preserve the invariant distribution. To explain
-this, let's put HMC in the context of an auxillary variable method. 
+this, we shall put HMC in the context of an auxiliary variable method. 
 
-First, the joint distribution of the position (original) and momentum(auxillary)
+First, the joint distribution of the position (original) and momentum(auxiliary)
 variables is factored into a product of a conditional distribution $\pi(q,p|E)$ and an
 independent marginal distribution $\pi(E)$
 \[ \pi(q,p) = \pi(q,p|E)\pi(E) .\]
 
 Sampling from the joint distribution is done by first sampling from the
-auxillary (energy) distribution $\pi(E)$. In this case randomness is introduced only during from the
-resampling of the momentum variable, that is, change in the kinetic energy,
+auxiliary (energy) distribution $\pi(E)$. In this case randomness is introduced only during from the
+re-sampling of the momentum variable, that is, change in the kinetic energy,
 because the potential energy is not dependent on the momentum. Then, conditional on the value of the
 current energy, we sample from the joint
 conditional distribution of the position and momentum variables $\pi(q,p|E)$. Leapfrog steps
@@ -303,7 +333,7 @@ components, the kinetic energy function $T(p)$.
 Because the
 Hamiltonian function remains constant along its trajectory after the initial
 position and momentum is fixed, the only change in the value of the joint probability
-density function $\pi(q,p)$ comes from the initial resampling of the momentum variables $p$
+density function $\pi(q,p)$ comes from the initial re-sampling of the momentum variables $p$
 from its marginal distribution.
 
 From the theory of auxiliary variable sampling we see that there are infinitely
@@ -350,7 +380,7 @@ Suppose we want to sample from $q \sim \mathcal{N}(0,\Sigma)$. Let $p \sim
 \mathcal{N}(0,\Sigma^{-1})$, then the updates would be equivalent to using an
 identity covariance for $p$ for drawing from a standard multivariate Gaussian
 distribution. This
-fact about the HMC suggests it would improve sampling efficiency if one has
+fact about HMC suggests it would improve sampling efficiency if one has
 access to the covariance of the target distribution and its inverse, although this is true for
 MCMC sampling in general as well. 
 In general the momentum distribution can be tuned by first exploring the density
@@ -377,7 +407,7 @@ high-dimensional settings. Because Random Walk Metropolis randomly proposes chan
 the $2^D$ possible directions, it becomes exponentially more unlikely to move
 to an area of the support where there is significant mass. The acceptance
 probability would be extremely low and the chain becomes stuck. On the other
-hand, because HMC uses information of the gradient and an auxillary variable
+hand, because HMC uses information of the gradient and an auxiliary variable
 tuned to the curvature of the target distribution, the exploration stays close
 to the mode and the high density neighbourhood around it. There is a delicate
 balance between staying close to the mode and in the neighbourhood containing
@@ -1207,10 +1237,10 @@ In Cho's work, he experimented with joint sampling of the lower-level weights an
 
 A quick note on the parameterization used for the hierarchical prior. The non-centered parametrization is expected to mitigate the posterior correlation between the hyperparameter and the lower-level weights. Reducing posterior correlation is known to help improve sampling efficiency signficantly. 
 
-We experimented with joint sampling under both parametrizations and found that non-centered parametrization is necessary for meaningful inference. The HMC also performs better than the Block-Gibbs sampler.
+We experimented with joint sampling under both parametrizations and found that non-centered parametrization is necessary for meaningful inference. The Hamiltonian sampler also performs better than the block-Gibbs sampler.
 
 \section{SGHMC}
-The idea of simulating Hamilotnian dynamics without the Metropolis acceptance step was first experimented in the statistics/machine learning literature by Neal \cite{neal1993bayesian} in a batch MCMC sampler for the posterior distribution of a BNN. He found that,with careful selection of the leapfrog step size, the biased samples achieve similar predictive performance as the full MCMC samples. Therefore, it seems to reason that for predictive tasks e.g. regression or classificaiton where observations are abundant, we could 
+The idea of simulating Hamilotnian dynamics without the Metropolis acceptance step was first experimented in the statistics/machine learning literature by Neal \cite{neal1993bayesian} in a batch MCMC sampler for the posterior distribution of a BNN. He found that,with careful selection of the leapfrog step size, the biased samples achieve similar predictive performance as the full MCMC samples. Therefore, it seems to reason that for predictive tasks e.g. regression or classification where observations are abundant, we could 
 use a validation set (predictive performance) to select tuning parameters, hoping to trade off a bit of bias for better predictive performance. 
 
 Another trick that helps to speed up the HMC sampler is data subsampling, also denoted partial gradient in Neal's thesis \cite{neal2012bayesian}.
@@ -1220,14 +1250,14 @@ where $\pi(q)$ is the prior density function and $\pi(q|data)$ is the likelihood
 \[ \sum_{i=1}^n \log \pi(q|data_i) \approx \frac{n}{k} \sum_{i \in I} \log \pi(q|data_i) \]
 where $I$ is a subset of $\{1,\dots, n\}$ of size $\frac{k}{n}$. 
 More pratically, if we divide the datapoints into $M$ equally sized subsets. Then for any such subset $S$, the potential energy function can be approximated by 
-\[ V(q) \approx    -\log(\pi(q)) + M \sum_{i \in S} \log(\pi(q|data_i)) = \tilde{V}(q) \] Data subsampling and omission of the Metropolis acceptance step are two key features of the stochastic gradient MCMC literature. In an overivew the stochastic gradient MCMC literature 
+\[ V(q) \approx    -\log(\pi(q)) + M \sum_{i \in S} \log(\pi(q|data_i)) = \tilde{V}(q) \] Data subsampling and omission of the Metropolis acceptance step are two key features of the stochastic gradient MCMC literature. In an overview the stochastic gradient MCMC literature 
 the authors summarized it as follows:
  "If the stationary distribution is not the target distribution, a Metropolis-Hastings (MH) correction can often be applied. Unfortunately, such correction steps require a costly computation on the entire
 dataset. Even if one can compute the MH correction, if the dynamics do not nearly lead to the correct stationary distribution, then the rejection rate can be high even for short simulation periods h. Furthermore, for many stochastic gradient MCMC samplers, computing the probability of the reverse path is infeasible, obviating the use of MH. As such, a focus in the literature is on defining dynamics with the right target distribution, especially in large-data scenarios where MH corrections are computationally burdensome or infeasible.
 "\cite{ma2015complete}
 
 In Deep Learning, neural networks are usually fitted by stochastic gradient descent (SGD) \cite{ngiam2011optimization}.
-This is a first order method like regular gradient descent \cite{wright1999numerical}, except at each weight update a random subset(batch) of datapoints are sampled to be the  observations, and the sequence of stepsizes over the optimiztion process must decay while satisfying the property
+This is a first order method like regular gradient descent \cite{wright1999numerical}, except at each weight update a random subset(batch) of data points are sampled to be the  observations, and the sequence of step sizes over the optimization process must decay while satisfying the property
 
 \[ \sum_{t=1}^\infty \epsilon_t = \infty , \sum_{t=1}^\infty \epsilon_t^2 < \infty \]
 
@@ -1239,7 +1269,7 @@ The success of SGD lies in being able to avoid evaluating the full likelihood, w
 
 where $\mathcal{D}$ is a random subset of $\{1,2, \dots, N\}$ of size $n$ sampled at each update of $q$. We assume there are $N$ observations in total. The step sizes are assumed to decay following the constraint stated above for SGD. The authors recommended setting $\epsilon_t = a(b+t)^{-\gamma} $ with $\gamma \in (0.5,1]$.  
 
-The author proved that as the step sizes $\epsilon_t$ goes to $0$ the samples $\{q_t\}$ converge tothe Langevin dynamics targeting the posterior distribution. Of course, in practice we set lower bound on $\epsilon_t$ and stop decreasing the stepsize once it is small enough. Also, the fact the we are not doing the acceptance-rejection step means there will be a bias in our posterior samples, which unlike the samples drawn from a Metropolis-Hastings sampler, does not decrese to $0$ as we sample from the chain longer.
+The author proved that as the step sizes $\epsilon_t$ goes to $0$ the samples $\{q_t\}$ converge to the Langevin dynamics targeting the posterior distribution. Of course, in practice we set lower bound on $\epsilon_t$ and stop decreasing the step size once it is small enough. Also, the fact the we are not doing the acceptance-rejection step means there will be a bias in our posterior samples, which unlike the samples drawn from a Metropolis-Hastings sampler, does not decrease to $0$ as we sample from the chain longer.
 
 
 Simulating from the discrete approximation to a Langevin dynamics is the basis
@@ -1252,10 +1282,9 @@ Stochastic Gradient Hamilotian Monte Carlo (SGHMC),
 which extends HMC the way SGLD extends LMC. 
 
 
-
 Applying MCMC methods to large datasets often involve 2 problems. First, evaluating the unnormalized posterior density
 \[ \pi(D|q) = \prod_{i=1}^n \pi(x_i|q) \]
- is equivalent to passing through all datapoints, which alone can make the sampling algorithm unacceptably slow since all versions of the Metropolis-Hastings sampler requires such evaluations for proposing new samples. Second, models that require MCMC samples when a large number of datapoints are available are necessarily singular models. Using the terminology of \cite{watanabe2009algebraic}, regular models are models for which the bayesian central limit theorem \cite{le2012asymptotic} holds, that is, when the number of observations goes to infinity the posterior distribution of $q$ converges to a Normal distribution. Models that are non-regular are called singular models. A lot of methods designed to scale MCMC \cite{neiswanger2013asymptotically,scott2016bayes} ultimately rely on this asymptotic normality for validity. Bayesian logistic regression is a classical model for which the CLT holds and is used in many papers to demonstrate the effectiveness of newly proposed large-scale MCMC methods. However, the very fact that asympotitic normality holds means there is little added utility to drawing MCMC samples from the posterior distribution, since a normal approximation would suffice. On the other hand, for singular models there is no guarantee that the estimates converge to the target posterior distribution. 
+ is equivalent to passing through all datapoints, which alone can make the sampling algorithm unacceptably slow since all versions of the Metropolis-Hastings sampler requires such evaluations for proposing new samples. Second, models that require MCMC samples when a large number of datapoints are available are necessarily singular models. Using the terminology of \cite{watanabe2009algebraic}, regular models are models for which the bayesian central limit theorem \cite{le2012asymptotic} holds, that is, when the number of observations goes to infinity the posterior distribution of $q$ converges to a Normal distribution. Models that are non-regular are called singular models. A lot of methods designed to scale MCMC \cite{neiswanger2013asymptotically,scott2016bayes} ultimately rely on this asymptotic normality for validity. Bayesian logistic regression is a classical model for which the CLT holds and is used in many papers to demonstrate the effectiveness of newly proposed large-scale MCMC methods. However, the very fact that asymptotic normality holds means there is little added utility to drawing MCMC samples from the posterior distribution, since a normal approximation would suffice. On the other hand, for singular models there is no guarantee that the estimates converge to the target posterior distribution. 
 
 Asympotic normality is also assumed for the application of stochastic gradient mcmc methods to neural network models \cite{welling2011bayesian,chen2014stochastic,ahn2012bayesian,ding2014bayesian,ma2015complete}. Even though neural networks are singular models where the conditions for the central limit theorem do not hold, these methods have shown good predictive performance on a variety of datasets. This is opposite of what one would expect and merits further investigation.
 
@@ -1313,7 +1342,7 @@ However, the horseshoe prior sometimes causes divergent behaviour during samplin
 &\lambda_j \sim C^+(0,1),\, j = 1,\dots,D\\
 &c^2 \sim \text{Inv-Gamma}(2,8) .
 \end{align*}
-We note that the Cauchy distribution is equivalent to Student-t distribution of degree 1. A thick-tailed prior like the Student-t is known to cause divergent problems. Therefore, it is often written as a Normal-Inverse Gamma mixture to reduce posterior correlation. That is, $x \sim t_{\nu}(0,1) $ is 
+We note that a Cauchy distribution is equivalent to a Student-t distribution of degree 1. A thick-tailed prior like the Student-t is known to cause divergent problems. Therefore, it is often written as a Normal-Inverse Gamma mixture to reduce posterior correlation. That is, $x \sim t_{\nu}(0,1) $ is 
 equivalent to 
 \begin{align*}
 & x \sim \mathcal{N}(0,\sigma^2)\\
@@ -1373,12 +1402,12 @@ subset is used as test set and the remaining sets used as training set. The
 extreme case is leave-one-out cross-validation (LOO-CV), where $k=n$. To
 calculate the log pointwise predictive density, $\text{lppd}_{\text{loo-cv}}$, we do as
 follows. For each split of the $n$ split $\{d_i,d_{-i}\}$, where $d_i$ is the
-$i$th datapoint $\{y_i,x_i\}$, and $d_{-i}$ are the $n-1$ remaining data points.
+$i^{\text{th}}$ data point $\{y_i,x_i\}$, and $d_{-i}$ are the $n-1$ remaining data points.
 Then
 \[ \text{lppd}_{\text{loo-cv}} = \sum_{i=1}^n \log p_{\text{post}(-i)}(d_i) \]
 where 
 \[p_{\text{post}(-i)(d_i)} = \int p(y_i|x_i,\theta) p(\theta |d_{-i}) d\theta \]
-which is the marginal predictive density of the $i$th data point, with $\theta$
+which is the marginal predictive density of the $i^\text{th}$ data point, with $\theta$
 integrated out with respect to the posterior density of $\theta$ having observed
 the remaining $n-1$ data points. In practice, the integration is performed
 approximately by drawing $S$ samples from $p(\theta|d_{-i})$, denoted
@@ -1391,7 +1420,7 @@ p(y_i|x_i,\theta_{-i}^s))\]
 
 The main obstacle to applying this to model selection for neural networks is the
 simulation from $n$ different posterior distribution required, each of these
-require tuning and monitoring to ensure low variance of the integral estiamte.
+require tuning and monitoring to ensure low variance of the integral estimate.
 For high dimensional distributions such as the posterior distribution of a neural
 network, simulation becomes more difficult because of increased computation time as
 well as a lack of tools for evaluating convergence of the joint distribution.
@@ -1404,10 +1433,10 @@ Holdout cross-validaiton as currently used in the neural network literature
 has higher variance than the k-fold and leave-one-out alternatives and might be
 problematic if the sample size is small. It might be
 preferable to use an information criterion which requires only simulation from
-one posterior distribution, hence reducing the difficulty of assessing convergence and the memory requirement for storing all samples. Traditional information criterai like the
-AIC, BIC or DIC rely on the asympotitic normality of the mle for its
+one posterior distribution, hence reducing the difficulty of assessing convergence and the memory requirement for storing all samples. Traditional information criteria like the
+AIC, BIC or DIC rely on the asymptotic normality of the mle for its
 justification, which does not hold for non-identifiable (singular) models such
-as mixture models, hidden markov models, and more relevantly here neural network
+as mixture models, hidden Markov models, and more relevantly here neural network
 models. The Watanabe Information Criterion (WAIC) is a recently introduced information criterion that works for
 singular models as well. Its justification uses advanced mathematics beyond the
 scope of this thesis, notably tools from algebraic geometry and empirical
@@ -1422,7 +1451,7 @@ where
 \[\text{lppd} = \sum_{i=1}^n \log( \frac{1}{S} \sum_{s=1}^S p(y_i|x_i,\theta^s) ) \]
 is the computed log pointwise predictive density.And 
 \[p_{\text{WAIC}} = \sum_{i=1}^n V_{s=1}^S(\log p(y_i|x_i, \theta^s)) \]
-is the effective number of parameters, where $V_s=1^S \log(p(y_i|x_i,\theta^s))$ is the empirical variance of the $S$  $\log(p(y_i|x_i,\theta^s))$ for fixed $i$. Note that only $nS$ points need tobe stored to calculate the WAIC. $p_{\text{WAIC}}$ can be calculated differently, but here we follow the recommendation of Gelman et al and use the formula above.
+is the effective number of parameters, where $V_s=1^S \log(p(y_i|x_i,\theta^s))$ is the empirical variance of the $S$  $\log(p(y_i|x_i,\theta^s))$ for fixed $i$. Note that only $nS$ points need to be stored to calculate the WAIC. $p_{\text{WAIC}}$ can be calculated differently, but here we follow the recommendation of Gelman et al and use the formula above.
 
 The WAIC can also be calculated by importance sampling, using the variational distribution as the proposal distribution \cite{yamada2012information}.
 
