@@ -1727,7 +1727,7 @@ Number of Hidden Units = 90 &$ 7.57 \times 10^4$  & 21.2   & 562  & 1359        
 \end{table}
 
 
-\section{Conclusion}
+\section{Conclusions}
 
 Experimenting on a simplified MNIST dataset, we found that Bayesian neural networks can achieve about the same and sometimes better predictive accuracy than early stopping committees. The main difference between the two is that early stopping committees need to be manually  tuned to achieve decent accuracy, whereas BNNs can achieve the same with dynamic HMC and automatic tuning of step sizes and covariance metrics. 
 
@@ -1752,16 +1752,21 @@ Based on experiments conducting on this dataset, we can make the following obser
 
 \end{enumerate}
 
-Finally, results above make should make one skeptical about claims made about Bayesian neural networks, since they defy some traditional wisdom about statistics. For example, for overparametrized models where the dimension is much larer than the number of observations, one should use hierarchical priors like the horseshoe to perform regularization. However, our experiments show that such regularization often harms predictive accuracy, even when there is high ESS overall.
+Finally, results above make should make one skeptical about claims made about Bayesian neural networks, since they defy some traditional wisdom about statistics. For example, for overparametrized models where the dimension is much larer than the number of observations, one should use hierarchical priors like the horseshoe to perform regularization. However, our experiments show that such regularization often harms predictive accuracy, even when there is high ESS overall. Also, we found that frequentist predictions could achieve similar predictive accuracy as Bayesian alternatives, although BNNs do seem to be more robust to tuning parameters.
 
 
 
 \chapter{Conclusion}
-use xhmc, unscaled normal prior, 
-use diag e 
-don't use sghmc
-don't use waic 
-can use float on gpu
+\section{Conclusion}
+
+	Bayesian neural networks have seen a resurgence with many optimization techniques being interpreted as approximate Bayesian inference. However, these claims were usually made without simulation studies using MCMC for full posterior inference. In this study we seeked to understand Bayesian inference for BNNs by using the best MCMC methods available to sample from these models. 
+
+
+In Chapter 2 we looked into the dynamic HMC samplers implemented in STAN and reimplemented them in PyTorch, along with methods for automatically tuning parameters and computing convergence diagnostics. We also provided pseudocode which should help future researchers understand the No-U-Turn sampler as implemented in STAN, since it differs significantly from the original implementation. Special attention needs to be paid to avoid computing probabilities on the original scale to maintain numerical stability.
+
+Then in Chapter 3 we delved into Bayesian neural networks. First we gave a review of the literature, which was mostly the contributions by Neal \cite{neal1993bayesian}. New developments like stochastic gradient Hamiltonian Monte Carlo and scaled initialization in the deep learning literature \cite{chen2014stochastic,bengio1994learning} were introduced and discussed. Finally, we discussed shrinkage priors, their origins in the statistics literature and adaptation for model selection with neural networks. 
+
+The discussions in chapter 2 and 3 provide the motivation for the simulation experiments in Chapter 4. Numerical experiments were conducted to sample from BNNs and compare different strategies. We found that dynamic HMC samplers can sample quite efficiently even from models with complicated hierarchical priors, although these priors do not necessarily improve predictive accuracy. Our main contention is that many of the claims made about BNNs in the deep learning should be viewed with skepticism because we found that even with relatively simple models and full MCMC sampling for Bayesian inference the effects of particular new priors do not seem clear, and it seems sometimes better initialized frequentist models would even beat BNNs sampled by robust, automatically tuned, state of the art HMC samplers.
 
 \chapter{Model}
 
