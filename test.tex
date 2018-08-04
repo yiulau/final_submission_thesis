@@ -501,17 +501,17 @@ $\{(q,p):H(q,p)=E\}$.
 
 
 There exists an extension of the basic HMC sampler that seeks to increase the acceptance
-rate by, conditioning on an initial state, proposing a trajectory instead of proposing just a state at the end
+rate by, conditioning on an initial state, proposing a state uniformly sampled over the leapfrog trajectory instead of always proposing the state at the end
 of the trajectory. Two trajectories are proposed, one containing the initial state; one
 of the two trajectories is chosen, then a state is sampled from the chosen
 trajectory. The HMC update step is then much more likely to propose and accept
 a state different from the initial state. This is Neal's window
 method \cite{neal1992improved}. 
 
-First we select a window size $W < L$, then sample randomly $s \in \{0, 1,2 , \dots , W -1 \}$. Take the current $(q,p)$ as $(q_s, p_s)$, we generate the sequence $[(q_0,p_0),(q_1, p_1), \dots (q_L,p_L)]$ deterministically by applying forward leapfrog steps (original leapfrog step with step size $\epsilon$) for $(q_i,p_i), i > s $, and backward leapfrog steps (step size equal to $-\epsilon$. ). 
-Then the acceptance window is a sequence of $W$ $(q_i,p_i)$ pairs at the end of the trajectory, more specifically,
+First we select a window size $W < L$, then sample randomly $s \in \{0, 1,2 , \dots , W -1 \}$. Take the current $(q,p)$ as $(q_s, p_s)$, we generate the sequence $[(q_0,p_0),(q_1, p_1), \dots (q_L,p_L)]$ stochastically by applying forward leapfrog steps (original leapfrog step with step size $\epsilon$) for $(q_i,p_i), i > s $, and backward leapfrog steps in random (step size equal to $-\epsilon$. ). 
+Then the acceptance window is the sequence of $W$ $(q_i,p_i)$ pairs at the end of the trajectory, more specifically,
 
-\[ \{(q_{L-W+1},p_{L-W+1}), \dots , (q_L,p_L)\} \]
+\[ \{(q_{L-W+1},p_{L-W+1}), \dots , (q_L,p_L)\}.\]
 
 And the rejection window is the $W$ pairs 
 \[ \{(q_0,p_0), \dots, (q_{W-1},p_{W-1})\}. \]
@@ -519,29 +519,13 @@ And the rejection window is the $W$ pairs
 Then we set the probability of accepting the acceptance window as 
 
 \[ \min (1, \frac{\sum_{i\in A} \pi(q_i,p_i)}{\sum_{j \in R} \pi(q_j,p_j) }) = \min (1, \frac{\sum_{i=L-W+1}^L \pi(q_i,p_i)}{\sum_{i=0}^{W-1}\pi(q_i,p_i)}), \]
-where $A,R$ are the set of indices for pairs belonging to the acceptance window and rejection windows respectively. We are essentially choosing the acceptance window with probability equal to the ratio of the sum of probabilities of each pair in the acceptance window to the sum of probability of pairs in the rejection sequence. 
+where $A,R$ are the set of indices for pairs belonging to the acceptance window and rejection windows respectively. We are essentially choosing the acceptance window with probability equal to the ratio of the sum of probabilities of each pair in the acceptance window to the sum of probability of pairs in the rejection window. This is reminiscent of the Hastings ratio in standard Metropolis Hastings samplers. One can conceptualize this sampler as performing MH sampling over an augmented space where each state is a window of $W$ points in the original phase space.
 
 Once a window has been chosen, we select a pair among the $W$ pairs in the window with probability weighted by $\pi(q_i,p_i)$. That is, suppose the rejection window is chosen, we chose the new state to be $(q_i,p_i)$, $i \in {0,\dots,W-1}$ with probability 
 \[ \frac{\pi(q_i,p_i)}{\sum_{j=0}^{W-1} \pi(q_j,p_j)}. \]
 It shows that even when we do not accept the proposal window near the end of the trajectory (acceptance window), there is still a probability of moving the chain away from its current state. This method generates a Markov Chain that leaves the target distribution invariant, and has been applied by Neal in neural network models to increase acceptance probability of the HMC sampler\cite{neal1992improved}. The two reasons for discussing the Window method are first that it has been shown to
 significantly improve sampling from BNN models and second that a special case of
 the method is incorporated in the No U-Turn sampler implemented in Stan. The important idea to retain is the conceptualization of proposing a new sample given the current sample as a two stage process, the first being to sample a trajectory containing the initial state, then sample the next state given the sampled trajectory.
-
-
-The No-U-Turn Sampler \cite{hoffman2014no} can be considered a two-in-one, where the windowed HMC sampler is extended to automatically adjust the trajectory length during sampling. 
-
-Starting with an initial state $(q_0,p_0)$ in the phase space. Similar to the Windowed HMC sampler, the NUTS starts by randomly integrating forward or backward by length $\ell$. For each subsequent integration step, the NUTS doubles the integration length. After each integration step, a termination criterion is computed to determine if the trajectory expansion should continue. Expansion stops when either end of the trajectory starts doubling back on itself. Compared to static HMC, where the number of leapfrog steps $L$ is fixed across the chain, NUTS can be considered a dynamic version of HMC, where the number of leapfrog steps can vary across iterations and is generally dependent on the geometry of the Hamiltonian flow trajectory in the phase space. 
-
-The reason for doubling the integration lengths is because the algorithm needs to compute a termination criterion at the end of each trajectory. Computing the termination criterion at the ends of the trajectory is necessary for the correctness of the sampler because it maintains reversibility. Suppose $T(\mathbf{t}|z) $ is the transition probability of a trajectory given initial state $z$, and $\mathcal{L}^L_{z,z'}$ is the set of all trajectories of length $L$ containing the points $z$ and $z'$. Computing the termination criteria after each integration step ensures
-
-\[T(\mathbf{t}|z) = T(\mathbf{t}|z') , \forall \mathbf{t} \in \mathcal{L}^L_{z,z'} . \]
-It is important to remember that conceptually what we are doing when moving from an initial state $z$ to a final state $z'$ while exploring the energy level set is a two-stage process: first sample a trajectory containing the initial state, then sample the final state given the trajectory.  Thus, the transition probability is 
-
-\[T(z'|z) = \sum_{\mathbf{t}} T(z'|\mathbf{t}) T(\mathbf{t}|z). \]
-This step acts as a checking mechanism to make sure that, starting from any state of the trajectory, the expansion could reach any other state in the trajectory. To do this care must be taken when doubling the trajectory. The algorithm for expanding the trajectory works by recursively doubling binary trees, where states in the trajectory are leaves in the tree. Each doubling of the trajectory is equivalent to appending a binary tree of the same size to the current tree. Only the two ends of the new tree need to be checked for the termination criterion all the subtrees have been checked by recursion.
-It means that, although in theory one can randomly integrate back and worth, adding one state to the trajectory at a time like the windowed HMC, to do this would necessitate  computing the termination criterion $O(L^2)$ times, whereas with the doubling only $O(\log L)$ times are required. 
-
-
 
 \begin{algorithm}
 \KwIn{number of leapfrog steps $L$, initial position $q_0$ }
@@ -565,6 +549,22 @@ $\log w_{\text{prop}} = H(q_{\text{prop}},p_{\text{prop}}) $ \;
 }
 \caption{Windowed HMC update step}
 \end{algorithm}
+
+The No-U-Turn Sampler \cite{hoffman2014no} can be considered a two-in-one, where the windowed HMC sampler is extended to automatically adjust the trajectory length during sampling. 
+
+Given an initial state $(q_0,p_0)$ in the phase space,similar to the windowed HMC sampler, the NUTS starts by randomly integrating forward or backward for $\ell$ number of leapfrog steps. For each subsequent integration step, the NUTS doubles the integration length. After each integration step, a termination criterion is computed to determine if the trajectory expansion should continue. Expansion stops when either end of the trajectory starts doubling back on itself. Compared to static HMC, where the number of leapfrog steps $L$ is fixed across the chain, NUTS can be considered a dynamic version of HMC, where the number of leapfrog steps can vary across iterations and is generally dependent on the geometry of the Hamiltonian flow trajectory in the phase space. 
+
+The reason for doubling the integration lengths is that the algorithm needs to compute a termination criterion at the end of each trajectory, which is necessary for the correctness of the sampler because it maintains reversibility. Suppose $T(\mathbf{t}|z) $ is the transition probability of a trajectory given initial state $z=(q,p)$, and $\mathcal{L}^L_{z,z'}$ is the set of all trajectories of length $L$ containing the points $z$ and $z'$. Computing the termination criterion after each integration step ensures
+\[T(\mathbf{t}|z) = T(\mathbf{t}|z') , \forall \mathbf{t} \in \mathcal{L}^L_{z,z'} . \]
+It is important to remember that conceptually what we are doing when moving from an initial state $z$ to a final state $z'$ while exploring the energy level set is a two-stage procedure: first sample a trajectory containing the initial state, then sample the final state given the trajectory.  Thus, the transition probability is 
+
+\[T(z'|z) = \sum_{\mathbf{t}} T(z'|\mathbf{t}) T(\mathbf{t}|z). \]
+This step acts as a checking mechanism to make sure that, starting from any state of the trajectory, the expansion could reach any other state in the trajectory. To ensure this care must be taken when doubling the trajectory. The algorithm for expanding the trajectory works by recursively doubling binary trees, where states in the trajectory are leaves in the binary tree. Each doubling of the trajectory is equivalent to appending a binary tree of the same size to the current tree. Only the two ends of the new tree need to be checked for the termination criterion all the subtrees have been checked by recursion.
+It means that, although in theory one can randomly integrate back and worth, adding one state to the trajectory at a time like the windowed HMC, to do this would necessitate  computing the termination criterion $O(L^2)$ times, whereas with the doubling only $O(\log L)$ times are required. 
+
+
+
+
 
 \begin{algorithm}
     \KwIn{initial position $q_0$, step size $\epsilon$, joint density $\pi$} 
@@ -621,16 +621,20 @@ $ w' \leftarrow \pi(q',p') $ \;
 
 \section{NUTS Termination Criteria}
 
+\begin{figure}[h!]
 \includegraphics[scale=0.5]{cropped_nuts_image}
+  \caption{Visualizing the No-U-Turn sampler. (a) shows a trajectory that is still expanding. (b) shows a trajectory that has started to turn back on itself and expansion stops. }
+  \label{nuts-figures}
+\end{figure}
 
-Even though the No-U-Turn sampler is named after its termination criterion, which can be described broadly as terminating whenever the trajectory starts to make a u-turn, the criterion itself is a rather crude heuristics that is not justified by any theory. The main advance of the paper is the devise of a correct and efficient way to construct dynamic leapfrog trajectories by recursively building binary trees. The termination criterion can be further improved, and Stan indeed adopts NUTS criteria more general than the original and others where the u-turn aspect is done away with. 
+Even though the No-U-Turn sampler is named after its termination criterion, which can be described broadly as terminating whenever the trajectory starts to make a u-turn, the criterion itself is a rather crude heuristics that is not justified by any theory. The main advance made by the original paper \cite{hoffman2014no} is the devising of a correct and efficient way to construct dynamic leapfrog trajectories by recursively building binary trees. The termination criterion can be further improved, and Stan indeed has adopted NUTS criteria more general than the original and even others where the u-turn aspect is done away with. 
 
-First we look further into the No-U-Turn termination criterion. From linear algebra, we know that $x^Ty > 0 $ can be interpreted to say that those two vectors form an acute angle. Then the No-U-Turn criterion 
+First we look deeper into the No-U-Turn termination criterion. From linear algebra, we know that $x^Ty > 0 $ can be interpreted to say that those two vectors form an acute angle. Then the No-U-Turn criterion 
 \begin{align*}
 &p_{+}^T (q_+ -q_-) < 0 \Leftrightarrow p_+^T (q_- - q_+) > 0 \\
 &p_{-}^T (q_+ -q_-) < 0 \Leftrightarrow -p_-^T (q_+ - q_-) > 0 \\
 \end{align*}
-can be explained visually by figures (a) and (b). Figure (a) shows when the trajectory does not satisfy the terminating criterion and expansion continues. Figure (b) shows when the criterion is satisfied and expansion stops. This idea is generalized in \cite{betancourt2013generalizing}, where the dot product 
+can be explained visually by figures (a) and (b) in \ref{nuts-figures}. Figure (a) shows when the trajectory does not satisfy the terminating criterion and expansion continues. Figure (b) shows when the criterion is satisfied and expansion stops. This idea is generalized in \cite{betancourt2013generalizing}, where the dot product 
 \begin{align*}
  p_{+}^T (q_{+} -q_{-})  
  &=p_{+}^T \int_{t=0}^{T} M^{-1}p(t) dt   \\
@@ -640,7 +644,7 @@ can be explained visually by figures (a) and (b). Figure (a) shows when the traj
  &\approx p^{\#}_{+} \sum_{i=0}^n p(t_{k_i}) \\
  &=  p^{\#}_{+} \sum_{z \sim \mathbf{t}} p(z) \\
 \end{align*} 
-is rewritten to accommodate variations of the HMC sampler where matrices other than the identity are set as the mass matrix. It is in fact the version of the terminating criterion implemented currently in Stan. Note that in this implementation the criterion is no longer dependent on the position variables $q$. The algorithm for this version of NUTS needs to be adjusted slightly to include a term accumulating the sum of $p$ variables across the subtrees. Pseudocode is provided below.
+is rewritten to accommodate variations of the HMC sampler where non-identity matrices are set as the mass matrix. It is in fact the version of the terminating criterion implemented currently in Stan. Note that in this implementation the criterion is no longer dependent on the position variables $q$. The algorithm for this version of NUTS needs to be adjusted slightly to include a term accumulating the sum of $p$ variables across the subtrees. Pseudocode is provided below.
 
 \begin{algorithm}
   	\DontPrintSemicolon
@@ -709,9 +713,9 @@ $s' = \text{True}$ \;
 \end{algorithm}
 
 
-The Exhaustive Hamiltonian Monte Carlo (XHMC) termination criterion  relies on a significant amount of differential geometry for its justification. For example one can easily finds parts of the paper that read "an exhaustion ,$T_{\delta}(z)$, is the family of integration times in the contangent bundle such that the temporal change of the virial along the resulting Hamiltonian flow is uniformly bounded". Understanding fully the mathematics behind it is beyond the scope of this thesis. From my understanding it is a proxy to to monitor the return of a leapfrog trajectory to a neighbourhood around its initial point after having explored the energy level set. With a smaller threshold meant to push the neighbourhood smaller, hence forcing the exploration to continue for longer. Luckily the numerical quantities that needs to be computed are quite easily understood. In the original paper \cite{betancourt2016identifying}, the author showed improved sampling over the NUTS criterion as indicated by increased effective sample size on correlated distributions. 
+The Exhaustive Hamiltonian Monte Carlo (XHMC) termination criterion  relies on a significant amount of differential geometry for its justification. For example one can easily finds parts of the paper \cite{betancourt2016identifying} that defines "an exhaustion ,$T_{\delta}(z)$, is the family of integration times in the contangent bundle such that the temporal change of the virial along the resulting Hamiltonian flow is uniformly bounded". Understanding fully the mathematics behind it is beyond the scope of this thesis. From my understanding it is a proxy to to monitor the return of a leapfrog trajectory to a neighbourhood around its initial point after having explored the energy level set. With a smaller threshold meant to push the neighbourhood smaller, hence forcing the exploration to continue for longer. Luckily the numerical quantities that needs to be computed are quite easily understood. In the original paper \cite{betancourt2016identifying}, the author demonstrated improved sampling performance over the NUTS criterion as indicated by increased effective sample size on correlated distributions. 
 
-The exhaustive termination criterion is defined as follows: given a threshold $\delta > 0$, terminates expansion of the trajectory when 
+The exhaustive termination criterion is defined as follows: given a threshold $\delta > 0$, terminate trajectory expansion when 
 \[  \Bigl |\frac{1}{|\mathbf{t}|} \sum_{z \in \mathbf{t}} \mathbb{P}[z | \mathbf{t}] \frac{dG}{dt}(z) \Bigr | < \delta, \]
 where 
 \[ \mathbb{P}[z| \mathbf{t}] = \frac{\exp^{-H(z)}}{\sum_{z' \in \mathbf{t}} \exp^{-H(z')}}. \]
@@ -726,6 +730,7 @@ For HMC samplers the virial can be simplified as follows:
  &= \sum_{i=1}^D [M^{-1}p]_i p_i - q_i \frac{\partial V}{\partial q_i} \\
  &= 2 T(p) - q \cdot \frac{\partial V}{\partial q}.\\
 \end{align*}
+
 
 \begin{algorithm}
   	\DontPrintSemicolon
@@ -784,23 +789,23 @@ $ {ave}' \leftarrow \frac{dG}{dt}(q',p') $\;
 
 \section{Adaptive Tuning of Step Size}
 
+The step size $\epsilon$ is arguably the most important tuning parameter for the HMC. Too large of a step size would cause the leapfrog trajectories to diverge. Although the divergence threshold is generally model dependent.
 
 For one dimensional potential energy function $V(q) = \frac{q^2}{2\sigma^2}$,
-that is, normal distributed with variance $\sigma^2$. Writing out the matrix that encodes the linear mapping from $(q(t),p(t))$ to $(q(t+\epsilon),p(t+\epsilon))$ gives that the mapping is stable if $\epsilon < 2 \sigma$, and diverges otherwise. 
+that is, normal distributed with variance $\sigma^2$, the threshold can be explicitly computed. Writing out the matrix that encodes the linear mapping from $(q(t),p(t))$ to $(q(t+\epsilon),p(t+\epsilon))$ gives that the mapping is stable if $\epsilon < 2 \sigma$, and diverges otherwise. 
 
 For a general multivariate $q$ with arbitrary potential energy function, equivalent to a general density function, we can approximate the potential energy function with a second order Taylor expansion, so that the $q^2$ term in the Taylor expansion of $V(q)$ has coefficient $\frac{1}{2} \frac{\partial^2 V}{\partial q^2}$  
 By matching the two expressions we get 
 \[ \sigma \approx ( \frac{\partial^2 V}{\partial q^2})^{-1/2} \]
 
-So by setting $\epsilon$ to that value, we are exactly in the middle of the domain of allowable step sizes, equivalent to half of the boundary limit. While this is a useful heuristic to help one thinks about setting the stepsize,
-care has to be taken to evaluate the second derivative using values of the current parameters, because then the leapfrog steps are no longer reversible; that is since the stepsize is position dependent, we would get different step sizes at different ends of a trajectory, so when we reverse direction at the other end the trajectory might not be able return to the starting point. This heuristic has been used to guide step size selection in Neal's work on Bayesian neural networks with hierarchical priors.
-
+So by setting $\epsilon$ to that value, we are exactly in the middle of the domain of allowable step sizes, equivalent to half of the boundary limit. While this is a useful heuristic to help one thinks about setting the step size,
+care has to be taken to evaluate the second derivative using values of the current parameters, because then the leapfrog steps are no longer reversible; that is since the step size is position dependent, we would get different step sizes at different ends of a trajectory, so when we reverse direction at the other end the trajectory might not be able return to the starting point. This heuristic has been used to guide step size selection in Neal's work on Bayesian neural networks with hierarchical priors.
 
 Now, we describe how the step size is automatically tuned in Stan. First, keep
 in mind that the step size is adapted only during the warm-up phase and stays
 fixed during the sampling phase. This ensures the correctness of the algorithm
 as the induced Markov chain resulted from an adaptive step size may not be
-reversible. One way of manual tuning is try to find the step size
+reversible. As a motivation, one way of manual tuning is try to find the step size
 $\epsilon'$ that would result in an acceptance probability of $0.65$. The
 acceptance probability is an average quantity, calculated as an expectation
 over a chain. That is, we try to optimize $\epsilon \in \mathbb{R}$ with respect
@@ -811,16 +816,15 @@ to the function
 where $f(X_t)$ denotes the acceptance probability for iteration $t$. The
 second equality comes from the convergence of the MCMC sampler. This is a
 stochastic optimization problem, and Stan uses the dual averaging scheme of
-Nesterov  to adapt the step size. The dual averaging scheme works in general as
+Nesterov to adapt the step size. The dual averaging scheme works in general as
 follows. Suppose we are trying to find $x\in \mathbb{R}$ such that $h(x) =
 E[H_t|x] = 0$ then we perform the updates 
-
 \[x_{t+1}  = \mu - \frac{\sqrt{t}}{\gamma} \frac{1}{t+t_0} \sum_{i=1}^tH_i;
 \bar{x}_{t+1} = \eta_t x_{t+1} + (1-\eta_t) \bar{x}_t \]
 
 where $\mu$ is the target that the $x_t$'s are shrunk towards, $\gamma > 0$ a
 parameter that controls the amount of shrinkage, $t_0 \ge 0$ a parameter that
-stabilizes the early iterations, and $\eta_t = t^{-\kappa},\kappa>0$ is a
+stabilizes the early iterations, and $\eta_t = t^{-\kappa},\kappa>0$  a
 step size schedule ensuring convergence. Since $\epsilon>0$, this is technically
 a constrained optimization problem, but it can be easily converted into an
 unconstrained problem by optimizing for $\log(\epsilon)$ instead. 
@@ -843,7 +847,7 @@ Initialize $\overline{H}_0 = 0, \gamma = 0.05, t_0 = 10 ,\kappa = 0.8 , \mu = \l
 \caption{dual averaging tuning of $\epsilon$ }
 \end{algorithm}
 
-Even with the dual averaging algorithm for adaptive tuning of the step size, it is still an optimization that requires an initialization. In Stan the original doubling-halving heuristic for initializing the dual averaging optimizer is used. It works by repeatedly doubling or halving the step size, integrating the system for one leapfrog step and evaluating the acceptance rate, until the rate crosses the 50 \% threshold. Hence it avoids starting off with a too large or small step size. 
+Even though there is the dual averaging algorithm for adaptive tuning of the step size, it is still an optimization problem that requires an initialization. Ideally we would an initial $\epsilon$ that this reasonable so as not to waste computational resources. In Stan the original doubling-halving heuristic for initializing the dual averaging optimizer is used. It works by repeatedly doubling or halving the step size, integrating the system for one leapfrog step and evaluating the acceptance rate, until the rate crosses the 50 \% threshold. Hence it avoids starting off with a too large or small step size. 
 \begin{algorithm}
 Initialize $\epsilon = 1$, momentum $p \sim \mathcal{N}(0,\mathbb{I}) $ \;
 $(q',p') \leftarrow \text{Leapfrog}(q,p,\epsilon) $ \;
@@ -867,12 +871,11 @@ Stan divides the tuning period into a number of windows of different lengths. Th
 \item Window size (n=25): the base length of interval for updating the covariance metric. 
 \end{enumerate}
 
-Both the step size and covariance metric are updated during the tuning stage. And it proceeds as follows: the covariance metric is initialized by the identity matrix and an initial step size found by the doubling-halving heuristic. Parameter tuning happens in three stages. The first is the initial buffer, where only $\epsilon $ is updated. In the second stage, both the step size and covariance metric are updated. While $\epsilon$ is updated after every MCMC transition, because the dual averaging procedure only requires an acceptance rate, the covariance metric is updated only after the number of MCMC samples collected equals the current window size. Then compute the empirical covariance and set the metric to its inverse. Then double the window size or increase it to cover the rest of the remaining second stage if doubling is impossible. The third and last stage, which is the end buffer, updates the step size only. 
+Both the step size and covariance metric are updated during the tuning stage. And it proceeds as follows: the covariance metric is initialized by the identity matrix and an initial step size is found by the doubling-halving heuristic. Parameter tuning then happens in three stages. The first is the initial buffer, where only $\epsilon $ is updated. In the second stage, both the step size and covariance metric are updated. While $\epsilon$ is updated after every MCMC transition,because the dual averaging procedure only requires an acceptance rate, the covariance metric is updated only after the number of MCMC samples collected equals the current window size. Then compute the empirical covariance and set the metric to its inverse. Then double the window size or increase it to cover the rest of the remaining second stage if doubling is impossible. The third and last stage, which is the end buffer, updates the step size only. 
 
 The algorithm is designed so that the covariance metric is not updated immediately at the start of the tuning stage, because the model might be initialized particularly poorly and hence the initial examples could be misleading. The doubling of window sizes is to allow progressive improvement of the covariance metric. For larger window sizes, the memory requirement for storing all the MCMC samples to estimate the covariance matrix could be prohibitive. Therefore, Stan actually uses an online algorithm for calculating the covariance, whose memory complexity is independent of the window size, which we will discuss in a later section.
 
 \section{HMC-Specific Sampling Diagnostics}
-bfmi , divergence ( talk about example 8 school) , tree depth ,
 
 First we describe how Stan uses
 divergence to diagnose $\epsilon$'s that are too large. A large constant
@@ -888,7 +891,7 @@ If the problem persists, it may call for reparametrization as the parameter
 space may have many sharp edges and steep wells that no step sizes are small
 enough to navigate the space.  This is not a diagnostic to be ignored. The recommended practice is zero tolerance for divergent transitions. Even a low number (say $\le 5 $ ) can cause biased samples.
 
-In a static sampler we only need to check for divergence at the end of the leapfrog trajectory. For a NUTS sampler, since each state in the trajectory is considered for acceptance when it is first generated, that means we need to check for divergence for each of them. 
+In a static sampler we only need to check for divergence at the end of the leapfrog trajectory. For a NUTS sampler, however, since each state in the trajectory is considered for acceptance when it is first generated, that means we need to check for divergence for each of them. 
 
 
 The second diagnostic tool that comes with Stan is the Bayesian fraction of
@@ -899,8 +902,8 @@ distribution when compared to the marginal Hamiltonian distribution.
 In a HMC sampler, the leapfrog step is a deterministic process
 restricted to exploring a level set determined by the 
 initial positions $(q_i,p_i)$ at the start of the trajectory. Given the previous 
-state $q_i$, the only randomness introduced in the sampling process comes from the resampling of the auxiliary
-momentum distribution.  The BFMI it is defined as 
+state $q_i$, the only randomness introduced in the sampling process comes from the re-sampling of the auxiliary
+momentum distribution.  The BFMI is defined as 
 \[ \text{BFMI} = \frac{ E_\pi[Var_{\pi_{H|q}}[H|q]]}{Var_{\pi_H}[H]} \]
 where $\pi$ is the marginal distribution of $q$ and $\pi_{H|q}$ and $\pi_{H}$
 are the conditional and marginal distributions of the Hamiltonian energy
@@ -924,7 +927,7 @@ Other than divergence and BFMI, Stan also includes MCMC convergence diagnostics 
 
 The Potential scale reduction factor, also commonly referred to as R hat $\hat{R}$ , can be thought of as the factor by which the scale of the current distribution for $\psi$ might be reduced if the simulations were continued in the limit $n \rightarrow \infty$. This quantity should converge to $1$ as $n \rightarrow \infty$. If $\hat{R}$ is high, $ > 1.1 $, for example, we might we want to continue simulation. 
 
-It is defined as follows. Suppose we have $m$ chains each of length $n$, where $\psi_{ij}$ is the $i$th term in chain $j$. Then we have 
+It is defined as follows. Suppose we have $m$ chains each of length $n$, where $\psi_{ij}$ is the $i^\text{th}$ term in chain $j$. Then we have 
 
 \begin{align*}
 &B = \frac{n}{m-1} \sum_{j=1}^{m}(\overline{\psi}_{\cdot j} - \overline{\psi}_{\cdot \cdot})^2, \text{ where } 
@@ -935,7 +938,7 @@ s_j^2 = \frac{1}{n-1} \sum_{i=1}^n (\psi_{ij} - \overline{\psi}_{\cdot j } )^2.\
 & \hat{\text{var}}^+(\psi|y) = \frac{n-1}{n} W + \frac{1}{n} B \\
 & \hat{R} = \sqrt{\frac{\hat{\text{var}}^+(\psi|y)}{W}}. \\
 \end{align*}
-The Effective Sample Size (ESS) takes into account the autocorrelation inherent in MCMC samples and can be interpreted to represent the equivalent number of independent draws that a set of MCMC draws can replace, for example in calculating expectations and various posterior quantities. The ESS has been defined  differently in the literature (quote), the Stan implementation requires multiple chains and has the advantage that it mitigates the danger of overestimating the ESS when the chain has not converged. It is defined as 
+The Effective Sample Size (ESS) takes into account the autocorrelation inherent in MCMC samples and can be interpreted to represent the equivalent number of independent draws that a set of MCMC draws can replace, for example in calculating expectations and various posterior quantities. The ESS has been computed  differently in the literature .The Stan implementation requires multiple chains and has the advantage that it mitigates the danger of overestimating the ESS when the chain has not converged. It is defined as 
 \[n_{\text{eff}}  = \frac{mn}{1 + 2 \sum_{t=1}^\infty \rho_t}, \]
 
 where  $\rho_t$ is the lag at time $t$. The variogram at $t$ 
@@ -945,18 +948,17 @@ and the fact $E[(\psi_i - \psi_{i-t})^2] = 2(1-\rho_t)\text{var}(\psi)$ helps to
 
 \[\hat{\rho}_t = 1 - \frac{V_t}{2 \hat{\text{var}}^+}\]
 
-Finally, the ess is estimated as 
-\[\hat{n}_{\text{eff}} = \frac{mn}{1 + 2 \sum_{t=1}^T \hat{\rho}_t} \]
-
+Finally, the ESS is estimated as 
+\[\hat{n}_{\text{eff}} = \frac{mn}{1 + 2 \sum_{t=1}^T \hat{\rho}_t}, \]
 where $T$ is the first odd positive integer for which $\hat{\rho}_{T+1} + \hat{\rho}_{T+2} $ is negative. It is defined this way because it was observed that for large $T$ the estimates for the lags become too noisy. 
  
 \section{Numerical/Implementation Tricks}
 
-Below we list a number of numerical "tricks" that are nonetheless essential for a successful implementation of a HMC sampler, but is usually omitted in the literature. 
+Below we list a number of numerical "tricks" that are essential for a successful implementation of a HMC sampler, but usually omitted in the literature. 
 
-First, there is the logsumexp function, which enables numerical stable addition of probability functions on the log scale. While users of traditonal MCMC samplers like the Random Walk Metropolis Hastings should be familiar with the idea of computing the Hastings ratio on the log scale to avoid division of probabilities, the NUTS expansion requires updating the probability of the current state by adding the probability from the new subtree. So, instead of doing 
+First, there is the logsumexp function, which enables numerical stable addition of probability functions on the log scale. While users of traditional MCMC samplers like the Random Walk Metropolis Hastings should be familiar with the idea of computing the Hastings ratio on the log scale to avoid division of probabilities, the NUTS expansion requires updating the probability of the current state by adding the probability from the new subtree. So, instead of doing 
 \[ w = w + w' \] 
-we would instead have
+we would have
 \[ \log w = \text{logsumexp}(\log w, \log w' ). \]
 
 \begin{algorithm}
@@ -970,7 +972,7 @@ $c = s + \log( \exp(a-s) + \exp(b-s)) $\;
 \caption{logsumexp}
 \end{algorithm}
 
-Similarly, for the Exhaustive Hamiltonian Monte Carlo termination criterion a sum of $\frac{dG}{dt}$ weighted by the probability at the state need to calculated. A numerical stable method calculating both quantities is described below.
+Similarly, for the Exhaustive Hamiltonian Monte Carlo termination criterion (XHMC) a sum of $\frac{dG}{dt}$ weighted by the probability at the state need to calculated. A numerical stable method calculating both quantities is described below.
 
 \begin{algorithm}
 \DontPrintSemicolon
@@ -990,7 +992,7 @@ Similarly, for the Exhaustive Hamiltonian Monte Carlo termination criterion a su
 \caption{Stable Sum }
 \end{algorithm}
 
-The pseudocode for numerically stble versions of generalized NUTS sampler (GNUTS) and XHMC are given below. Note that it also monitors divergence and rejects automatically any divergent transition.
+The pseudocode for numerically stable versions of the generalized NUTS sampler (GNUTS) and XHMC are given below. Note that it also monitors divergence and rejects automatically any divergent transition.
 
 \begin{algorithm}
 	\SetKwFunction{BuildTree}{BuildTree}
@@ -1097,7 +1099,7 @@ $ s' = \text{True} \text{ and } \mathbb{I}[\log w' - H_0 > 1000] $\;
 
 
 
-Next we show the online algorithm used by Stan to calculate the empirical covariance matrix of the target distribution during the tuning stage. It uses the Welford algorithm, which only requires storing one vector of the same size as the mean and one matrix of the same dimension as the covariance. 
+Next we describe the online algorithm used by Stan to calculate the empirical covariance matrix of the target distribution during the tuning stage. It uses the Welford algorithm, which only requires storing one vector of the same size as the mean and one matrix of the same dimension as the covariance. 
 \begin{algorithm}
 \DontPrintSemicolon
 \KwIn{current sample counter $t$,accumulator for the mean $m$, accumulator for covariance $m_2$, current sample $x$}
@@ -1111,7 +1113,7 @@ $\Sigma = \frac{m_2}{t-1} $\;
 \caption{Welford algorithm}
 \end{algorithm}
 
-Since HMC only works on unconstrained parameter spaces, any constrained parameters, for example the variance need to be transformed into unconstrained variables, and transformed back into the original form after the leapfrog steps to calculate acceptance rate. The following identities are useful for coding up the distributions for sampling by HMC.
+Since HMC only works on unconstrained parameter spaces, any constrained parameters, for example the variance in a normal prior, need to be transformed into unconstrained variables, and transformed back into the original form after the leapfrog steps to calculate acceptance rate. The following identities are useful for coding up the distributions for sampling by HMC.
 
 Suppose $y \ge 0 $ is the original parameter. Then it is first transformed
  \[ X = \text{exp}(y)  \]
@@ -1122,7 +1124,7 @@ p_Y(y) = p_X(f^{-1}(y)) \ |\frac{d}{dY} f^{-1}(y) |\\
 p_Y(y) = p_X(\exp(y)) \cdot \exp(y) \\
 \log p_Y(y) = \log p_X(\exp(y)) + y \\
 \end{align*}
-When calculating the ESS, the variogram $V_t$ involves a summation term of the form $\sum_{n=t+1}^N (\theta_{n} - \theta_{n-t})^2$, which can be time-consuming when carried by brtute force. From discrete mathematics we know that the Fast Fourrier Transform (FFT) can be used to speed up calculation for sums of the form 
+When calculating the ESS, the variogram $V_t$ involves a summation term of the form $\sum_{n=t+1}^N (\theta_{n} - \theta_{n-t})^2$, which can be time-consuming when carried by brute force. From discrete mathematics we know that the Fast Fourier Transform (FFT) can be used to speed up calculation for sums of the form 
 
 \[ \sum_{n=t+1}^N \theta_n \theta_{n-t}.  \]
 
@@ -1133,10 +1135,10 @@ We can rewrite the sum into a linear combination of the desired form:
  &= \sum_{n=t+1}^N \theta_n^2 -2 \sum_{n=t+1}^N \theta_n \theta_{n-t} + \sum_{n=t+1}^N \theta_{n-t}^2 \\ 
   &= \sum_{n=t+1}^N  \theta_n^2 \cdot 1  -2 \sum_{n=t+1}^N \theta_n \theta_{n-t} + \sum_{n=t+1}^N 1 \cdot \theta_{n-t}^2 \\
 \end{align*}
-Finally we discuss a useful heuristics for debugging MCMC samplers. Suppose we have coded a sampler and it seems to run smoothly without a hitch, one might want to use it to sample from a distribution with known mean and covariance, and see if the MCMC samples converge to them in the first and second moments. However, since the empirical mean and covariance will never match exactly the true values, how should we decide if the estimates are close enoguh?
+Finally we discuss a useful heuristics for debugging MCMC samplers. Suppose we have coded a sampler and it seems to run smoothly without a hitch, one might want to use it to sample from a distribution with known mean and covariance, and see if the MCMC samples converge to them in the first and second moments. However, since the empirical mean and covariance will never match exactly the true values, how should we decide if the estimates are close enough?
 
 
-As an example, suppose we want to sample from a bivariate normal distribution with known mean and covariance matrix. Say $\mathcal{N}(\mu,\Sigma) $, where 
+As an example, suppose we want to sample from a bivariate normal distribution with known mean and covariance matrix. $\mathcal{N}(\mu,\Sigma) $, where 
 
 \begin{displaymath}
 \mathlarger{\Sigma} = 
@@ -1146,15 +1148,15 @@ As an example, suppose we want to sample from a bivariate normal distribution wi
 \end{bmatrix}.
 \end{displaymath}
 
-Given a chain of $n$ MCMC samples $\{x_i\}_{i=1:n}$ generated by the sampler to be tested, we could estimate  the target mean by $ \frac{1}{n-1} \sum_{i=1}^ n x_i$. Since $E[X-\mu] = 0$, we would expect the generated quantity $\eta= \frac{1}{n-1} \sum_{i=1}^ n x_i -\mu$ to decrease with increasing number of samples. We could monitor $\eta$ by comparing it with its Monte Carlo standard error (MCSE) 
+Given a chain of $n$ MCMC samples $\{x_i\}_{i=1:n}$ generated by the sampler to be tested, we could estimate  the target mean by $ \frac{1}{n-1} \sum_{i=1}^ n x_i$. Since $E[X-\mu] = 0$, and we would expect the generated quantity $\eta= \frac{1}{n-1} \sum_{i=1}^ n x_i -\mu$ to decrease with increasing number of samples. Then we could monitor $\eta$ by comparing it with its Monte Carlo standard error (MCSE) 
 
 \[ \text{MCSE} = \frac{\hat{\sigma}}{\sqrt{n_{\text{eff}}}} \]
 
 where $\hat{\sigma}$ is the estimated standard deviation. By the Central Limit Theorem one would expect  $\eta \in (-\text{MCSE},\text{MCSE})$ with high probability.Similarly we can monitor quantities like $\frac{1}{n-1} \sum_{i=1}^n ({x_i}_1 -\mu_1)^2 - \sigma^2_1,  \frac{1}{n-1}^n \sum_{i=1}^n ({x_i}_1 - \mu_1)({x_i}_2 - \mu_2)^2 $ to assess convergence to the marginal variances and covariance.
 
-One can then construct example models where the mean and covariance are known explicitly, simulate multiple chains and monitor quantities for approximate convergence, in the sense that the empirical estimated quantities differ from their exact quantities by a margin no larger than its MCSE (or its constant multiple .) 
+One can then construct example models where the mean and covariance are known explicitly, simulate multiple chains and monitor quantities for approximate convergence, in the sense that the empirical estimated quantities differ from their exact quantities by a margin no larger than its MCSE (or its constant multiple .) While this test does not guarantee convergence of the sampler under all circumstances, it is sophisticated enough to detect faulty implementations that lead to 
 
-The samplers implemented in this study have been tested on a two dimensional multivariate normal distribution with known covariance and Bayesian logistic regression problem whose posterior covariance is estimated by a long chain generated by Stan.
+The samplers implemented in this study have been tested on a two dimensional correlated normal distribution with known covariance and a Bayesian logistic regression problem whose posterior covariance is estimated by a long chain generated by Stan.
 
 \chapter{Bayesian Neural Networks}
 \section{Introduction to BNNs}
@@ -1785,8 +1787,9 @@ Based on experiments conducting on this dataset, we can make the following obser
 
 \item  SGHMC can can give similar performance as HMC but the result is not robust to choice of tuning parameters.
 
-\item Integration time does no seem to influence predictive accuracy or sample quality, once the step size is chose so that acceptance rate is kept high.
+\item Integration time does no seem to influence predictive accuracy or sample quality, once the step size is chosen so that acceptance rate is kept high.
 
+\item The windowed HMC sampler does not improve over the regular HMC sampler in terms of ESS as long as the acceptance rate is kept reasonably high.
 \end{enumerate}
 
 Finally, results above make should make one skeptical about claims made about Bayesian neural networks, since they defy some traditional wisdom about statistics. For example, for overparametrized models where the dimension is much larer than the number of observations, one should use hierarchical priors like the horseshoe to perform regularization. However, our experiments show that such regularization often harms predictive accuracy, even when there is high ESS overall. Also, we found that frequentist predictions could achieve similar predictive accuracy as Bayesian alternatives, although BNNs do seem to be more robust to tuning parameters.
