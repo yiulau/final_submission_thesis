@@ -1476,16 +1476,15 @@ In the experiments that follow we would focus entirely on classification, becaus
 \tcbincludegraphics{mnist5.png}
 
 \end{tcbraster}
-\caption{Digits. The first row contains some examples of the original MNIST digits. The second row contains some simplified digits}
+\caption{Examples of the digits datasets. The first row contains some examples of the original MNIST digits. The second row contains some simplified digits}
 \end{figure}
 
-All of the experiments that follow, unless stated otherwise, use a neural network with one hidden layer and the hyperbolic tangent function as activation function. We omit separate biases weights to simplify the presentation. It does not reduce the representational capacity of the model by too much because one of the hidden units can act as the bias by learning to represent a constant. The simplified model has two groups of weights,namely the input-to-hidden weights of dimension $N_{\text{in}} \times N_{\text{hidden}}$, and the hidden-to-output weights of dimension $N_{\text{hidden}} \times N_{\text{out}} $, where $N_{\text{in}},N_{\text{hidden}},N_{\text{out}}$, are the number of input covariates, hidden units and output units respectively. For example, for the simplified MNIST digits dataset described above, we have $N_{\text{in}} = 64 $ and $N_{\text{out}} = 10 $. Suppose $X,y$ are the training data input and target respectively. A single-hidden-layer neural network with a standard normal prior on its weights would have this posterior 
+Unless stated otherwise, all of the experiments that follow use a neural network with one hidden layer, 35 hidden units, and the hyperbolic tangent function as activation function. We omit separate biases weights to simplify the presentation. It does not reduce the representational capacity of the model by too much because one of the hidden units can act as the bias by learning to represent a constant. The simplified model has two groups of weights,namely the input-to-hidden weights of dimension $N_{\text{in}} \times N_{\text{hidden}}$, and the hidden-to-output weights of dimension $N_{\text{hidden}} \times N_{\text{out}} $, where $N_{\text{in}},N_{\text{hidden}},N_{\text{out}}$, are the number of input covariates, hidden units and output units respectively. For example, for the simplified MNIST digits dataset described above, we have $N_{\text{in}} = 64 $ and $N_{\text{out}} = 10 $. Suppose $X,y$ are the training data input and target respectively. A single-hidden-layer neural network with a standard normal prior on its weights would have this posterior 
 
 \[ \prod_{i=1}^N p(y,X|W) p(W^{\text{in}})p(W^{\text{out}}) \]
 where 
 \[p(W^{\text{in}}) = \prod_{k=1}^{N_{\text{in}}}\prod_{j=1}^{N_{\text{hidden}}} \text{exp}(- \frac{W_{kj}^{\text{in}} \cdot W_{kj}^{\text{in}}}{2}), \]
 \[p(W^{\text{out}}) = \prod_{k=1}^{N_{\text{hidden}}}\prod_{j=1}^{N_{\text{out}}} \text{exp}(- \frac{W_{kj}^{\text{out}} \cdot W_{kj}^{\text{out}}}{2}) \]
-
 are the priors for the input-to-hidden weights and hidden-to-output weights respectively, and 
 
 \[ p(y_i,X_i) = \prod_{t=0}^9 \hat{\pi}_t^{\mathbb{I}[y_i=t]}, \]
@@ -1496,7 +1495,7 @@ where $\hat{\pi}_t$ is the estimated probability for $X_i$ belonging to class $t
 
 where $h$ is the tanh function and $h'$ the softmax function.
 
-For high dimensional models like BNNs, especially ones where no one-dimensional quantities should be predomimant apriori, like a network with standard normal prior, for example, the usual strategy of monitoring trace plots for diagnosing convergence is infeasible because it would require the user to skim through the traceplots for the thousands of parameters for even a moderately sized network. Therefore, instead we use multiple chains to compute Gelman's effective sample size (ESS) and monitor the minimum and median ESS over all parameters. The minimum ESS would indicate to us if any marginal quantities have slow convergence whereas the median would be indicative of the general speed of convergence of the chains as a whole. High ESS is desired as they imply low autocorrelation between samples, which means the Markov chain is moving rapidly across the parameter space and is generating more independent samples.
+For high dimensional models like neural networks with standard normal prior, where no particular one-dimensional quantities could be singled out a priori for monitoring, the usual strategy of monitoring trace plots for diagnosing convergence is infeasible because it would require the user to skim through the trace plots for the thousands of parameters for even a moderately sized network. Therefore, instead we use multiple chains to compute Gelman's effective sample size (ESS) \cite{gelman2014bayesian} and monitor the minimum and median ESS over all parameters. The minimum ESS would indicate to us if any marginal quantities have slow convergence whereas the median would be indicative of the general speed of convergence of the chains as a whole. High ESS is desired as they imply low autocorrelation between samples, which means the Markov chain is moving rapidly across the parameter space and is generating more independent samples.
 
 \section{Comparison with Early Stopping Committees}
 
@@ -1516,7 +1515,7 @@ BNN                                             & \multicolumn{5}{c}{23.4}      
 \end{table}
 
 \section{GNUTS v.s. XHMC}
-In the following experiment we compare the generalized NUTS termination criterion and the exhaustive termination criterion (XHMC). For both samplers we adapt the step sizes and the diagonal metric and use multiple chains like the previous experiment. We tested different values of the threshold $\delta$ and found that XHMC is capable of generating samples about as efficiently as GNUTS. 
+In the following experiment we compare the generalized NUTS termination criterion and the exhaustive termination criterion (XHMC). For both samplers we adapt the step sizes and the diagonal metric and use multiple chains like in the previous experiment. We tested different values of the threshold $\delta$ and found that XHMC is capable of generating samples about as efficiently as GNUTS. 
 
 \begin{table}[]
 \centering
@@ -1571,7 +1570,7 @@ where $ W_{i,\cdot}  $ are the weights entering the $i$'th hidden unit. This is 
 & \tau \sim C^+(0,1) \\
 &c^2 \sim \text{Inv-Gamma}(2,8).\\
 \end{align*}
-We found that while the regularized horseshoe prior performs better than the original horseshoe prior in terms of having zero divergent transitions, none of the horseshoe priors can be said to induce great sampling efficiency, as both result in models whose posterior distribution are difficult to sample, resulting in low ESS. What's more is that even the Normal-Inverse-Gamma prior does not give better predictive performance than the standard normal prior, which we have already seen in earlier experiments comparing Gibbs sampling to joint sampling for the hyperparameter. 
+We found that while the regularized horseshoe prior performs better than the original horseshoe prior in terms of having zero divergent transitions, neither of the horseshoe priors can be said to induce great sampling efficiency, as both result in models whose posterior distribution are difficult to sample, resulting in low ESS. What's more is that even the Normal-Inverse-Gamma prior does not give better predictive performance than the standard normal prior, which we have already seen in earlier experiments comparing Gibbs sampling to joint sampling for the hyperparameter. 
 \begin{table}[]
 \centering
 \begin{tabular}{@{}rrrrrrrr@{}}
@@ -1586,7 +1585,7 @@ Median ESS    & 1348      & 1298  & 1220  & 911 & 1356     & 80      & 1354     
 \end{table}
 
 \section{SGHMC}
-The SGHMC has several extra tuning parameters other than the step size $\epsilon$ and number of leapfrogs $L$ that it inherits from the original HMC sampler. To reduce the number of parameters to tune, we fix these parameters ($\alpha=0.01, \hat{\beta}=0$) at the default values used in the experiments even though they are not sufficiently motivated. The parameters remain to be tuned are $\epsilon,L $ and $\eta$. We found that the SGHMC can perform similarly to the HMC although it requires having the right tuning parameter. Because the Metropolis acceptance step is omitted, there is no mechanism to avoid the chain from diverging into a low probability zone in the parameter space. Note that $L=50$ seems to give the best predictive accuracy regardless of the step size, this is puzzling because the $\epsilon$'s span 4 orders of magnitude and thus gives a wide range of integration time $t = \epsilon L$. The role of the learning rate $\eta$ is unclear other than that too large a $\eta$ seems to cause divergence (denoted by NA in the tables) more often. We see that SGHMC can generate samples that have good predictive performance, but their is no clear way to tune all the different hyperparameters other than by a grid search.
+The SGHMC has several extra tuning parameters other than the step size $\epsilon$ and number of leapfrogs $L$ that it inherits from the original HMC sampler. To reduce the number of parameters to tune, we fix these parameters ($\alpha=0.01, \hat{\beta}=0$) at the default values used in the experiments even though they are not sufficiently motivated. The parameters remain to be tuned are $\epsilon,L $ and $\eta$. We found that the SGHMC can perform similarly to the HMC although it requires having the right tuning parameter. Because the Metropolis acceptance step is omitted, there is no mechanism to avoid the chain from diverging into a low probability zone in the parameter space. Note that $L=50$ seems to give the best predictive accuracy regardless of the step size, this is puzzling because the $\epsilon$'s span 4 orders of magnitude and thus gives a wide range of integration time $t = \epsilon L$. The role of the learning rate $\eta$ is unclear other than that too large a $\eta$ seems to cause divergence (denoted by NA in the tables) more often. We see that SGHMC can generate samples that have good predictive performance, but their is no clear way to tune all the different hyperparameters other than by a grid search. 
 
 
 \begin{table}[]
@@ -1667,7 +1666,7 @@ Hidden units = 65 & 22.0 (69.6)      & 610 (660)      & 1352 (1324)        \\ \b
 \end{table}
 
 \section{Covariance Adaptation}
-Here we explore whether its necessary or indeed useful to condition the HMC by the full covariance matrix of the target distribution. We experimented with a number of different priors and found that not only is adapting the full matrix more time consuming because of the need to multiply by a full mass matrix at every leapfrog step, the samples generated have much higher autocorrelation (equivalent to low ESS) to the point it slows sampling to a halt and destroys any hope of meaningful inference. We attribute this result to the singular nature of neural network models. For each of the prior, we sample from the posterior using the full covariance (dense metric), only the diagonal variances (diagonal metric) and no conditioning (unity metric) respectively. We see that the unity and diagonal metric performs similarly with the diagonal metric giving higher ESS's for the hierarchical priors, and they both take about the same time to compute.
+Here we explore whether its necessary or indeed useful to condition the HMC by the full covariance matrix of the target distribution. We experimented with a number of different priors and found that not only is adapting the full matrix more time consuming because of the need to multiply by a full mass matrix at every leapfrog step, the samples generated have much higher autocorrelation (equivalent to low ESS) to the point it slows sampling to a halt and destroys any hope of meaningful inference. We attribute this result to the singular nature of neural network models. For each of the prior, we sample from the posterior using the full covariance (dense metric), only the diagonal variances (diagonal metric) and no conditioning (unity metric) respectively. We see that the unity and diagonal metric performs similarly with the diagonal metric giving higher ESSs for the hierarchical priors, and they both take about the same time to compute.
 
 \begin{table}[]
 \footnotesize
@@ -1684,7 +1683,7 @@ Normal-Inv-Gamma ARD & 91.2 (23.2) [27.2]  & 4 (370) [140]  & 8 (1295) [1332]   
 
 \section{Number of Layers}
 Now we fix the prior to be a standard normal distribution and vary the number of hidden layers. We found no evidence of increasing sampling difficulty with increased number of layers. 
-However, for the the model with 4 hidden layers the test error went up significantly even though the ESS's stay about the same. 
+However, for the the model with 4 hidden layers the test error went up significantly even though the ESSs stay about the same. 
 
 \begin{table}[]
 \centering
@@ -1715,10 +1714,7 @@ Normal-Inv-Gamma     & 23.2  & 28.8                         \\ \bottomrule
 
 \section{Static  v.s. Dynmaic HMC}
 In the following experiment we ran two HMC samplers, the regular HMC and windowed HMC, over a grid of tuning parameter values $(\epsilon,L)$, and compare the samples generated by the best combination with those generated by the dynamic HMC (NUTS). The model is a single-hidden-layer BNN with a standard normal prior.
-The step sizes and covariance metrics are tuned automatically as in previous experiments. The results show that the static samplers has similar performance as the dynamic sampler, both in terms of predictive accuracy and ESS. Although this may be more indicative of the success of the dual averaging tuning of the step size $\epsilon$ in generating stable leapfrog trajectories. 
-
-
-The sampling performance and predictive accuracy seems to be independent of the number of leapfrog steps, and also of the use or not of the windowed sampler. 
+The step sizes and covariance metrics are tuned automatically as in previous experiments. The results show that the static samplers has similar performance as the dynamic sampler, both in terms of predictive accuracy and ESS. Although this may be more indicative of the success of the dual averaging tuning of the step size $\epsilon$ in generating stable leapfrog trajectories. The sampling performance and predictive accuracy seems to be independent of the number of leapfrog steps, and also of the use or not of the windowed sampler. 
 \begin{table}[]
 \centering
 \begin{tabular}{@{}llll@{}}
@@ -1781,7 +1777,7 @@ Based on experiments conducting on this dataset, we can make the following obser
 \item The windowed HMC sampler does not improve over the regular HMC sampler in terms of ESS as long as the acceptance rate is kept reasonably high.
 \end{enumerate}
 
-Finally, results above make should make one skeptical about claims made about Bayesian neural networks, since they defy some traditional wisdom about statistics. For example, for overparametrized models where the dimension is much larer than the number of observations, one should use hierarchical priors like the horseshoe to perform regularization. However, our experiments show that such regularization often harms predictive accuracy, even when there is high ESS overall. Also, we found that frequentist predictions could achieve similar predictive accuracy as Bayesian alternatives, although BNNs do seem to be more robust to tuning parameters.
+Finally, results above make should make one skeptical about claims made about Bayesian neural networks, since they defy some traditional wisdom about statistics. For example, for overparametrized models where the dimension is much larger than the number of observations, one should use hierarchical priors like the horseshoe to perform regularization. However, our experiments show that such regularization often harms predictive accuracy, even when there is high ESS overall. Also, we found that frequentist predictions could achieve similar predictive accuracy as Bayesian alternatives, although BNNs do seem to be more robust to tuning parameters.
 
 
 
