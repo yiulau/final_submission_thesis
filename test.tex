@@ -1161,14 +1161,14 @@ The samplers implemented in this study have been tested on a two dimensional cor
 \chapter{Bayesian Neural Networks}
 \section{Introduction to BNNs}
 
-Deep Learning, a field in machine learning studying multilayered neural network models, has become quite successful in Artificial Intelligence tasks and a lot of research has been, and is being done to improve our understanding of these models and to apply them better and to more fields. See \cite{Goodfellow-et-al-2016-Book,lecun2015deep} for a general introduction into the methodology and application of deep learning, and \cite{schmidhuber2015deep} for an in-depth literature review. 
+Deep Learning, a field in machine learning which studies multilayered neural network models, has become quite successful in Artificial Intelligence tasks and a lot of research has been, and is being done to improve our understanding of these models and to apply them better and to more fields. See \cite{Goodfellow-et-al-2016-Book,lecun2015deep} for a general introduction into the methodology and application of deep learning, and \cite{schmidhuber2015deep} for an in-depth literature review. 
 
-Before there was Deep Learning, a term which only came about in the mid 2000s, there were Neural Networks \cite{bishop1995neural,ripley2007pattern}, which were also hugely popular in the 90s, but eventually the enthusiasim for neural networks cooled off because they were perceived to be too computationally intensive and difficult to scale up. The main reason for this was the difficulty of training neural networks of more than one or two hidden layers. Traditional optimization techniques like stochastic gradient descent with backpropogation did not improve empirical test error for networks with more layers,not until ideas like pre-training to initialize optimization were experimented could we fit "deep" neural networks with more than 2 hidden layers. This rebooted the field, now rebranded as Deep Learning, and innovations like using the rectified linear units as activation functions \cite{nair2010rectified} to allow training deep networks without pre-training, and using GPUs to speed up the training process \cite{krizhevsky2012imagenet}, as well as the creation of software libraries like Theano \cite{bergstra2010theano}, Caffe \cite{jia2014caffe}, Tensorflow\cite{tensorflow2015-whitepaper}, and PyTorch \cite{paszke2017automatic}, just to name a few, that make building and training neural network models much easier by automating the backpropogation step with symbolic differentiation \cite{bahrampour2015comparative} and handles the transition between CPU and GPU computation modes. 
+Before there was deep learning, a term which only came about in the mid 2000s, there were neural networks \cite{bishop1995neural,ripley2007pattern}, which were also hugely popular in the 90s, but eventually the enthusiasim for neural networks cooled off because they were perceived to be too computationally intensive and difficult to scale up. The main reason for this was the difficulty of training neural networks of more than one or two hidden layers. Traditional optimization techniques like stochastic gradient descent with backpropogation did not improve empirical test error for networks with more layers,not until ideas like pre-training to initialize optimization were experimented could we fit "deep" neural networks with more than 2 hidden layers. This rebooted the field, now rebranded as deep learning, and it was followed by innovations like using the rectified linear units as activation functions \cite{nair2010rectified} to allow training deep networks without pre-training, and using GPUs to speed up the training process \cite{krizhevsky2012imagenet}, as well as the creation of software libraries like Theano \cite{bergstra2010theano}, Caffe \cite{jia2014caffe}, Tensorflow\cite{tensorflow2015-whitepaper}, and PyTorch \cite{paszke2017automatic}, just to name a few, that make building and training neural network models much easier by automating the backpropogation step with symbolic differentiation \cite{bahrampour2015comparative} and handles the transition between CPU and GPU computation modes. 
 
 First we describe one of the most popular neural network models, the feedforward networks.
 
-Suppose we have $n$ observed data points $\{y_i,x_i\}$ where $X_i \in
-\mathcal{R}^p$ is a $p$-dimensional vector, then a feedforward neural network models the
+Suppose we have $n$ observed data points $\{y_i,x_i\}_{i=1}^n$ where $X_i \in
+\mathbb{R}^p$ is a $p$-dimensional vector, then a feedforward neural network models the
 data as follows:
 
 \[y_i = \prod_{j=1}^Lg_j(V_jf_j(W_j))x_i \]
@@ -1177,8 +1177,8 @@ weight matrix, $V_j$ a $m_j \times m_{j-1}$ weight matrix, and each $g_j$,$f_j$
 a pair of activation functions that are usually non-linear functions. There are
 usually no restrictions on what these activation functions must be other than on
 $g_L$ which must match the data type of the $y_i$'s. For example, if $y_i$ are
-binary observations then we would like the last output activate function to be a
-logistic function so that it maps output to strictly $[0,1]$, just like in
+binary observations then we would like the last output activation function to be a
+logistic function so that it maps output strictly to $[0,1]$, just like with the
 logistic regression.
 
 Popular activation functions in the classical neural network literature includes
@@ -1186,9 +1186,8 @@ the logistic function $f(x) = \frac{1}{1+\text{exp}(-x)} $ and the hyperbolic ta
 learning the Rectified linear unit (RELU) has come to dominate the field. It has
 a simple form of $g(x)=\max{0,x}$, which is straightforward to do
 backpropogation with despite a single point of nondifferentiability, and it was
-found to improve optimization enormously. It's discovery has allowed training
-neural network models with many more layers than 2 with random initialization of
-weights, getting rid of the need for pre-training. 
+found to facilitate optimization enormousl.It's particularly helpful for
+neural network models with many more layers than 2 and needs only random weight initialization, getting rid of the need for pre-training. 
 
 While neural networks can have different numbers of layers and number of hidden
 units within each layer, theoretically only one layer is sufficient to
@@ -1196,11 +1195,10 @@ approximate any function as we increase the number of hidden units \cite{hornik1
 
 For Bayesian neural networks where one puts a Gaussian prior distribution on the weights of model, it has been shown that for a one-hidden-layer model, the prior converges to a Gaussian process as the number of hidden units converge to infinity \cite{neal2012bayesian}.This gives a neat intrepretation of bayesian neural networks. 
 
-Further work by \cite{gal2015dropout}, shows that heuristic training techniques such as dropout \cite{srivastava2014dropout}  are actually are actually doing variational inference with Deep Gaussian Process \cite{damianou2013deep} as its prior, a process where several GPs are stacked one after another. 
+Further work by \cite{gal2015dropout} shows that heuristic training techniques such as dropout \cite{srivastava2014dropout}  are actually doing variational inference with Deep Gaussian Process \cite{damianou2013deep} as its prior, a process where several GPs are stacked one after another. 
 
-The most exact way to perform Bayesian inference for BNNs is still MCMC sampling as pioneered in Neal's thesis. In his work he put a conjugate hiearchical prior on the weights of the network and sampled the weights with HMC and the hyperparameter with block-Gibbs updates. One of his graduate students attempted to sample the weights and hyperparameters jointly with HMC but did not get better performance. Cho experimented with a Block Gibbs-HMC hybrid method where each conditional distribution is sampled alternatively by HMC. I experimented with a much simply alternative for joint sampling and found good results in terms of sample quality. 
+The most exact way to perform Bayesian inference for BNNs is still MCMC sampling as pioneered in Neal's thesis. In his work he put a conjugate hiearchical prior on the weights of the network and sampled the weights with HMC and the hyperparameter with block-Gibbs updates. One of his graduate students attempted to sample the weights and hyperparameters jointly with HMC but did not get better performance. Cho \cite{choo2000learning} experimented with a block-Gibbs-HMC hybrid method where each conditional distribution is sampled alternatively by HMC. I experimented with a much simply alternative for joint sampling and found good results in terms of sample quality. 
 
-For some theory on why, for the same number of hidden layers, it would be better to have multiple layers in a NN rather than a wide single-layer network, see \cite{montufar2014number}. 
 
 Neal found that the windowed HMC sampler improves sampling in general, and also that evaluating the gradient using only a subset of the data would not deterioate performance significantly. We would seek to corroborate those observations in our own experiments.
 
@@ -1212,16 +1210,16 @@ It's still useful to monitor the convergence of the log posterior and of the E-B
 
 \section{Sampling for the Hyperparameter}
 
-In Neal's work he separated the model parameters into groups, and put independent Gaussian-Inverse-Gamma priors on each of them. For example, let $W_{ij}$ let be the an entry in the weight matrix connecting the input covariates to the hidden units in the first layer. Then, the prior is 
+In Neal's work he separated the model parameters into groups, and put independent Gaussian-Inverse-Gamma priors on each of them. For example, let $W_{ij}$ let be an entry in the weight matrix connecting the input covariates to the hidden units in the first layer. Then, the prior is 
 
 \[W_{ij} \sim \mathcal{N}(0,\sigma^2), \sigma^{-2} \sim \text{Gamma}(a_0,b_0) \]
 
-Assuming $n = |W|$, the  posterior distribution for the hyperparameter is once again Inverse-Gamma
+Assuming $n = |W|$, the posterior distribution for the hyperparameter is once again Inverse-Gamma
 \[\sigma^{-2}|W,X,y \sim \text{Gamma}(a_1,b_1)\]
 \[a_1 = a_0 + \frac{1}{2} n  \]
 \[b_1 = b_0 + \frac{1}{2} \sum_{ij} W_{ij}^2 \]
 
-In Neal's work he alternated between sampling the lower-level weights with HMC and drawing from the conjugate posterior for the hyperparameter. The pseudocode is given below.
+In Neal's work he alternated between sampling the lower-level weights with HMC and drawing from the conjugate posterior for the hyperparameter exactly. The pseudocode is given below.
 \begin{algorithm}
 \KwIn{Initial variance $\sigma^2_0$, number of MCMC samples $M$}
 
@@ -1235,14 +1233,12 @@ In Neal's work he alternated between sampling the lower-level weights with HMC a
 \caption{Blocks-Gibbs Sampler for NN weights and variance}
 \end{algorithm}
 
-In Cho's work, he experimented with joint sampling of the lower-level weights and hyperparameters. However, since the dual averaging scheme for automatic tuning the step size was not available at the time, he had to rely on the heuristics invented by Neal, which asks for alternate sampling of the conditional distributions in which the step size is dependent on the variables being held constant. He devised a scheme where the leapfrog steps in the joint parameter space have to be done separately for the two groups of parameters. 
+In Cho's work \cite{choo2000learning}, he experimented with joint sampling of the lower-level weights and hyperparameters. However, since the dual averaging scheme for automatic tuning the step size was not available at the time, he had to rely on the heuristics invented by Neal, which asks for alternate sampling of the conditional distributions in which the step size is dependent on the variables being held constant. He devised a scheme where the leapfrog steps in the joint parameter space have to be done separately for the two groups of parameters. 
 
-A quick note on the parameterization used for the hierarchical prior. The non-centered parametrization is expected to mitigate the posterior correlation between the hyperparameter and the lower-level weights. Reducing posterior correlation is known to help improve sampling efficiency signficantly. 
+A quick note on the parameterization used for the hierarchical prior. The non-centered parametrization is expected to mitigate the posterior correlation between the hyperparameter and the lower-level weights. Reducing posterior correlation is known to help improve sampling efficiency signficantly. We experimented with joint sampling under both parametrizations and found that non-centered parametrization is necessary for meaningful inference. The Hamiltonian sampler also performs better than the block-Gibbs sampler.
 
-We experimented with joint sampling under both parametrizations and found that non-centered parametrization is necessary for meaningful inference. The Hamiltonian sampler also performs better than the block-Gibbs sampler.
-
-\section{SGHMC}
-The idea of simulating Hamilotnian dynamics without the Metropolis acceptance step was first experimented in the statistics/machine learning literature by Neal \cite{neal1993bayesian} in a batch MCMC sampler for the posterior distribution of a BNN. He found that,with careful selection of the leapfrog step size, the biased samples achieve similar predictive performance as the full MCMC samples. Therefore, it seems to reason that for predictive tasks e.g. regression or classification where observations are abundant, we could 
+\section{Stochastic Gradient Hamiltonian Monte Carlo}
+The idea of simulating Hamiltonian dynamics without the Metropolis acceptance step was first experimented in the statistics/machine learning literature by Neal \cite{neal1993bayesian} in a batch HMC sampler for the posterior distribution of a BNN. He found that,with careful selection of the leapfrog step size, the biased samples achieve similar predictive performance as the full MCMC samples. Therefore, it seems to reason that for predictive tasks e.g. regression or classification where observations are abundant, we could 
 use a validation set (predictive performance) to select tuning parameters, hoping to trade off a bit of bias for better predictive performance. 
 
 Another trick that helps to speed up the HMC sampler is data subsampling, also denoted partial gradient in Neal's thesis \cite{neal2012bayesian}.
