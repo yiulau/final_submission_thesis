@@ -1247,14 +1247,14 @@ Assuming there are $n$ data points, the potential energy function $V(q)$ can be 
 where $\pi(q)$ is the prior density function and $\pi(q|data)$ is the likelihood function. Note that the finite series in the last expression above can be approximated as 
 \[ \sum_{i=1}^n \log \pi(q|data_i) \approx \frac{n}{k} \sum_{i \in I} \log \pi(q|data_i) \]
 where $I$ is a subset of $\{1,\dots, n\}$ of size $\frac{k}{n}$. 
-More pratically, if we divide the datapoints into $M$ equally sized subsets. Then for any such subset $S$, the potential energy function can be approximated by 
+More practically, if we divide the datapoints into $M$ equally sized subsets. Then for any such subset $S$, the potential energy function can be approximated by 
 \[ V(q) \approx    -\log(\pi(q)) + M \sum_{i \in S} \log(\pi(q|data_i)) = \tilde{V}(q) \] Data subsampling and omission of the Metropolis acceptance step are two key features of the stochastic gradient MCMC literature. In an overview the stochastic gradient MCMC literature 
 the authors summarized it as follows:
  "If the stationary distribution is not the target distribution, a Metropolis-Hastings (MH) correction can often be applied. Unfortunately, such correction steps require a costly computation on the entire
-dataset. Even if one can compute the MH correction, if the dynamics do not nearly lead to the correct stationary distribution, then the rejection rate can be high even for short simulation periods h. Furthermore, for many stochastic gradient MCMC samplers, computing the probability of the reverse path is infeasible, obviating the use of MH. As such, a focus in the literature is on defining dynamics with the right target distribution, especially in large-data scenarios where MH corrections are computationally burdensome or infeasible.
+dataset. Even if one can compute the MH correction, if the dynamics do not nearly lead to the correct stationary distribution, then the rejection rate can be high even for short simulation periods $h$. Furthermore, for many stochastic gradient MCMC samplers, computing the probability of the reverse path is infeasible, obviating the use of MH. As such, a focus in the literature is on defining dynamics with the right target distribution, especially in large-data scenarios where MH corrections are computationally burdensome or infeasible.
 "\cite{ma2015complete}
 
-In Deep Learning, neural networks are usually fitted by stochastic gradient descent (SGD) \cite{ngiam2011optimization}.
+In deep learning, neural networks are usually fitted by stochastic gradient descent (SGD) \cite{ngiam2011optimization}.
 This is a first order method like regular gradient descent \cite{wright1999numerical}, except at each weight update a random subset(batch) of data points are sampled to be the  observations, and the sequence of step sizes over the optimization process must decay while satisfying the property
 
 \[ \sum_{t=1}^\infty \epsilon_t = \infty , \sum_{t=1}^\infty \epsilon_t^2 < \infty \]
@@ -1275,8 +1275,8 @@ for Langevin Monte Carlo (LMC) or Metropolis adjusted Langevin Algorithm (MALA),
 includes an acceptance-rejection step at each update. This can also be seen as a
 special case of HMC where only one leapfrog step is used ($L=1$). It has been
 demonstrated that HMC is much more efficient than LMC because it avoids random
-walk. (Show $O(D^{4/3})$ vs $O(D^{5/4})$ kind of results). This inspires
-Stochastic Gradient Hamilotian Monte Carlo (SGHMC), 
+walk. This inspires the
+stochastic gradient Hamilotian Monte Carlo (SGHMC), 
 which extends HMC the way SGLD extends LMC. 
 
 
@@ -1284,10 +1284,10 @@ Applying MCMC methods to large datasets often involve 2 problems. First, evaluat
 \[ \pi(D|q) = \prod_{i=1}^n \pi(x_i|q) \]
  is equivalent to passing through all datapoints, which alone can make the sampling algorithm unacceptably slow since all versions of the Metropolis-Hastings sampler requires such evaluations for proposing new samples. Second, models that require MCMC samples when a large number of datapoints are available are necessarily singular models. Using the terminology of \cite{watanabe2009algebraic}, regular models are models for which the bayesian central limit theorem \cite{le2012asymptotic} holds, that is, when the number of observations goes to infinity the posterior distribution of $q$ converges to a Normal distribution. Models that are non-regular are called singular models. A lot of methods designed to scale MCMC \cite{neiswanger2013asymptotically,scott2016bayes} ultimately rely on this asymptotic normality for validity. Bayesian logistic regression is a classical model for which the CLT holds and is used in many papers to demonstrate the effectiveness of newly proposed large-scale MCMC methods. However, the very fact that asymptotic normality holds means there is little added utility to drawing MCMC samples from the posterior distribution, since a normal approximation would suffice. On the other hand, for singular models there is no guarantee that the estimates converge to the target posterior distribution. 
 
-Asympotic normality is also assumed for the application of stochastic gradient mcmc methods to neural network models \cite{welling2011bayesian,chen2014stochastic,ahn2012bayesian,ding2014bayesian,ma2015complete}. Even though neural networks are singular models where the conditions for the central limit theorem do not hold, these methods have shown good predictive performance on a variety of datasets. This is opposite of what one would expect and merits further investigation.
+Asympotic normality is also assumed for the application of stochastic gradient MCMC methods to neural network models \cite{welling2011bayesian,chen2014stochastic,ahn2012bayesian,ding2014bayesian,ma2015complete}. Even though neural networks are singular models where the conditions for the central limit theorem do not hold, these methods have shown good predictive performance on a variety of datasets. This is opposite of what one would expect and merits further investigation.
 
 
-Now we introduce the Stochastic gradient Hamiltonian Monte Carlo (SGHMC) \cite{chen2014stochastic}
+Now we introduce the Stochastic gradient Hamiltonian Monte Carlo (SGHMC). \cite{chen2014stochastic}
 
 
 \begin{algorithm}
@@ -1313,25 +1313,18 @@ Now we introduce the Stochastic gradient Hamiltonian Monte Carlo (SGHMC) \cite{c
 
 
 
-
-
-Stochastic gradient Hamiltonian Monte Carlo \cite{chen2014stochastic}
-relies on the assumption that the gradient of the log target density is normally distributed, which in turn comes from assuming independence of the observations $x$ and appealing to the central limit theorem.
-
-
-
 \section{Priors}
 
-The horseshoe prior was first proposed by quote as a Bayesian counterpart to the frequentist Lasso estimator in high-dimensional statistics. Like the lasso, it shrinks estimates for irrelevant covariates to zero. Compared to alternatives like the Bayesian Lasso \cite{park2008bayesian},  and the spike-and-slab prior \cite{mitchell1988bayesian}, it has the advantage of admitting full HMC sampling because it contains no discrete parameters.
+The horseshoe prior was first proposed by \cite{carvalho2009handling} as a Bayesian counterpart to the frequentist Lasso estimator in high-dimensional statistics. Like the lasso, it shrinks estimates for irrelevant covariates to zero. Compared to alternatives like the Bayesian Lasso \cite{park2008bayesian}, and the spike-and-slab prior \cite{mitchell1988bayesian}, it has the advantage of admitting full HMC sampling because it contains no discrete parameters.
 
-It proceeds as follows: 
+Suppose we have a $D$-dimensional parameter.
 \[ \mathbf{\beta} = (\beta_1,\cdots,\beta_D)\]
-
+Then the horseshoe prior for this parameter is defined as
 \begin{align*}
  &\beta_j \sim \mathcal{N}(0,\tau^2\lambda^2) \\
  &\lambda_j \sim C^+(0,1),\, j = 1,\dots , D, \\
 \end{align*}
-where $C^+(0,1)$ is a half-Cauchy distribution with mean zero and variance one. The horseshoe prior is usually applied to regression problems where the number of samples were significantly fewer than the number of covariates and can be useful for models that require regularization, like neural networks \cite{ghosh2017model}.
+where $C^+(0,1)$ is a half-Cauchy distribution with mean zero and variance one. The horseshoe prior is usually applied to regression problems where the number of samples were significantly fewer than the number of covariates, which makes it a suitable candidate prior for models that require regularization, like neural networks \cite{ghosh2017model}.
 
 However, the horseshoe prior sometimes causes divergent behaviour during sampling. The regularized horseshoe prior \cite{piironen2017sparsity} fixes this problem and is described below:
 
@@ -1367,22 +1360,22 @@ where
 Because the local and global $r_1$ parameters are constrained to be positive,the final unconstrained parameter space is $(z,\log r_1^l,r_2^l,\log r_1^g,r_2^g)$
 
 
-Here we would briefly introduce the Automatic Relevance Determination (ARD) priors. It is a general way of assigning priors to the neural network weights that, along with a proper choice of prior, should allow the NN's to regulate excess hidden units, and hence obviating the need for fixing the number of hidden units.
+Here we would briefly introduce the Automatic Relevance Determination (ARD) priors. It is a general way of assigning priors to the neural network weights that, along with a proper choice of prior, should allow the NNs to self-regulate excess hidden units, and hence obviating the need for choosing the number of hidden units.
 
-An ARD prior puts independent priors of the same distribution on the group of weights entering each hidden unit.
-Suppose $W_{i\ell}$ are the weights connecting into the $i$th hidden unit in the $\ell$'th layer of a NN. For example, if there are $n$ incoming units connecting to $m$ hidden units and if the prior in question is Normal-Inverse-Gamma,then we have 
+An ARD prior puts independent priors of a common distribution on the group of weights entering each hidden unit.
+Suppose $W_{i\ell}$ are the weights connecting into the $i^\text{th}$ hidden unit in the $\ell^\text{th}$ layer of a NN. For example, if there are $n$ incoming units connecting to $m$ hidden units and if the prior in question is Normal-Inverse-Gamma,then we have 
 \begin{align*}
 & W_{i\ell} \in \mathbb{R}^n , \forall i \in \{1,\dots,m\}\\ 
 & W_{i\ell} \sim \mathcal{N}(0,\sigma^2) \\
 & \sigma_i^2  \sim \text{Inv-Gamma}(a_0,b_0), \forall i \in \{1,\dots,m\} . \\
 \end{align*}
 \section{Scaled Initialization}
-In the neural network literature, the initialization of weights has been observed to influence the final predictive performance of the optimized model. Conventional initializations like the normal distribution, $\text{Uniform}(0,1) $ were replaced by scaled distributions whose scale is dependent on the model structure. For example,
+In the neural network literature, the initialization of weights has been observed to influence the final predictive performance of the optimized model. Conventional initializations like the normal distribution $\text{Uniform}(0,1) $ were replaced by scaled distributions whose scale is dependent on the model structure. For example,
 \[ W \sim \text{Uniform}(\frac{-1}{\sqrt{N_{in}}},\frac{1}{\sqrt{N_{\text{in}}}}) \]
 
 where $N_\text{in}$ is the number of incoming units from the previous layer. This motivates us to consider priors of this form. Experiment results will be discussed in Chapter 4.
 \section{Model Selection}
-In a neural network model there are multiple hyperparameters that has to be selected be
+In a neural network model there are multiple hyperparameters that has to be selected by
 the user. These include the number of hidden layers, the number of hidden
 units in each layer, the choice of activation function, the use of
 convolutional layers in the case of convolutional neural networks, and the prior
@@ -1402,9 +1395,9 @@ calculate the log pointwise predictive density, $\text{lppd}_{\text{loo-cv}}$, w
 follows. For each split of the $n$ split $\{d_i,d_{-i}\}$, where $d_i$ is the
 $i^{\text{th}}$ data point $\{y_i,x_i\}$, and $d_{-i}$ are the $n-1$ remaining data points.
 Then
-\[ \text{lppd}_{\text{loo-cv}} = \sum_{i=1}^n \log p_{\text{post}(-i)}(d_i) \]
+\[ \text{lppd}_{\text{loo-cv}} = \sum_{i=1}^n \log p_{\text{post}(-i)}(d_i), \]
 where 
-\[p_{\text{post}(-i)(d_i)} = \int p(y_i|x_i,\theta) p(\theta |d_{-i}) d\theta \]
+\[p_{\text{post}(-i)(d_i)} = \int p(y_i|x_i,\theta) p(\theta |d_{-i}) d\theta, \]
 which is the marginal predictive density of the $i^\text{th}$ data point, with $\theta$
 integrated out with respect to the posterior density of $\theta$ having observed
 the remaining $n-1$ data points. In practice, the integration is performed
@@ -1427,7 +1420,7 @@ simulating multiple chains,thus further multiplying the the computational burden
 (in the case of k-fold cross-validation for $k=10$, or $k=5$) when a single sampling session could use up all available memory and computational resources. 
 It might not be worth it to obtaining a better estimate of the test error if it means shrinking the model to allow repeated sampling sessions.
 
-Holdout cross-validaiton as currently used in the neural network literature
+Holdout cross-validation as currently used in the neural network literature
 has higher variance than the k-fold and leave-one-out alternatives and might be
 problematic if the sample size is small. It might be
 preferable to use an information criterion which requires only simulation from
@@ -1449,7 +1442,7 @@ where
 \[\text{lppd} = \sum_{i=1}^n \log( \frac{1}{S} \sum_{s=1}^S p(y_i|x_i,\theta^s) ) \]
 is the computed log pointwise predictive density.And 
 \[p_{\text{WAIC}} = \sum_{i=1}^n V_{s=1}^S(\log p(y_i|x_i, \theta^s)) \]
-is the effective number of parameters, where $V_s=1^S \log(p(y_i|x_i,\theta^s))$ is the empirical variance of the $S$  $\log(p(y_i|x_i,\theta^s))$ for fixed $i$. Note that only $nS$ points need to be stored to calculate the WAIC. $p_{\text{WAIC}}$ can be calculated differently, but here we follow the recommendation of Gelman et al and use the formula above.
+is the effective number of parameters, where $V_s=1^S \log(p(y_i|x_i,\theta^s))$ is the empirical variance of the $S$  $\log(p(y_i|x_i,\theta^s))$ for fixed $i$. Note that only $nS$ points need to be stored to calculate the WAIC. $p_{\text{WAIC}}$ can be calculated differently, but here we follow the recommendation in \cite{gelman2014bayesian} and use the formula above.
 
 The WAIC can also be calculated by importance sampling, using the variational distribution as the proposal distribution \cite{yamada2012information}.
 
@@ -1461,7 +1454,7 @@ and a prediction made by drawing from the empirical distribution.
 
 PyTorch \cite{paszke2017automatic} is a deep learning computational framework which contains an automatic differentiation module optimized for neural network models. It also offers the option of GPU computing, which Stan does not provide. What makes it stand out amongst other popular deep learning framework as a prime candidate for implementing the NUTS sampler is that it has a dynamic computational graph framework, which allows easy implementation of recursion and allows backpropogation through it, unlike the static computational graph approach adopted by TensorFlow.
 
-There is concern that single precision might not be enough to maintain accuracy of the Hamiltonian during integration, therefore we carried out some experiments comparing the performance of single and double precision numbers on a neural network test problem. Results will be discussed in Chapter 4.
+There is concern that single precision might not be enough to maintain accuracy of the Hamiltonian during leapfrog integration, therefore we carried out some experiments comparing the performance of single and double precision numbers on a neural network test problem. Results will be discussed in Chapter 4.
 
 
 \chapter{Experiments}
