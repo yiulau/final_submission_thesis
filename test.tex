@@ -1301,7 +1301,7 @@ Now we introduce the Stochastic gradient Hamiltonian Monte Carlo (SGHMC). \cite{
         \For{$i = 1:L$}{
         $q^{i} = q^{i-1} + v^{i-1}$ \;
         Sample $z \sim \mathcal{N}(0,2(\alpha-\hat{\beta} \eta))$ \;
-        Sample minibatch and calculate $\nabla \tilde{V}(q)$  \;
+        Sample minibatch of size $n$ and calculate $\nabla \tilde{V}(q)$  \;
         $v^{i} = -\eta \nabla \tilde{V}(q) - \alpha v^{i-1} + z$ \;
         }
         
@@ -1310,7 +1310,7 @@ Now we introduce the Stochastic gradient Hamiltonian Monte Carlo (SGHMC). \cite{
         }
 \end{algorithm}
 
-
+Notice that there are two normal distributions being sampled in the algorithm. The first one is the momentum distribution which is the same as the original HMC. The second is a quantitiy designed to account for the uncertainty introduced by replacing the full observed data points by a minibatch. Under simlpifying conditions on the tuning parameters and the subsampling noise model, the SGHMC samples from the target distribution as $\epsion$ goes to zero. However, those conditions do not usually hold and practice and $\epsilon$ is always fixed at a non-zero value. Nonetheless, these biased samples can be useful if the sampler is tuned carefully.
 
 
 \section{Priors}
