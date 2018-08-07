@@ -1310,7 +1310,7 @@ Now we introduce the Stochastic gradient Hamiltonian Monte Carlo (SGHMC). \cite{
         }
 \end{algorithm}
 
-Notice that there are two normal distributions being sampled in the algorithm. The first one is the momentum distribution which is the same as the original HMC. The second is a quantitiy designed to account for the uncertainty introduced by replacing the full observed data points by a minibatch. Under simlpifying conditions on the tuning parameters and the subsampling noise model, the SGHMC samples from the target distribution as $\epsion$ goes to zero. However, those conditions do not usually hold and practice and $\epsilon$ is always fixed at a non-zero value. Nonetheless, these biased samples can be useful if the sampler is tuned carefully.
+Notice that there are two normal distributions being sampled in the algorithm. The first one is the momentum distribution which is the same as the original HMC. The second is a quantitiy designed to account for the uncertainty introduced by replacing the full observed data points by a minibatch. Under simlpifying conditions on the tuning parameters and the subsampling noise model, the SGHMC samples from the target distribution as $\epsilon$ goes to zero. However, those conditions do not usually hold and practice and $\epsilon$ is always fixed at a non-zero value. Nonetheless, these biased samples can be useful if the sampler is tuned carefully.
 
 
 \section{Priors}
@@ -1459,8 +1459,9 @@ There is concern that single precision might not be enough to maintain accuracy 
 
 \chapter{Experiments}
 \section{Model and Data}
+Having introduced the tools for exploring BNNs and the type of BNNs of interest, in this chapter we will identity the research questions about BNNs and describe the numerical experiments which have been carried out to study these questions. In the experiments that follow we would focus entirely on classification, because that is where neural networks model are employed most and have achieved the most success. Similarly, we would focus on a dataset which is similar in nature to the types of problems usually encountered in the neural network literature, but sufficiently simplified that it does not overtax our computational resources. 
 
-In the experiments that follow we would focus entirely on classification, because that is where neural networks model are employed most and have achieved the most success. MNIST \cite{lecun-mnisthandwrittendigit-2010} is a benchmark dataset that is arguably the most popular one in the machine learning literature. It consists of 60000 images of digits from zero to nine. Each image is of dimension $ 28 \times 28 = 784 $, which already is high enough that it exceeds the memory and time constraint for HMC sampling for a moderate number of hidden units, even in the simplest neural networks with one hidden layer. Therefore, we chose a simplified version of MNIST where both the dimension and number of samples are reduced. We compare below the original MNIST and the simplified digits images. The simplified digits has dimension $8 \times 8 = 64 $ and the number of samples is reduced to $1797$. While the shapes of the digits could still be made out in the simplified images, the reduced definition blurs classes together so that a 4 might look like a 9 and so on so forth. This should make prediction harder than the original.
+MNIST \cite{lecun-mnisthandwrittendigit-2010} is a benchmark dataset that is arguably the most popular one in the machine learning literature. It consists of 60000 images of digits from zero to nine. Each image is of dimension $ 28 \times 28 = 784 $, which already is high enough that it exceeds the memory and time constraint for HMC sampling for a moderate number of hidden units, even in the simplest neural networks with one hidden layer. Therefore, we chose a simplified version of MNIST where both the dimension and number of samples are reduced. We compare below the original MNIST and the simplified digits images. The simplified digits has dimension $8 \times 8 = 64 $ and the number of samples is reduced to $1797$. While the shapes of the digits could still be made out in the simplified images, the reduced definition blurs classes together so that a 4 might look like a 9 and so on so forth. This should make prediction harder than the original.
 
 \begin{figure}
 \begin{tcbraster}[raster columns=5, enhanced, blankest]
@@ -1499,9 +1500,13 @@ For high dimensional models like neural networks with standard normal prior, whe
 
 \section{Comparison with Early Stopping Committees}
 
-In the first experiment we compare a Bayesian neural network to an early stopping committee of neural networks, a frequentist framework which is commonly used as a baseline method. Early stopping is an optimization technique in which training is stopped when the predictive accuracy on a holdout validate set ceases to improve. A group of neural networks initialized with different random seeds, after training by early stopping,  would then combine their predictions by simple averaging. We can find the results of the simulation in table \ref{esc}. We see that for smaller sized committees the predictive performance is significantly worse than Bayesian networks. However, with increasing size their predictive accuracy eventually matches that of BNNs. The target neural network is a single-hidden-layer network with 35 hidden units, where a standard normal prior has been placed on all weights. 
+In the first experiment we compare a Bayesian neural network to an early stopping committee of neural networks, a frequentist framework which is commonly used as a baseline method. Early stopping is an optimization technique in which training is stopped when the predictive accuracy on a holdout validation set ceases to improve. A group of neural networks initialized with different random seeds, after training by early stopping,  would then combine their predictions by simple averaging. 
 
-To sample from the BNN, a XHMC sampler with a diagonal metric and $\delta = 0.1$ is used. The step size and covariance metric are adapted for the first 1000 iterations with the target acceptance rate set to $0.9$. Four parallel chains each of length 2000 are sampled, resulting in 4000 final samples.
+
+The target neural network is a single-hidden-layer network with 35 hidden units, where a standard normal prior has been placed on all weights. An XHMC sampler with a diagonal metric and $\delta = 0.1$ is used to sample from the posterior distribution of the model. The step size and covariance metric are adapted for the first 1000 iterations with the target acceptance rate set to $0.9$. Four parallel chains each of length 2000 are sampled, resulting in 4000 final samples.
+
+We can find the results of the simulation in table \ref{esc}. We see that for smaller sized committees the predictive performance is significantly worse than Bayesian networks. It also reveals the main disadvantage of plain optimization for fitting neural networks, that it is heavily dependent on initialization for good performance. In some experiments we actually found that a single neural network trained by early stopping is enough to match the predictive performance of BNNs, but it requires trying multiple combinations of tuning parameters and initializations. It also requires an extra holdout validation set if we do not want to overfit to the test set. With increasing sizes the bias induced by bad initialization is eventually smoothed out and early stopping committees' predictive accuracies eventually match those of BNNs. 
+
 \begin{table}[]
 \centering
 \begin{tabular}{@{}rlllll@{}}
@@ -1515,6 +1520,8 @@ BNN                                             & \multicolumn{5}{c}{23.4}      
 \end{table}
 
 \section{GNUTS v.s. XHMC}
+
+
 In the following experiment we compare the generalized NUTS termination criterion and the exhaustive termination criterion (XHMC). For both samplers we adapt the step sizes and the diagonal metric and use multiple chains like in the previous experiment. We tested different values of the threshold $\delta$ and found that XHMC is capable of generating samples about as efficiently as GNUTS. 
 
 \begin{table}[]
@@ -1712,7 +1719,10 @@ Normal-Inv-Gamma     & 23.2  & 28.8                         \\ \bottomrule
 \caption{Difference in test error ($\%$) between single and double precision.}
 \end{table}
 
-\section{Static  v.s. Dynmaic HMC}
+\section{Static v.s. Dynmaic HMC}
+
+First we want to find out whether dynamic HMC is an effective way of sampling from the posterior distribution of a BNN. In Neal's work \cite{neal1996sampling} he used only static HMC and relied on using a hierarchical prior in order to use the hyperparameter to set the step size. Therefore, in order to make a fair comparison between static and dynamic HMC for sampling from a BNN with a single-level prior like the standard normal, we used the dual averaging technique introduced in Chapter 2 to tune the step size automatically. 
+
 In the following experiment we ran two HMC samplers, the regular HMC and windowed HMC, over a grid of tuning parameter values $(\epsilon,L)$, and compare the samples generated by the best combination with those generated by the dynamic HMC (NUTS). The model is a single-hidden-layer BNN with a standard normal prior.
 The step sizes and covariance metrics are tuned automatically as in previous experiments. The results show that the static samplers has similar performance as the dynamic sampler, both in terms of predictive accuracy and ESS. Although this may be more indicative of the success of the dual averaging tuning of the step size $\epsilon$ in generating stable leapfrog trajectories. The sampling performance and predictive accuracy seems to be independent of the number of leapfrog steps, and also of the use or not of the windowed sampler. 
 \begin{table}[]
