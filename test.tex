@@ -1563,8 +1563,9 @@ Joint sampler - NCP   & 28.4      & 504         & 434     & 1333        \\ \bott
 \end{table}
 
 \section{Priors}
+In the following experiments we shall compare the effects of choice of prior on predictive accuracy and sampling efficiency. To keep the presentation simple we chose to use a single-hidden-layer with 35 hidden units. Then we fix the prior on the input-to-hidden weights as the standard normal and vary only the prior on the hidden-to-output weights. For the normal, normal-inv-gamma and horseshoe priors, the application to the weight matrix is simple; we simply consider the matrix as a flattened vector and evaluate the priors as if in regression. This causes no problem even for the hierarchical priors because the hierarchical structure does not involve correlation among the lower level weights. 
 
-The horseshoe prior can be applied two ways on the weights in a layer. The first is to consider the weights as one long vector and assign the prior as one would in a regression problem. The second is an ARD-type approach, where a local variance is assigned for each hidden unit and one global variance for the entire layer. More specifically, suppose the layer in question has $n$ input units and $m$ hidden units. Then, the horseshoe ARD prior can be defined as follows 
+The second way to assign such priors to weights is an Automatic Relevance Determination (ARD) type approach, where a local variance is assigned for each hidden unit and one global variance for the entire layer. As an example, suppose the layer in question has $n$ input units and $m$ hidden units. Then, the horseshoe ARD prior can be defined as follows 
 \begin{align*}
 & W_{i,\cdot} \sim \mathcal{N}(0,\lambda_i^2\tau^2) , \forall i \sim \{1,\dots, m \} \\
 & \lambda_i \sim C^+(0,1) \\
@@ -1577,7 +1578,10 @@ where $ W_{i,\cdot}  $ are the weights entering the $i$'th hidden unit. This is 
 & \tau \sim C^+(0,1) \\
 &c^2 \sim \text{Inv-Gamma}(2,8).\\
 \end{align*}
-We found that while the regularized horseshoe prior performs better than the original horseshoe prior in terms of having zero divergent transitions, neither of the horseshoe priors can be said to induce great sampling efficiency, as both result in models whose posterior distribution are difficult to sample, resulting in low ESS. What's more is that even the Normal-Inverse-Gamma prior does not give better predictive performance than the standard normal prior, which we have already seen in earlier experiments comparing Gibbs sampling to joint sampling for the hyperparameter. 
+
+In the experiments we compared the standard normal prior against a number of hierarchical priors and their ARD variants.We found that while the regularized horseshoe prior performs better than the original horseshoe prior in terms of having zero divergent transitions, neither of the horseshoe priors can be said to induce great sampling efficiency, as both result in models whose posterior distribution are difficult to sample, resulting in low ESS. What's more is that even the Normal-Inverse-Gamma prior does not give better predictive performance than the standard normal prior, which we have already seen in earlier experiments comparing Gibbs sampling to joint sampling for the hyperparameter. 
+
+We observe that the ARD priors in general have better predictive accuracy and \textit{much} better sampling efficiency. For the horseshoe prior in particular, the naive horseshoe application has extremely low mininum ESS it can be considered to be not even converging in some marginal dimensions.
 \begin{table}[]
 \centering
 \begin{tabular}{@{}rrrrrrrr@{}}
@@ -1592,7 +1596,12 @@ Median ESS    & 1348      & 1298  & 1220  & 911 & 1356     & 80      & 1354     
 \end{table}
 
 \section{SGHMC}
-The SGHMC has several extra tuning parameters other than the step size $\epsilon$ and number of leapfrogs $L$ that it inherits from the original HMC sampler. To reduce the number of parameters to tune, we fix these parameters ($\alpha=0.01, \hat{\beta}=0$) at the default values used in the experiments even though they are not sufficiently motivated. The parameters remain to be tuned are $\epsilon,L $ and $\eta$. We found that the SGHMC can perform similarly to the HMC although it requires having the right tuning parameter. Because the Metropolis acceptance step is omitted, there is no mechanism to avoid the chain from diverging into a low probability zone in the parameter space. Note that $L=50$ seems to give the best predictive accuracy regardless of the step size, this is puzzling because the $\epsilon$'s span 4 orders of magnitude and thus gives a wide range of integration time $t = \epsilon L$. The role of the learning rate $\eta$ is unclear other than that too large a $\eta$ seems to cause divergence (denoted by NA in the tables) more often. We see that SGHMC can generate samples that have good predictive performance, but their is no clear way to tune all the different hyperparameters other than by a grid search. 
+Next we would like to explore stochastic gradient Hamiltonian Monte Carlo. Since it is doubtful that even the full HMC can explore completely the full posterior distribution of a BNN because of its exponential multimodaility, we would not try to compare the empirical distributions of the HMC samples and those of the SGHMC samples directly. Instead we compare the two samplers by their test errors.
+
+The SGHMC has several extra tuning parameters other than the step size $\epsilon$ and number of leapfrogs $L$ that it inherits from the original HMC sampler. To reduce the number of parameters to tune, we fix these parameters ($\alpha=0.01, \hat{\beta}=0$) at the default values used in the experiments even though they are not sufficiently motivated. The parameters remain to be tuned are $\epsilon,L $ and $\eta$. We generated samples by SGHMC by trying every combination of tuning parameters on a grid of values.
+
+
+We found that the SGHMC can perform similarly to the HMC although it requires having the right tuning parameter. Because the Metropolis acceptance step is omitted, there is no mechanism to avoid the chain from diverging into a low probability zone in the parameter space. Note that $L=50$ seems to give the best predictive accuracy regardless of the step size, this is puzzling because the $\epsilon$'s span 4 orders of magnitude and thus gives a wide range of integration time $t = \epsilon L$. The role of the learning rate $\eta$ is unclear other than that too large a $\eta$ seems to cause divergence (denoted by NA in the tables) more often. We see that SGHMC can generate samples that have good predictive performance, but there is no clear way to tune all the different hyperparameters other than by a grid search. 
 
 
 \begin{table}[]
@@ -1689,8 +1698,12 @@ Normal-Inv-Gamma ARD & 91.2 (23.2) [27.2]  & 4 (370) [140]  & 8 (1295) [1332]   
 \end{table}
 
 \section{Number of Layers}
-Now we fix the prior to be a standard normal distribution and vary the number of hidden layers. We found no evidence of increasing sampling difficulty with increased number of layers. 
-However, for the the model with 4 hidden layers the test error went up significantly even though the ESSs stay about the same. 
+Now we are interested in the impact of the number of layers on sampling efficiency. We know from the neural network literature that deep structures tend to reduce test error. However, there is no empirical studies on the impact of deep hierarchical structures in BNNs, since tradtionally only single-hidden-layer networks were studied.
+Here we fix the prior to be a standard normal distribution and vary the number of hidden layers.
+
+Initially we found that increasing the number of layers does reduce the test error, in line with the folk wisdom of the literature. However, for the the model with 4 hidden layers the test error went up significantly even though the ESSs stay about the same. Since the ESS does not seem to drop precipitously with increasing number layers, the drop in predictive accuracy cannot be attributed to sampling difficulties. In this case it is more likely due to overfitting. It shows that even Bayesian neural networks can overfit, corroborating observations in \cite{gal2015bayesian}.
+
+
 
 \begin{table}[]
 \centering
