@@ -1795,28 +1795,37 @@ Number of Hidden Units = 90 &$ 7.57 \times 10^4$  & 21.2   & 562  & 1359        
 
 \section{Conclusions}
 
-Experimenting on a simplified MNIST dataset, we found that Bayesian neural networks can achieve about the same and sometimes better predictive accuracy than early stopping committees. The main difference between the two is that early stopping committees need to be manually  tuned to achieve decent accuracy, whereas BNNs can achieve the same with dynamic HMC and automatic tuning of step sizes and covariance metrics. 
+Experimenting on a simplified MNIST dataset, we found that Bayesian neural networks can achieve about the same and sometimes better predictive accuracy than early stopping committees. The main difference between the two is that early stopping committees need to be manually  tuned to achieve decent accuracy, whereas BNNs can achieve the same with dynamic HMC and automatic tuning of step sizes and covariance metrics. This corroborates previous observations in the literature \cite{neal1996sampling}. 
 
-Based on experiments conducting on this dataset, we can make the following observations.
+Once we can start using BNNs, the challenge becomes about finding the best sampler to sample from the posterior distributions. In our experiments we compared static and dynamic HMC samplers. We found that for the static samplers varying the integration time does no seem to influence the predictive accuracy or sample quality, once the step size is chosen so that acceptance rate is kept high. And dynamic HMC has more robust sampling efficiency than static HMC.
+
+The improvement in sampling efficiency observed by Neal when using the windowed HMC sampler could not be confirmed in our experiment. For our task the windowed HMC sampler does not improve over the regular HMC sampler in terms of ESS as long as the acceptance rate is kept reasonably high. However, it does not generate worse samples either. Perhaps it could still be useful in scenarios where we could not tune for the acceptance rate and the sampler has low acceptance rate.
+
+We then experimented with diffrent termination criteria and found that XHMC can perform as well as GNUTS, and $\delta = 0.1$ seems like a good default threshold value. Although this purely a convenient choice, we note the robustness of the XHMC sampler to this choice of hyperparamter.
+We recommend XHMC since it requires fewer computations than GNUTS, which might even scale by a factor of the models dimension if a full covariance metric is used.
+
+We further found that for dynmaic HMC, automatic tuning of the step size and covariance metric is essential for a robust sampling workflow. Automatic tuning of the step size avoids divergent transitions and tuning the covariance metric improves sampling efficiency by adjusting the scales by their target distribution variance. We found that, however, for BNNs the target distribution is far too complex and cannot be modeled well by a multivariate normal distribution, which the conditioning of the covariance metric implicitly relies on. The dense metric is also more computationally intensive during both the tuning and sampling stage.
+Hence the diagonal metric should be chosen over the dense metric.
+
+Further comparsion of the Gibbs sampler and joint HMC samplers for the BNNs with hierarchical priors was carried out, and we found that joint sampling by dynamic HMC can be much more efficient for sampling the hyperparmeter. The Gibbs sampler in this instance could not even sample the hyperparameter to any meaningful degree in terms of the ESS. Also, we found that the non-centered parametrizations allowed effective sampling of the hyperparameter, which the centered parameterization was unable to do. This matches the general observations from the Bayesian hierarchical models literature \cite{bernardo2003non}
+
+
+SGHMC can can give similar performance as HMC but the result is not robust to choice of tuning parameters.
 
 \begin{enumerate}
-\item XHMC can perform as well as GNUTS, $\delta = 0.1$ seems like a good default value. We recommend XHMC since it requires fewer computations. 
 
-\item Gibbs Sampler can be difficult to tune and we prefer joint sampling and the non-centered parametrization for sampling for hierarchical priors.
+
 
 \item Standard normal prior works better than complicated hierarchical priors or "informed priors" that take model structure into account when setting the scale.
 
-\item Automatic tuning of step size and covariance metric is essential for a robust sampling workflow. Diagonal metric should be chosen over dense metric.
 
 \item WAIC does not work so well at choosing the best model as the theory suggests. 
 
 \item Single precision is good enough for HMC sampling with BNNs. 
 
-\item  SGHMC can can give similar performance as HMC but the result is not robust to choice of tuning parameters.
 
-\item Integration time does no seem to influence predictive accuracy or sample quality, once the step size is chosen so that acceptance rate is kept high.
 
-\item The windowed HMC sampler does not improve over the regular HMC sampler in terms of ESS as long as the acceptance rate is kept reasonably high.
+
 \end{enumerate}
 
 Finally, results above make should make one skeptical about claims made about Bayesian neural networks, since they defy some traditional wisdom about statistics. For example, for overparametrized models where the dimension is much larger than the number of observations, one should use hierarchical priors like the horseshoe to perform regularization. However, our experiments show that such regularization often harms predictive accuracy, even when there is high ESS overall. Also, we found that frequentist predictions could achieve similar predictive accuracy as Bayesian alternatives, although BNNs do seem to be more robust to tuning parameters.
