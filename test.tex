@@ -1809,26 +1809,16 @@ Hence the diagonal metric should be chosen over the dense metric.
 
 Further comparsion of the Gibbs sampler and joint HMC samplers for the BNNs with hierarchical priors was carried out, and we found that joint sampling by dynamic HMC can be much more efficient for sampling the hyperparmeter. The Gibbs sampler in this instance could not even sample the hyperparameter to any meaningful degree in terms of the ESS. Also, we found that the non-centered parametrizations allowed effective sampling of the hyperparameter, which the centered parameterization was unable to do. This matches the general observations from the Bayesian hierarchical models literature \cite{bernardo2003non}
 
+Stochastic gradient HMC was investigated and compared with standard HMC for sampling from BNNs, and we found that SGHMC can can give similar performance as HMC but the result is not robust to the choice of tuning parameters. Therefore, it might be worthwhile to try SGHMC if there is enough data for a separate validation set for choosing the tuning parameters. The reduced computational cost of SGHMC means if we choose the right tuning parameter and can accept the unpleasant implications of using a biased sampler, we could achieve better test error than using the full HMC sampler.
 
-SGHMC can can give similar performance as HMC but the result is not robust to choice of tuning parameters.
-
-\begin{enumerate}
-
+On the question of model selection we looked at the WAIC as an alternative to holdout test set for choosing the model that minimizes predictive error. We were not able to clearly establish the WAIC as a better option for model selection for BNN than the holdout test set. When faced with insufficient data for a new partition into a test set, we do not recommend at the moment using the WAIC for model selection, instead we should collect more data from the generating distribution.
 
 
-\item Standard normal prior works better than complicated hierarchical priors or "informed priors" that take model structure into account when setting the scale.
+Now that we have some answers on questions about how to sample from BNNs. We need to choose  the right prior to regulate the weights in typically overparametrized neural network models. We already have experiments showing that the setting the scale of the prior by a multiple of the number of incoming units actually gives worse predictive performance. We further found that automatic relevance determination priors can improve significantly both the predictive accuracy and sampling efficiency, that the regularized horseshoe priors is better than the ordinary horseshoe prior, and that the normal prior is better any of the hierarchical priors test, ARD or otherwise. 
 
+While all the experiments above where conducted in double precision, it is more a choice of convenience than of necessity. We have conducted experiments showing that switching to single precision does not result in a loss of accuracy in the leapfrog trajectories or in the test error computed from the final MCMC samples. This means that we should be able to carry out HMC sampling on GPUs to take advantage of the speedup without any significant loss of correctness.
 
-\item WAIC does not work so well at choosing the best model as the theory suggests. 
-
-\item Single precision is good enough for HMC sampling with BNNs. 
-
-
-
-
-\end{enumerate}
-
-Finally, results above make should make one skeptical about claims made about Bayesian neural networks, since they defy some traditional wisdom about statistics. For example, for overparametrized models where the dimension is much larger than the number of observations, one should use hierarchical priors like the horseshoe to perform regularization. However, our experiments show that such regularization often harms predictive accuracy, even when there is high ESS overall. Also, we found that frequentist predictions could achieve similar predictive accuracy as Bayesian alternatives, although BNNs do seem to be more robust to tuning parameters.
+Finally, results in this chapter should make one skeptical about claims made about Bayesian neural networks, since they defy some traditional wisdoms about statistics. For example, for overparametrized models where the dimension is much larger than the number of observations, one should use hierarchical priors like the horseshoe to perform regularization. However, our experiments show that such regularization often harms predictive accuracy, even when there is high ESS overall. Also, we found that frequentist predictions could achieve similar predictive accuracy as Bayesian alternatives, although BNNs do seem to be more robust to tuning parameters. These bizarre outcomes need to be explained first before we can make claims about Bayesian neural networks, for example, that the are approximated by stochastic gradient descent \cite{mandt2017stochastic} or other ad-hoc optimization techniques \cite{gal2015dropout,gal2015bayesian}
 
 
 
