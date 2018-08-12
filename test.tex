@@ -63,6 +63,8 @@ Neural network models have seen tremendous success in predictive tasks in machin
 \tableofcontents 
 
 \chapter{Introduction}
+There are two main themes in this thesis. The first is the Stan software, the HMC samplers implemented therein, the principles behind these samplers, as well as the diagnostic tools that come with it. The second are the Bayesian neural network models, which has been hugely popular in deep learning. Since we will use HMC samplers to sample from the posterior of the Bayesian neural networks, we would have to first understand the inner workings of these samplers. This motivates the order we chose to present these two themes.
+
 \section{Stan}
 
 Stan has replaced most Bayesian statistical softwares like JAGS and WINBUGS as the recommended tool for Bayesian inference requiring Markov Chain Monte Carlo (MCMC)  because of its effectiveness, relative ease to learn, clear and extensive documentation, as well as its large community of users and expert support staff. Roughly based on the No-U-Turn sampler (NUTS) \cite{hoffman2014no}, it has since evolved from the original NUTS sampler and has many more features built in to facilitate sampling and diagnosing sampling issues.
@@ -72,6 +74,7 @@ Then we will explain the version of No U-TURN Sampler implemented in Stan, highl
 Finally, we discuss some of the numerical tricks used by Stan that are omitted in the official documentation but can be critical for creating a robust implementation. 
 
 Most algorithms discussed in chapter 2 will come with clear pseudocode and have been implemented in Python. Source code will be provided.
+
 
 \section{Bayesian Neural Networks}
 
@@ -118,14 +121,6 @@ Then we accept the move to state $q'$ with probability $ \min (1, h(q,q')) $.
  
 \end{algorithm}
 
-
-The choice of a proposal distribution is highly critical to the efficiency of a MH sampler. Even after a proposal distribution is chosen, there is usually further tuning parameters that needs to be chosen. The acceptance probability is an important quantity which 
-can be optimized. For example, using the most popular Metropolis Hastings sampler, Random Walk Metropolis Hasting, where the proposal distribution is a zero mean normal distribution,
-the optimal acceptance rate is 0.234 when the target is a normal distribution with zero correlation.\cite{roberts1997weak,gelman1996efficient,roberts2001optimal} 
-
-Very much like optimization \cite{wright1999numerical}, for differentiable density
-functions, information about the gradient can be useful for proposing the next
-state, which is one of the main features of Hamiltonian Monte Carlo.
 
 
 The use of MCMC in statistical applications began with \cite{geman1984stochastic,besag1986statistical} in the field of image analysis. Because of the high-dimensional nature of image datasets, initially only the Gibbs sampler were used, circumventing the well known slow-mixing/low-acceptance behaviour of the random-walk Metropolis-Hastings sampler in high dimensions. The introduction of Hamiltonian Monte Carlo into the field of statistics by Neal \cite{neal2011mcmc,neal2012bayesian}, who built on the work of physicists using HMC to simulate from lattice field models \cite{duane1987hybrid}, brings an exciting new tool that allows statisicians to simulate much more efficiently from high-dimenisonal distributions. Unfortunately, because of the relative difficulty in implementing such samplers its use in statistics has been limited. In the last few years there has been a rebirth of the HMC sampler, with new developments that try to utilize information about the local curvature of the density function during  sampling \cite{girolami2011riemann,betancourt2013general}, as well as  automate the selection of tuning parameters.  \cite{hoffman2014no,betancourt2016identifying}. 
@@ -446,39 +441,7 @@ $(\epsilon,L)$. This approach does not utilize information about the target
 distribution, relying only on inappropriate choices of parameters to be weeded
 out when the diagnostics indicate poor results.
 
-In Neal's thesis \cite{neal1996sampling} he suggested a way to tune $\epsilon$ together with the
-momentum distribution,  under the simplified assumption that the potential
-energy function $V(q)$ is the density function of a multivariate Gaussian distribution
-with a diagonal
-covariance matrix. The momentum distribution is assumed to have diagonal
-covariance $M= diag(\{m_i\}_{i=1}^p)>$ as well. Tuning the momentum is
-equivalent to tuning the $m_i$'s, which because the way the leapfrog updates
-work is equivalent to tuning step sizes $\epsilon_i$ individually for each
-variables. We would set them as
 
-\[ \epsilon_i  = \eta (\frac{\partial^2 V}{\partial q^2})^{-\frac{1}{2}}\]
-where $\eta$ is an extra tuning parameter to be set as $0<\eta<1$. In this
-modified version of HMC, we still have to tune for the integration time $t$ via
-the trajectory length $L$. This heuristic is based on the idea that if the
-marginal distribution for $x_i$ is $\mathcal{N}(0,\sigma_i)$, then a
-step size $\epsilon_i > 2 \sigma_i$ would overshoot and causes low acceptance
-rate. It is equivalent to setting $\epsilon_i = \eta \sigma_i$, and when $\eta
-\approx 1$ it is optimal in the sense that it reaches the boundary of its
-distribution in one update. Note that $  \frac{\partial^2 V}{\partial q^2}$ is
-independent of $q$ under the assumption, and the same cannot be said of any real
-models, for which the second derivatives of the potential energy, commonly
-defined as the negative log of the posterior density, almost certainly would
-have a dependency on the variables $q_i$. In Neal's tuning of Bayesian neural network models, he used
-various model-dependent approximation tricks to get rid of the dependency on
-$x$. To implement this trick for general Bayesian neural network models would require
-problem-solving each time a new model with is used, which makes it impractical for
-testing a large number of model architecture of different complexities, not to mention there are better ways of adaptively tuning
-step sizes and momentum distribution parameters. One principle about tuning
-the step size, assuming we are not varying step sizes across dimensions, is that it
-should be less than the minimum 2$\sigma_{min}$, $\sigma_i$'s being the marginal
-covariance of the target variables $\mathbf{q}$. The reason that it causes low
-acceptance rate when violated is that the trajectory simulated by the subsequent
-leapfrog steps would cause divergence. 
 
 
 So far we have already touched upon the integration time in discussion of
