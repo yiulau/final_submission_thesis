@@ -57,7 +57,7 @@ I would like to thank my supervisor Dr.Stephens for being patient and understand
 \renewcommand{\abstractname}{ABSTRACT}
 
 \begin{abstract}
-Neural network models have seen tremendous success in predictive tasks in machine learning and artificial intelligence, with some attributing their success to implicit use of Bayesian inference \cite{mandt2017stochastic}. Stan is a state of the art software for Bayesian statistical computing used mainly in the statistical community, however, it is not optimzed for use with neural network models. In this thesis, we replicated much of Stan's No U-Turn sampler in PyTorch and explore its use for sampling from Bayesian neural network models. We were able to explore different samplers,model structures and their sampling and predictive performances, on a benchmark classification task. We found that Bayesian inference gives more robust predictive performance compared to their frequentist counterparts in general, but care is needed with the choice of prior and the MCMC sampler. 
+Neural network models have seen tremendous success in predictive tasks in machine learning and artificial intelligence, with some attributing their success to implicit use of Bayesian inference \cite{mandt2017stochastic}. Stan is a state of the art software for Bayesian statistical computing used mainly in the statistical community, however, it is not optimized for use with neural network models. In this thesis, we replicated much of Stan's No U-Turn sampler in PyTorch and explore its use for sampling from Bayesian neural network models. We were able to explore different samplers,model structures and their sampling and predictive performances, on a benchmark classification task. We found that Bayesian inference gives more robust predictive performance compared to their frequentist counterparts in general, but care is needed with the choice of prior and the MCMC sampler. 
 
 \end{abstract}
 \tableofcontents 
@@ -176,12 +176,12 @@ For the simple version of HMC where the momentum variable is independent from th
 One leapfrog step consists of first a half-step update for momentum, a full-step
 for position, then another half-step for momentum. Since the update for momentum
 at time $t+\epsilon$ and time $t+\epsilon + \frac{\epsilon}{2}$ both involve
-$q(t+\epsilon)$,  we can combine the updates in the implementation, so that instead of performing two half steps for momentum $p(t+\frac{\epsilon}{2}) \rightarrow p(t+\epsilon)$, then $ p(t+\epsilon) \rightarrow p(t+\epsilon + \frac{\epsilon}{2})$, we can perform a full step for momentum $p(t+\frac{\epsilon}{2}) \rightarrow p(t+ \epsilon + \frac{\epsilon}{2}) $ as 
+$q(t+\epsilon)$,  we can combine the updates in the implementation, so that instead of performing two half steps for momentum $p(t+\frac{\epsilon}{2}) \rightarrow p(t+\epsilon)$, then $ p(t+\epsilon) \rightarrow p\left(t+\epsilon + \frac{\epsilon}{2}\right)$, we can perform a full step for momentum $p(t+\frac{\epsilon}{2}) \rightarrow p(t+ \epsilon + \frac{\epsilon}{2}) $ as 
 \begin{align}
-p(t+\epsilon + \frac{\epsilon}{2})  
+p\left(t+\epsilon + \frac{\epsilon}{2}\right)  
 &= p(t+\epsilon) - \frac{\epsilon}{2} \frac{\partial U}{\partial q }(q(t+\epsilon)) \\
-&= p(t+\frac{\epsilon}{2}) - \frac{\epsilon}{2} \frac{\partial U}{\partial q }(q(t+\epsilon)) - \frac{\epsilon}{2} \frac{\partial U}{\partial q }(q(t+\epsilon)) \\
-&= p(t+\frac{\epsilon}{2}) - \epsilon \frac{\partial U}{\partial q }(q(t+\epsilon)).
+&= p\left(t+\frac{\epsilon}{2}\right) - \frac{\epsilon}{2} \frac{\partial U}{\partial q }(q(t+\epsilon)) - \frac{\epsilon}{2} \frac{\partial U}{\partial q }(q(t+\epsilon)) \\
+&= p\left(t+\frac{\epsilon}{2}\right) - \epsilon \frac{\partial U}{\partial q }(q(t+\epsilon)).
 \end{align}
 
 Note, however, we still need $p(t+\frac{\epsilon}{2})$ to perform the full
@@ -409,14 +409,9 @@ the mode while the momentum variable keeps it from getting stuck there and moves
 We have described some of the advantages of HMC, but unfortunately it has one great disadvantage, which is its sensitivity to tuning parameters. 
 In the description of the basic HMC sampler above, we assume the step size $\epsilon$, trajectory length $L$, and the momentum covariance $M$ are known. These cannot be set arbitrarily as the performance of the algorithm can change completely when they are not set appropriately \cite{neal2011mcmc}. HMC can perform no better than random walk Metropolis -- itself an highly inefficient sampler -- for high-dimensional distributions. The manual tuning of these parameters is the next part of our discussion. 
 
-<<<<<<< HEAD
 The first parameter we will discuss is the step size $\epsilon$. A small step size would cost more computation time but gives better approximation to the correct trajectory. Worse still, when a too large step size is used, there are no constraints on how far the simulated trajectory would deviate from the correct one. The simulated trajectory could quickly move to a region of the support where the Hamiltonian function blows up. There needs to be a mechanism in the algorithm to detect divergence due to the step size and signals us to possibly tune it down, otherwise the unstable trajectory would diverge to infinity in terms of its Hamiltonian function value and causes the program to crash, not to mention a chain with too many divergences would generally be biased. It is suggested by Neal that introducing a random jitter around the step size at the start of each trajectory, for example, use $\epsilon + \epsilon*\text{Uniform}(-0.1,0.1)$ instead of $\epsilon$,  would help alleviate the problem, as sometimes the trajectory would be simulated using a step size under the stability limit for $\epsilon$, which can differ between different parts of the support of $\pi(q,p)$. This also deals with the problem of accidentally have $\epsilon L$ match the period of some variable or equivalently simulate a trajectory which returns to the original position at the end of its trajectory. This destroys ergodicity and makes the sampler biased. 
 
-The second parameter of interest is the trajectory length $L$. Once $\epsilon$ is fixed, it is essentially a proxy for the integration time $t= \epsilon L$. It controls how much of the state space is explored at each iteration of the Markov chain. The longer we let the trajectory run the more of the state space would be explored, but letting it run too long we would eventually come back to the initial position and the exploration is wasted. Similar to the discussion about tuning $\epsilon$, the tuning of $L$ could be dependent on the part of the state space where the chain finds itself.In the basic HMC sampler, we use the same $\epsilon$ and $L$ throughout the
-=======
-The second parameter of interest is the trajectory length $L$. Once $\epsilon$ is fixed, it is essentially a proxy for the integration time $t= \epsilon L$. It controls how much of the state space is explored at each iteration of the Markov chain. The longer we let the trajectory run the more of the state space would be explored, but letting it run too long we would eventually come back to the initial position and the exploration is wasted. Similar to the discussion about tuning $\epsilon$, the tuning of $L$ could be dependent on the part of the state space where the chain finds itself. In the basic HMC sampler, we use the same $\epsilon$ and $L$ throughout the
->>>>>>> 5747143e7cf2c29b9ea5e0fb792324c8349507f1
-entire sampling process.  
+The second parameter of interest is the trajectory length $L$. Once $\epsilon$ is fixed, it is essentially a proxy for the integration time $t= \epsilon L$. It controls how much of the state space is explored at each iteration of the Markov chain. The longer we let the trajectory run the more of the state space would be explored, but letting it run too long we would eventually come back to the initial position and the exploration is wasted. Similar to the discussion about tuning $\epsilon$, the tuning of $L$ could be dependent on the part of the state space where the chain finds itself.In the basic HMC sampler, we use the same $\epsilon$ and $L$ throughout the entire sampling process.  
 
 Neal \cite{neal2012bayesian} suggests doing several preliminary runs with a combination of $\epsilon$ and $L$ values using the acceptance rate as guidance. There is no guarantee of optimality and in even moderately complex distributions we never know whether we have sufficiently integrated the trajectory long enough. The optimal acceptance rate for HMC has been derived as $0.65$. Optimality here is defined with respect to the cost of obtaining an independent point. See \cite{neal2011mcmc} for an intuitive derivation and see \cite{beskos2013optimal} for a theoretical derivation. This sort of manual tuning is similar in spirit to the manual tuning strategies from the MCMC literature, and shares with them the disadvantage of requiring human intervention after each chain is sampled. 
 
@@ -512,7 +507,7 @@ $\log w_{\text{prop}} = H(q_{\text{prop}},p_{\text{prop}}) $ \;
 The No-U-Turn Sampler \cite{hoffman2014no} builds on the windowed HMC sampler, which is extended to automatically adjust the trajectory length during sampling. Given an initial state $(q_0,p_0)$ in the phase space,similar to the windowed HMC sampler, the NUTS starts by randomly integrating forward or backward for $\ell$ number of leapfrog steps. For each subsequent integration step, the NUTS doubles the integration length. After each integration step, a termination criterion is computed to determine if the trajectory expansion should continue. Expansion stops when either end of the trajectory starts doubling back on itself. Compared to static HMC, where the number of leapfrog steps $L$ is fixed across the chain, NUTS can be considered a dynamic version of HMC, where the number of leapfrog steps can vary across iterations and is generally dependent on the geometry of the Hamiltonian flow trajectory in the phase space. 
 
 The reason for doubling the integration lengths is that the algorithm needs to compute a termination criterion at the end of each trajectory, which is necessary for the correctness of the sampler because it maintains reversibility. Suppose $T(\mathbf{t}|z) $ is the transition probability of a trajectory given initial state $z=(q,p)$, and $\mathcal{L}^L_{z,z'}$ is the set of all trajectories of length $L$ containing the points $z$ and $z'$. Computing the termination criterion after each integration step ensures
-\[T(\mathbf{t}|z) = T(\mathbf{t}|z') , \forall \mathbf{t} \in \mathcal{L}^L_{z,z'} . \]
+\[T(\mathbf{t}|z) = T(\mathbf{t}|z'), \quad \forall \mathbf{t} \in \mathcal{L}^L_{z,z'} . \]
 It is important to remember that conceptually what we are doing when moving from an initial state $z$ to a final state $z'$ while exploring the energy level set is a two-stage procedure: first sample a trajectory containing the initial state, then sample the final state given the trajectory.  Thus, the transition probability is 
 
 \[T(z'|z) = \sum_{\mathbf{t}} T(z'|\mathbf{t}) T(\mathbf{t}|z). \]
@@ -580,7 +575,7 @@ $ w' \leftarrow \pi(q',p') $ \;
 
 \begin{figure}[h!]
 \includegraphics[scale=0.5]{cropped_nuts_image}
-  \caption{Visualizing the No-U-Turn sampler. (a) shows a trajectory that is still expanding. (b) shows a trajectory that has started to turn back on itself and expansion stops. }
+  \caption{Visualizing the No-U-Turn sampler. (a) shows a trajectory that is still expanding. (b) shows a trajectory that has started to turn back on itself and expansion stops. Figures come from \cite{betancourt2017conceptual}.}
   \label{nuts-figures}
 \end{figure}
 
@@ -876,7 +871,7 @@ inefficient for sampling. In Stan, the default threshold for low E-BFMI is set t
 
  
 \section{Other Sampling Diagnostics}
-
+\label{sec:otherdiag}
 Other than divergence and BFMI, Stan also includes MCMC convergence diagnostics that are not specific to HMC samplers. They are the potential scale reduction factor and effective sample size. In the discussion that follows we assume the parameter under investigation is a one dimensional real variable $\psi$, it can be the log-posterior, the variance parameter for a regression model with normal prior, or the posterior mean of a covariate of interest.
 
 
@@ -1110,16 +1105,13 @@ The samplers implemented in this study have been tested on a two dimensional cor
 \chapter{Bayesian Neural Networks}
 \section{Introduction to BNNs}
 
-Deep Learning, a field in machine learning which studies multilayered neural network models, has become quite successful in Artificial Intelligence tasks and a lot of research has been, and is being done to improve our understanding of these models and to apply them better and to more fields. See \cite{Goodfellow-et-al-2016-Book,lecun2015deep} for a general introduction into the methodology and application of deep learning, and \cite{schmidhuber2015deep} for an in-depth literature review. 
+Deep Learning, a field in machine learning which studies multilayered neural network models, has become quite successful in Artificial Intelligence tasks and a lot of research has been, and is being done to improve our understanding of these models and to apply them better and to more fields. See \cite{goodfellow2016deep,lecun2015deep} for a general introduction into the methodology and application of deep learning, and \cite{schmidhuber2015deep} for an in-depth literature review. 
 
-Before there was deep learning, a term which only came about in the mid 2000s, there were neural networks \cite{bishop1995neural,ripley2007pattern}, which were also hugely popular in the 90s, but eventually the enthusiasim for neural networks cooled off because they were perceived to be too computationally intensive and difficult to scale up. The main reason for this was the difficulty of training neural networks of more than one or two hidden layers. Traditional optimization techniques like stochastic gradient descent with backpropogation did not improve empirical test error for networks with more layers,not until ideas like pre-training to initialize optimization were experimented could we fit "deep" neural networks with more than 2 hidden layers. This rebooted the field, now rebranded as deep learning, and it was followed by innovations like using the rectified linear units as activation functions \cite{nair2010rectified} to allow training deep networks without pre-training, and using GPUs to speed up the training process \cite{krizhevsky2012imagenet}, as well as the creation of software libraries like Theano \cite{bergstra2010theano}, Caffe \cite{jia2014caffe}, Tensorflow\cite{tensorflow2015-whitepaper}, and PyTorch \cite{paszke2017automatic}, just to name a few, that make building and training neural network models much easier by automating the backpropogation step with symbolic differentiation \cite{bahrampour2015comparative} and handles the transition between CPU and GPU computation modes. 
+Before there was deep learning, a term which only became popular in the mid 2000s, there were neural networks \cite{bishop1995neural,ripley2007pattern}, which were also hugely popular in the 90s, but eventually the enthusiasim for neural networks cooled off because they were perceived to be too computationally intensive and difficult to scale up. The main reason for this was the difficulty of training neural networks of more than one or two hidden layers. Traditional optimization techniques like stochastic gradient descent with backpropagation did not improve empirical test error for networks with more layers,not until ideas like pre-training to initialize optimization were experimented could we fit "deep" neural networks with more than two hidden layers. This rebooted the field, now rebranded as deep learning, and it was followed by innovations such as using the rectified linear units as activation functions \cite{nair2010rectified} to allow training deep networks without pre-training, and using GPUs to speed up the training process \cite{krizhevsky2012imagenet}, as well as the creation of software libraries like Theano \cite{bergstra2010theano}, Caffe \cite{jia2014caffe}, Tensorflow\cite{tensorflow2015-whitepaper}, and PyTorch \cite{paszke2017automatic}, just to name a few, that make building and training neural network models much easier by automating the backpropogation step with symbolic differentiation \cite{bahrampour2015comparative} and handles the transition between CPU and GPU computation modes. 
 
-First we describe one of the most popular neural network models, the feedforward networks.
-
-Suppose we have $n$ observed data points $\{y_i,x_i\}_{i=1}^n$ where $X_i \in
+First we describe one of the most popular neural network models, the feedforward networks. Suppose we have $n$ observed data points $\{y_i,x_i\}_{i=1}^n$ where $X_i \in
 \mathbb{R}^p$ is a $p$-dimensional vector, then a feedforward neural network models the
 data as follows:
-
 \[y_i = \prod_{j=1}^Lg_j(V_jf_j(W_j))x_i \]
 where $L$ is the number of layers of the network, $W_j$ a $n_j \times m_{j-1}$
 weight matrix, $V_j$ a $m_j \times m_{j-1}$ weight matrix, and each $g_j$,$f_j$
@@ -1128,47 +1120,44 @@ usually no restrictions on what these activation functions must be other than on
 $g_L$ which must match the data type of the $y_i$'s. For example, if $y_i$ are
 binary observations then we would like the last output activation function to be a
 logistic function so that it maps output strictly to $[0,1]$, just like with the
-logistic regression.
+logistic regression. For a concrete example of a neural network used in practice, see section \ref{sec:nnmodel}.
 
-Popular activation functions in the classical neural network literature includes
+Popular activation functions in the classical neural network literature include
 the logistic function $f(x) = \frac{1}{1+\text{exp}(-x)} $ and the hyperbolic tangent function $h(x) =  2f(2x)-1$, but in modern deep
-learning the Rectified linear unit (RELU) has come to dominate the field. It has
-a simple form of $g(x)=\max{0,x}$, which is straightforward to do
-backpropogation with despite a single point of nondifferentiability, and it was
-found to facilitate optimization enormousl.It's particularly helpful for
+learning the rectified linear unit (RELU) has come to dominate the field. It has
+a simple form of $g(x)=\max(0,x)$, which is straightforward to do
+backpropagation with despite a single point of nondifferentiability, and it was
+found to facilitate optimization enormously.It's particularly helpful for
 neural network models with many more layers than 2 and needs only random weight initialization, getting rid of the need for pre-training. 
 
 While neural networks can have different numbers of layers and number of hidden
 units within each layer, theoretically only one layer is sufficient to
 approximate any function as we increase the number of hidden units \cite{hornik1991approximation}. 
 
-For Bayesian neural networks where one puts a Gaussian prior distribution on the weights of model, it has been shown that for a one-hidden-layer model, the prior converges to a Gaussian process as the number of hidden units converge to infinity \cite{neal2012bayesian}.This gives a neat intrepretation of bayesian neural networks. 
+For Bayesian neural networks where one puts a Gaussian prior distribution on the weights of model, it has been shown that for a one-hidden-layer model, the prior converges to a Gaussian process as the number of hidden units converge to infinity \cite{neal2012bayesian}. This gives a neat interpretation of Bayesian neural networks. 
 
 Further work by \cite{gal2015dropout} shows that heuristic training techniques such as dropout \cite{srivastava2014dropout}  are actually doing variational inference with Deep Gaussian Process \cite{damianou2013deep} as its prior, a process where several GPs are stacked one after another. 
 
-The most exact way to perform Bayesian inference for BNNs is still MCMC sampling as pioneered in \cite{neal2012bayesian}, where he put a conjugate hiearchical prior on the weights of the network and sampled the weights with HMC and the hyperparameter with block-Gibbs updates. One of his graduate students attempted to sample the weights and hyperparameters jointly with HMC but did not get better performance. Cho \cite{choo2000learning} experimented with a block-Gibbs-HMC hybrid method where each conditional distribution is sampled alternatively by HMC. I experimented with a much simply alternative for joint sampling and found good results in terms of sample quality. 
+The most asymptotically correct way to perform Bayesian inference for BNNs is still MCMC sampling as pioneered in \cite{neal2012bayesian}, in the sense that when the number of MCMC samples goes to infinity they converge to the target posterior distribution, and marginal posterior estimation becomes exact. This is better than alternatives that give biased approximations, such as variational inference \cite{graves2011practical}. In \cite{neal2012bayesian} Neal put a conjugate hiearchical prior on the weights of the network and sampled the weights with HMC and the hyperparameter with block-Gibbs updates. One of his graduate students attempted to sample the weights and hyperparameters jointly with HMC but did not get better performance. Cho \cite{choo2000learning} experimented with a block-Gibbs-HMC hybrid method where each conditional distribution is sampled alternatively by HMC. We experimented with a much simpler alternative for joint sampling and found good results in terms of sample quality. 
 
 
 Neal found that the windowed HMC sampler improves sampling in general, and also that evaluating the gradient using only a subset of the data would not deterioate performance significantly. We would seek to corroborate those observations in our own experiments.
 
-When assessing convergence of the MCMC samples to the posterior distribution of a Bayesian neural network model, one needs to keep in mind that in general these models have a high number of local modes, usually as an exponential function of the number hidden units. \cite{bishop1995neural}. This means we cannot interpret the samples as being drawn from the full posterior distribution, but only from the neighbourhoods containing the local modes that the chains happen to settle around. That means looking at the potential scale reduction (Rhat) for individual weights is probably not that useful because it's not designed to handle multimodal distributions.  
+When assessing convergence of the MCMC samples to the posterior distribution of a Bayesian neural network model, one needs to keep in mind that in general these models have a high number of local modes, usually as an exponential function of the number hidden units \cite{bishop1995neural}. This means we cannot interpret the samples as being drawn from the full posterior distribution, but only from the neighbourhoods containing the local modes that the chains happen to settle around. That means looking at the potential scale reduction (Rhat) for individual weights is probably not that useful because it's not designed to handle multimodal distributions.  
 
-It's still useful to monitor the convergence of the log posterior and of the E-BFMI statistics. Also it can still be useful to monitor the Rhat statistics for the hyperparameter if we can reasonably expect(as we can in the case for the variance parameter of a Bayesian neural network) it no to be multimodal. 
+It is still useful to monitor the convergence of the log posterior and of the E-BFMI statistics. Also it can still be useful to monitor the Rhat statistics (see section \ref{sec:otherdiag}) for the hyperparameter if we can reasonably expect it not to be multimodal, as we can in the case for the variance parameter of a Bayesian neural network.
 
 
 
 \section{Sampling for the Hyperparameter}
 
-In Neal's work he separated the model parameters into groups, and put independent Gaussian-Inverse-Gamma priors on each of them. For example, let $W_{ij}$ let be an entry in the weight matrix connecting the input covariates to the hidden units in the first layer. Then, the prior is 
-
-\[W_{ij} \sim \mathcal{N}(0,\sigma^2), \sigma^{-2} \sim \text{Gamma}(a_0,b_0) \]
-
-Assuming $n = |W|$, the posterior distribution for the hyperparameter is once again Inverse-Gamma
+In Neal's work \cite{neal2012bayesian} he separated the model parameters into groups, and put independent Gaussian-Inverse-Gamma priors on each of them. For example, let $W_{ij}$ be an entry in the weight matrix connecting the input covariates to the hidden units in the first layer. Then, the prior is 
+\[W_{ij} \sim \mathcal{N}(0,\sigma^2), \sigma^{-2} \sim \text{Gamma}(a_0,b_0). \]
+Assuming the size of weight matrix  $|W|=n $, the posterior distribution for the hyperparameter is once again inverse-Gamma
 \[\sigma^{-2}|W,X,y \sim \text{Gamma}(a_1,b_1)\]
 \[a_1 = a_0 + \frac{1}{2} n  \]
 \[b_1 = b_0 + \frac{1}{2} \sum_{ij} W_{ij}^2 \]
-
-In Neal's work he alternated between sampling the lower-level weights with HMC and drawing from the conjugate posterior for the hyperparameter exactly. The pseudocode is given below.
+He then proposed alternating between sampling the lower-level weights with HMC and drawing from the conjugate posterior for the hyperparameter exactly. The pseudocode is given below.
 \begin{algorithm}
 \KwIn{Initial variance $\sigma^2_0$, number of MCMC samples $M$}
 
@@ -1184,10 +1173,10 @@ In Neal's work he alternated between sampling the lower-level weights with HMC a
 
 In Cho's work \cite{choo2000learning}, he experimented with joint sampling of the lower-level weights and hyperparameters. However, since the dual averaging scheme for automatic tuning the step size was not available at the time, he had to rely on the heuristics invented by Neal, which asks for alternate sampling of the conditional distributions in which the step size is dependent on the variables being held constant. He devised a scheme where the leapfrog steps in the joint parameter space have to be done separately for the two groups of parameters. 
 
-A quick note on the parameterization used for the hierarchical prior. The non-centered parametrization is expected to mitigate the posterior correlation between the hyperparameter and the lower-level weights. Reducing posterior correlation is known to help improve sampling efficiency signficantly. We experimented with joint sampling under both parametrizations and found that non-centered parametrization is necessary for meaningful inference. The Hamiltonian sampler also performs better than the block-Gibbs sampler.
+A quick note on the parameterization used for the hierarchical prior. The non-centered parametrization (see section \ref{sec:priors}) is expected to mitigate the posterior correlation between the hyperparameter and the lower-level weights. Reducing posterior correlation is known to help improve sampling efficiency signficantly. We experimented with joint sampling under both parametrizations and found that non-centered parametrization is necessary for meaningful inference. The Hamiltonian sampler also performs better than the block-Gibbs sampler.
 
 \section{Stochastic Gradient Hamiltonian Monte Carlo}
-The idea of simulating Hamiltonian dynamics without the Metropolis acceptance step was first experimented in the statistics/machine learning literature by Neal \cite{neal2012bayesian} in a batch HMC sampler for the posterior distribution of a BNN. He found that,with careful selection of the leapfrog step size, the biased samples achieve similar predictive performance as the full MCMC samples. Therefore, it seems to reason that for predictive tasks e.g. regression or classification where observations are abundant, we could 
+The idea of simulating Hamiltonian dynamics without the Metropolis acceptance step was first experimented in the statistics/machine learning literature by Neal \cite{neal2012bayesian} in a batch HMC sampler for the posterior distribution of a BNN. He found that, with careful selection of the leapfrog step size, the biased samples achieve similar predictive performance as the full MCMC samples. Therefore, it seems to reason that for predictive tasks e.g. regression or classification where observations are abundant, we could 
 use a validation set (predictive performance) to select tuning parameters, hoping to trade off a bit of bias for better predictive performance. 
 
 Another trick that helps to speed up the HMC sampler is data subsampling, also denoted partial gradient in Neal's thesis \cite{neal2012bayesian}.
@@ -1197,23 +1186,20 @@ where $\pi(q)$ is the prior density function and $\pi(q|data)$ is the likelihood
 \[ \sum_{i=1}^n \log \pi(q|data_i) \approx \frac{n}{k} \sum_{i \in I} \log \pi(q|data_i) \]
 where $I$ is a subset of $\{1,\dots, n\}$ of size $\frac{k}{n}$. 
 More practically, if we divide the datapoints into $M$ equally sized subsets. Then for any such subset $S$, the potential energy function can be approximated by 
-\[ V(q) \approx    -\log(\pi(q)) + M \sum_{i \in S} \log(\pi(q|data_i)) = \tilde{V}(q) \] Data subsampling and omission of the Metropolis acceptance step are two key features of the stochastic gradient MCMC literature. In an overview the stochastic gradient MCMC literature 
+\[ V(q) \approx    -\log(\pi(q)) + M \sum_{i \in S} \log(\pi(q|data_i)) = \tilde{V}(q) \] Data subsampling and omission of the Metropolis acceptance step are two key features of the stochastic gradient MCMC literature. In an overview of the stochastic gradient MCMC literature \cite{ma2015complete}
 the authors summarized it as follows:
  "If the stationary distribution is not the target distribution, a Metropolis-Hastings (MH) correction can often be applied. Unfortunately, such correction steps require a costly computation on the entire
 dataset. Even if one can compute the MH correction, if the dynamics do not nearly lead to the correct stationary distribution, then the rejection rate can be high even for short simulation periods $h$. Furthermore, for many stochastic gradient MCMC samplers, computing the probability of the reverse path is infeasible, obviating the use of MH. As such, a focus in the literature is on defining dynamics with the right target distribution, especially in large-data scenarios where MH corrections are computationally burdensome or infeasible.
-"\cite{ma2015complete}
+"
 
 In deep learning, neural networks are usually fitted by stochastic gradient descent (SGD) \cite{ngiam2011optimization}.
 This is a first order method like regular gradient descent \cite{wright1999numerical}, except at each weight update a random subset(batch) of data points are sampled to be the  observations, and the sequence of step sizes over the optimization process must decay while satisfying the property
-
-\[ \sum_{t=1}^\infty \epsilon_t = \infty , \sum_{t=1}^\infty \epsilon_t^2 < \infty \]
-
+\[ \sum_{t=1}^\infty \epsilon_t = \infty , \sum_{t=1}^\infty \epsilon_t^2 < \infty. \]
 Theory from the stochastic optimization literature \cite{robbins1951stochastic} guarantees convergence to a local minimum. However, as per the norm in the optimization literature, the convergence property is usually only provable for easier classes of problems (.e.g. convex, quadratic functions) to which the likelihood of neural network models does not belong. Nonetheless, SGD has the advantage of easy implementation and low memory requirement ($O(D)$), and hence remains the predominant optimization method in deep learning.  
 
 The success of SGD lies in being able to avoid evaluating the full likelihood, which has contribution from each data point, at each update. The problems that neural network models tend to be fitted are usually in the high-sample-size, high-dimensional regime, hence a full evaluation would slow down the algorithm significantly. A stochastic gradient extension to MCMC was first experimented by \cite{welling2011bayesian}, where the author proposed to use the following updates :
 
 \[q_{t+1} = q_t + \frac{\epsilon_t}{2} ( \nabla \log p(q_t) + \frac{N}{n} \sum_{i \in \mathcal{D}} \nabla \log \pi(x_i|q_t) ) + \eta_t , \eta \sim \mathcal{N}(0,\epsilon_t) \]
-
 where $\mathcal{D}$ is a random subset of $\{1,2, \dots, N\}$ of size $n$ sampled at each update of $q$. We assume there are $N$ observations in total. The step sizes are assumed to decay following the constraint stated above for SGD. The authors recommended setting $\epsilon_t = a(b+t)^{-\gamma} $ with $\gamma \in (0.5,1]$.  
 
 The author proved that as the step sizes $\epsilon_t$ goes to $0$ the samples $\{q_t\}$ converge to the Langevin dynamics targeting the posterior distribution. Of course, in practice we set lower bound on $\epsilon_t$ and stop decreasing the step size once it is small enough. Also, the fact the we are not doing the acceptance-rejection step means there will be a bias in our posterior samples, which unlike the samples drawn from a Metropolis-Hastings sampler, does not decrease to $0$ as we sample from the chain longer.
@@ -1229,9 +1215,10 @@ stochastic gradient Hamilotian Monte Carlo (SGHMC),
 which extends HMC the way SGLD extends LMC. 
 
 
-Applying MCMC methods to large datasets often involve 2 problems. First, evaluating the unnormalized posterior density
+Applying MCMC methods to large datasets often involve two problems. First, evaluating the unnormalized posterior density
 \[ \pi(D|q) = \prod_{i=1}^n \pi(x_i|q) \]
- is equivalent to passing through all datapoints, which alone can make the sampling algorithm unacceptably slow since all versions of the Metropolis-Hastings sampler requires such evaluations for proposing new samples. Second, models that require MCMC samples when a large number of datapoints are available are necessarily singular models. Using the terminology of \cite{watanabe2009algebraic}, regular models are models for which the bayesian central limit theorem \cite{le2012asymptotic} holds, that is, when the number of observations goes to infinity the posterior distribution of $q$ converges to a Normal distribution. Models that are non-regular are called singular models. A lot of methods designed to scale MCMC \cite{neiswanger2013asymptotically,scott2016bayes} ultimately rely on this asymptotic normality for validity. Bayesian logistic regression is a classical model for which the CLT holds and is used in many papers to demonstrate the effectiveness of newly proposed large-scale MCMC methods. However, the very fact that asymptotic normality holds means there is little added utility to drawing MCMC samples from the posterior distribution, since a normal approximation would suffice. On the other hand, for singular models there is no guarantee that the estimates converge to the target posterior distribution. 
+ is equivalent to passing through all datapoints, which alone can make the sampling algorithm unacceptably slow since all versions of the Metropolis-Hastings sampler requires such evaluations for proposing new samples. Second, many models that require MCMC samples when a large number of datapoints are available are singular models. Using the terminology of \cite{watanabe2009algebraic}, regular models are models for which the Fisher information matrix is positive definite. They have the property that the Bayesian central limit theorem \cite{le2012asymptotic} holds, that is, when the number of observations goes to infinity the posterior distribution of $q$ converges to a Normal distribution. 
+A singular model is defined as a model whose Fisher information matrix is not positive deinfite. A lot of methods designed to scale MCMC \cite{neiswanger2013asymptotically,scott2016bayes} ultimately rely on this asymptotic normality for validity. Bayesian logistic regression is a classical model for which the CLT holds and is used in many papers to demonstrate the effectiveness of newly proposed large-scale MCMC methods. However, the very fact that asymptotic normality holds means there is little added utility to drawing MCMC samples from the posterior distribution, since a normal approximation would suffice. On the other hand, for singular models there is no guarantee that the estimates converge to the target posterior distribution. 
 
 Asympotic normality is also assumed for the application of stochastic gradient MCMC methods to neural network models \cite{welling2011bayesian,chen2014stochastic,ahn2012bayesian,ding2014bayesian,ma2015complete}. Even though neural networks are singular models where the conditions for the central limit theorem do not hold, these methods have shown good predictive performance on a variety of datasets. This is opposite of what one would expect and merits further investigation.
 
@@ -1263,7 +1250,7 @@ Notice that there are two normal distributions being sampled in the algorithm. T
 
 
 \section{Priors}
-
+\subsection{Horseshoe Priors}
 The horseshoe prior was first proposed by \cite{carvalho2009handling} as a Bayesian counterpart to the frequentist Lasso estimator in high-dimensional statistics. Like the lasso, it shrinks estimates for irrelevant covariates to zero. Compared to alternatives like the Bayesian Lasso \cite{park2008bayesian}, and the spike-and-slab prior \cite{mitchell1988bayesian}, it has the advantage of admitting full HMC sampling because it contains no discrete parameters.
 
 Suppose we have a $D$-dimensional parameter.
@@ -1271,7 +1258,7 @@ Suppose we have a $D$-dimensional parameter.
 Then the horseshoe prior for this parameter is defined as
 \begin{align*}
  &\beta_j \sim \mathcal{N}(0,\tau^2\lambda^2) \\
- &\lambda_j \sim C^+(0,1),\, j = 1,\dots , D, \\
+ &\lambda_j \sim C^+(0,1),\, j = 1,\dots , D, 
 \end{align*}
 where $C^+(0,1)$ is a half-Cauchy distribution with mean zero and variance one. The horseshoe prior is usually applied to regression problems where the number of samples were significantly fewer than the number of covariates, which makes it a suitable candidate prior for models that require regularization, like neural networks \cite{ghosh2017model}.
 
@@ -1288,7 +1275,7 @@ equivalent to
 & x \sim \mathcal{N}(0,\sigma^2)\\
 &\sigma^2 \sim \text{Inv-Gamma}(0.5,0.5). \\
 \end{align*}
-We can further reduce correlation by using a non-centered parametrization:
+We can further reduce correlation by using a non-centered parametrization \cite{piironen2017sparsity}:
 \begin{align*}
 & x = z * \sigma \\
 & z \sim \mathcal{N}^+(0,1)\\
@@ -1306,13 +1293,13 @@ where
 & \tau = r_1^g \cdot r_2^g \\
 & \beta = z \cdot \lambda \tau . \\
 \end{align*}
-Because the local and global $r_1$ parameters are constrained to be positive,the final unconstrained parameter space is $(z,\log r_1^l,r_2^l,\log r_1^g,r_2^g)$
+Because the local and global $r_1$ parameters are constrained to be positive,the final unconstrained parameter space is $(z,\log r_1^l,r_2^l,\log r_1^g,r_2^g).$
 
-
+\subsection{ARD Priors}
 Here we would briefly introduce the Automatic Relevance Determination (ARD) priors. It is a general way of assigning priors to the neural network weights that, along with a proper choice of prior, should allow the NNs to self-regulate excess hidden units, and hence obviating the need for choosing the number of hidden units.
 
 An ARD prior puts independent priors of a common distribution on the group of weights entering each hidden unit.
-Suppose $W_{i\ell}$ are the weights connecting into the $i^\text{th}$ hidden unit in the $\ell^\text{th}$ layer of a NN. For example, if there are $n$ incoming units connecting to $m$ hidden units and if the prior in question is Normal-Inverse-Gamma,then we have 
+Suppose $W_{i\ell}$ are the weights connecting into the $i^\text{th}$ hidden unit in the $\ell^\text{th}$ layer of a NN. For example, if there are $n$ incoming units connecting to $m$ hidden units and if the prior in question is Normal-Inverse-Gamma, then we have 
 \begin{align*}
 & W_{i\ell} \in \mathbb{R}^n , \forall i \in \{1,\dots,m\}\\ 
 & W_{i\ell} \sim \mathcal{N}(0,\sigma^2) \\
@@ -1353,11 +1340,9 @@ the remaining $n-1$ data points. In practice, the integration is performed
 approximately by drawing $S$ samples from $p(\theta|d_{-i})$, denoted
 $\{\theta_{-i}^1,\dots, \theta_{-i}^S\}$, and they form the estimate
 $\frac{1}{S} \sum_{s=1}^S p(y_i|x_i,\theta_{-i}^s) $.
-
 Then
 \[\text{lppd}_{\text{loo-cv}} \approx \sum_{i=1}^n \log (\frac{1}{S} \sum_{s=1}^S
 p(y_i|x_i,\theta_{-i}^s))\]
-
 The main obstacle to applying this to model selection for neural networks is the
 simulation from $n$ different posterior distribution required, each of these
 require tuning and monitoring to ensure low variance of the integral estimate.
@@ -1367,7 +1352,7 @@ well as a lack of tools for evaluating convergence of the joint distribution.
 Most convergence diagnostics require storing the entire Markov chain, or even
 simulating multiple chains,thus further multiplying the the computational burden. Further, it is time-consuming and often unproductive to repeat 10 or 5 times the sampling process  
 (in the case of k-fold cross-validation for $k=10$, or $k=5$) when a single sampling session could use up all available memory and computational resources. 
-It might not be worth it to obtaining a better estimate of the test error if it means shrinking the model to allow repeated sampling sessions.
+It might not be worth it to obtain a better estimate of the test error if it means shrinking the model to allow repeated sampling sessions.
 
 Holdout cross-validation as currently used in the neural network literature
 has higher variance than the k-fold and leave-one-out alternatives and might be
@@ -1408,9 +1393,10 @@ There is concern that single precision might not be enough to maintain accuracy 
 
 \chapter{Experiments}
 \section{Model and Data}
-Having introduced the tools for exploring BNNs and the type of BNNs of interest, in this chapter we will identity the research questions about BNNs and describe the numerical experiments which have been carried out to study these questions. In the experiments that follow we would focus entirely on classification, because that is where neural networks model are employed most and have achieved the most success. Similarly, we would focus on a dataset which is similar in nature to the types of problems usually encountered in the neural network literature, but sufficiently simplified that it does not overtax our computational resources. 
+\label{sec:nnmodel}
+Having introduced the tools for exploring BNNs and the type of BNNs of interest, in this chapter we will identity the research questions about BNNs and describe the numerical experiments which have been carried out to study them. In the experiments that follow we would focus entirely on classification problems, because that is where neural networks model are employed most and have achieved the most success. Similarly, we would focus on a dataset which is similar in nature to the types of problems usually encountered in the neural network literature, but sufficiently simplified that it does not overtax our computational resources. 
 
-MNIST \cite{lecun-mnisthandwrittendigit-2010} is a benchmark dataset that is arguably the most popular one in the machine learning literature. It consists of 60000 images of digits from zero to nine. Each image is of dimension $ 28 \times 28 = 784 $, which already is high enough that it exceeds the memory and time constraint for HMC sampling for a moderate number of hidden units, even in the simplest neural networks with one hidden layer. Therefore, we chose a simplified version of MNIST where both the dimension and number of samples are reduced. We compare below the original MNIST and the simplified digits images. The simplified digits has dimension $8 \times 8 = 64 $ and the number of samples is reduced to $1797$. While the shapes of the digits could still be made out in the simplified images, the reduced definition blurs classes together so that a 4 might look like a 9 and so on so forth. This should make prediction harder than the original.
+MNIST \cite{lecun-mnisthandwrittendigit-2010} is a benchmark dataset that is arguably the most popular in the machine learning literature. It consists of 60000 images of digits ranging from zero to nine. Each image is of dimension $ 28 \times 28 = 784 $, which already is high enough that it exceeds the memory and time constraint for HMC sampling for a moderate number of hidden units, even in the simplest neural networks with one hidden layer. Therefore, we chose a simplified version of MNIST \cite{scikit-learn} where both the dimension and number of samples are reduced. We compare below the original MNIST and the simplified digits images. The simplified digits has dimension $8 \times 8 = 64 $ and the number of samples is reduced to $1797$. Unless specified, for the following experiments we use the first 500 observations as the training set and the last 500 observations as the test set. While the shapes of the digits could still be made out in the simplified images, the reduced definition blurs classes together so that a 4 might look like a 9 and so on so forth. This should make prediction harder than the original.
 
 \begin{figure}
 \begin{tcbraster}[raster columns=5, enhanced, blankest]
@@ -1433,8 +1419,8 @@ Unless stated otherwise, all of the experiments that follow use a neural network
 
 \[ \prod_{i=1}^N p(y,X|W) p(W^{\text{in}})p(W^{\text{out}}) \]
 where 
-\[p(W^{\text{in}}) = \prod_{k=1}^{N_{\text{in}}}\prod_{j=1}^{N_{\text{hidden}}} \text{exp}(- \frac{W_{kj}^{\text{in}} \cdot W_{kj}^{\text{in}}}{2}), \]
-\[p(W^{\text{out}}) = \prod_{k=1}^{N_{\text{hidden}}}\prod_{j=1}^{N_{\text{out}}} \text{exp}(- \frac{W_{kj}^{\text{out}} \cdot W_{kj}^{\text{out}}}{2}) \]
+\[p(W^{\text{in}}) = \prod_{k=1}^{N_{\text{in}}}\prod_{j=1}^{N_{\text{hidden}}} \text{exp}\left(- \frac{W_{kj}^{\text{in}} \cdot W_{kj}^{\text{in}}}{2}\right), \]
+\[p(W^{\text{out}}) = \prod_{k=1}^{N_{\text{hidden}}}\prod_{j=1}^{N_{\text{out}}} \text{exp}\left(- \frac{W_{kj}^{\text{out}} \cdot W_{kj}^{\text{out}}}{2}\right) \]
 are the priors for the input-to-hidden weights and hidden-to-output weights respectively, and 
 
 \[ p(y_i,X_i) = \prod_{t=0}^9 \hat{\pi}_t^{\mathbb{I}[y_i=t]}, \]
@@ -1494,7 +1480,7 @@ Our next research question concerns sampling for the hyperparameter in hierarchi
 
 Here, we compare Gibbs sampling with joint sampling for a neural network with a Normal-Inverse-Gamma prior put on the input-hidden weights. A standard normal prior is put on the hidden-out weights. More specifically, we assume 
 \[W_{ij} \sim \mathcal{N}(0,\sigma^2), \sigma^{-2} \sim \text{Gamma}(0.5,0.5), \]
-which is equivalent to a student-t prior of degree 1 on $W_{ij}$. Both centered (CP) and non-centered (NCP) parameterizations are tried for joint sampling. For the Gibbs sampler, a GNUTS sampler with an identity covariance metric and a conservative step size $\epsilon = 0.01$ is chosen to sample the lower level weights. For joint sampling with both parametrizations, the step sizes and covariance metrics are tuned similarly as in previous experiments.
+which is equivalent to a student-t prior of degree 1 on $W_{ij}$. Both centered (CP) and non-centered (NCP) parametrizations are tried for joint sampling. For the Gibbs sampler, a GNUTS sampler with an identity covariance metric and a conservative step size $\epsilon = 0.01$ is chosen to sample the lower level weights. For joint sampling with both parametrizations, the step sizes and covariance metrics are tuned similarly as in previous experiments.
 
 Focusing only on the variance parameter $\sigma^2$, we see that the CP encounters difficulty during sampling and results in a too low ESS for meaningful inference. In comparison the NCP encounters much less difficulty and has a reasonable ESS relative to the total number of samples. Compared to the  estimates generated by Gibbs sampling, joint sampling gives much higher ESS both for the hyperparameter and the lower-level weights. We tried different step sizes the lower-level weights in the Gibbs sampler but failed to find one that gives decent predictive accuracy and sample efficiency. This simulation shows that joint sampling and automatic step size tuning is an even bigger necessity than previously expected for sampling from BNNs with hierarchical priors.
 
@@ -1519,14 +1505,14 @@ The second way to assign such priors to weights is an Automatic Relevance Determ
 \begin{align*}
 & W_{i,\cdot} \sim \mathcal{N}(0,\lambda_i^2\tau^2) , \forall i \sim \{1,\dots, m \} \\
 & \lambda_i \sim C^+(0,1) \\
-& \tau \sim C^+(0,1), \\
+& \tau \sim C^+(0,1), 
 \end{align*}
 where $ W_{i,\cdot}  $ are the weights entering the $i$'th hidden unit. This is how the horseshoe prior was used for model selection in \cite{ghosh2017model}. Similarly we can define the regularized horseshoe ARD prior as 
 \begin{align*}
 & W_{i,\cdot} \sim \mathcal{N}(0,\tilde{\lambda}_i^2\tau^2) , \, \tilde{\lambda}_j^2 = \frac{c^2 \lambda_j^2}{c^2 + \tau^2 \lambda_j^2}  \forall i \sim \{1,\dots, m \} \\
 & \lambda_i \sim C^+(0,1) \\
 & \tau \sim C^+(0,1) \\
-&c^2 \sim \text{Inv-Gamma}(2,8).\\
+&c^2 \sim \text{Inv-Gamma}(2,8).
 \end{align*}
 
 In the experiments we compared the standard normal prior against a number of hierarchical priors and their ARD variants.We found that while the regularized horseshoe prior performs better than the original horseshoe prior in terms of having zero divergent transitions, neither of the horseshoe priors can be said to induce great sampling efficiency, as both result in models whose posterior distribution are difficult to sample, resulting in low ESS. What's more is that even the Normal-Inverse-Gamma prior does not give better predictive performance than the standard normal prior, which we have already seen in earlier experiments comparing Gibbs sampling to joint sampling for the hyperparameter. 
@@ -1675,7 +1661,7 @@ It is important to investigate whether HMC can remain accurate enough for long t
 
  The first experiment looks at the stability of the leapfrog trajectory. The model we used is a single-hidden-layer neural network with 35 hidden units and the normal prior on its weights. First, a number of points ${q_i}$ from the posterior distribution are generated by a sampler in double precision, which are then each augmented by an independent momentum $(p_i)$ drawn from a standard normal distribution. Then the list of $(q_i,p_i)$ points are cast into single precision. The two sets of points are then integrated forward for a fixed number of iterations with a reasonably conservative step size to ensure high acceptance rate, and we compare the difference in Hamiltonian between the start and end point of the trajectory. Denote the Hamiltonian at the end of the double trajectory as $H_d$ and that at the end of the float trajectory as $H_f$. Ideally we would want $H_d-H_f$ to be small if we want the sampler to behave similarly on single and double precision. The initial Hamiltonian does not matter because both trajectories have the same initial state. 
 
-We found that for the normal prior the final states in trajectory differ in energy on average by less than $10^{-5}$ and for the normal-inv-gamma prior the difference on the order $10^{-2}$, which translates to at most a difference of 1 $\%$ in the final acceptance rate.
+We found that for the normal prior the final states in trajectory differ in energy on average by less than $10^{-5}$ and for the normal-inverse-Gamma prior the difference on the order $10^{-2}$, which translates to at most a difference of 1 $\%$ in the final acceptance rate.
 
 
 The second experiment investigates whether the loss of precision when adopting single precision would affect the predictive performance. We tested two neural network models with identical structures; both are single-hidden-layer networks with 35 hidden units and the hyperbolic tangent as the activation function. One model has the normal prior on its weights, which is typical of most BNNs used in the literature. The other has a normal-inverse-Gamma prior on the hidden-to-output weights and normal prior on the input-to-hidden-weights. This should be a more difficult model to sample from because of the presence of a hyperparameter which is correlated with most of the lower-level weights. We found that while double precision seems to perform better for the normal prior and single precision better for the hierarchical prior, the difference is not significant enough to be outside of the variance of the estimated test error. 
@@ -1748,42 +1734,39 @@ Number of Hidden Units = 90 &$ 7.57 \times 10^4$  & 21.2   & 562  & 1359        
 
 Experimenting on a simplified MNIST dataset, we found that Bayesian neural networks can achieve about the same and sometimes better predictive accuracy than early stopping committees. The main difference between the two is that early stopping committees need to be manually  tuned to achieve decent accuracy, whereas BNNs can achieve the same with dynamic HMC and automatic tuning of step sizes and covariance metrics. This corroborates previous observations in the literature \cite{neal2012bayesian}. 
 
-Once we can start using BNNs, the challenge becomes about finding the best sampler to sample from the posterior distributions. In our experiments we compared static and dynamic HMC samplers. We found that for the static samplers varying the integration time does no seem to influence the predictive accuracy or sample quality, once the step size is chosen so that acceptance rate is kept high. And dynamic HMC has more robust sampling efficiency than static HMC.
+Once we can start using BNNs, the challenge becomes finding the best sampler to sample from the posterior distributions. In our experiments we compared static and dynamic HMC samplers. We found that for the static samplers varying the integration time does not seem to influence the predictive accuracy or sample quality, once the step size is chosen so that acceptance rate is kept high. And dynamic HMC is more robust to the choice of tuning parameters than static HMC in terms of sampling efficiency. 
 
-The improvement in sampling efficiency observed by Neal when using the windowed HMC sampler could not be confirmed in our experiment. For our task the windowed HMC sampler does not improve over the regular HMC sampler in terms of ESS as long as the acceptance rate is kept reasonably high. However, it does not generate worse samples either. Perhaps it could still be useful in scenarios where we could not tune for the acceptance rate and the sampler has low acceptance rate.
+The improvement in sampling efficiency observed by Neal using the windowed HMC sampler \cite{neal2012bayesian} could not be confirmed in our experiment. For our task the windowed HMC sampler does not improve over the regular HMC sampler in terms of ESS as long as the acceptance rate is kept reasonably high. However, it does not generate worse samples either. Perhaps it could still be useful in scenarios where we could not tune for the acceptance rate and the sampler has low acceptance rate.
 
-We then experimented with diffrent termination criteria and found that XHMC can perform as well as GNUTS, and $\delta = 0.1$ seems like a good default threshold value. Although this purely a convenient choice, we note the robustness of the XHMC sampler to this choice of hyperparamter.
-We recommend XHMC since it requires fewer computations than GNUTS, which might even scale by a factor of the models dimension if a full covariance metric is used.
+We then experimented with different termination criteria and found that XHMC can perform as well as GNUTS, and $\delta = 0.1$ seems like a good default threshold value. Although this purely a convenient choice, we note the robustness of the XHMC sampler to the choice of this hyperparamter. We recommend XHMC since it requires fewer computations than GNUTS, which might even scale by a third order factor of the model's dimension if a full covariance metric is used.
 
-We further found that for dynmaic HMC, automatic tuning of the step size and covariance metric is essential for a robust sampling workflow. Automatic tuning of the step size avoids divergent transitions and tuning the covariance metric improves sampling efficiency by adjusting the scales by their target distribution variance. We found that, however, for BNNs the target distribution is far too complex and cannot be modeled well by a multivariate normal distribution, which the conditioning of the covariance metric implicitly relies on. The dense metric is also more computationally intensive during both the tuning and sampling stage.
-Hence the diagonal metric should be chosen over the dense metric.
+We further found that, for dynmaic HMC, automatic tuning of the step size and covariance metric is essential for a robust sampling workflow. Automatic tuning of the step size avoids divergent transitions and tuning the covariance metric improves sampling efficiency by adjusting the scales by their target distribution variances. We found that, however, for BNNs the target distribution is far too complex and cannot be modeled well by a multivariate normal distribution, which the conditioning of the covariance metric implicitly relies on. The dense metric is also more computationally intensive during both the tuning and sampling stage.Hence the diagonal metric should be chosen over the dense metric.
 
-Further comparsion of the Gibbs sampler and joint HMC samplers for the BNNs with hierarchical priors was carried out, and we found that joint sampling by dynamic HMC can be much more efficient for sampling the hyperparmeter. The Gibbs sampler in this instance could not even sample the hyperparameter to any meaningful degree in terms of the ESS. Also, we found that the non-centered parametrizations allowed effective sampling of the hyperparameter, which the centered parameterization was unable to do. This matches the general observations from the Bayesian hierarchical models literature \cite{bernardo2003non}
+Further comparsion of the Gibbs sampler and joint HMC samplers for the BNNs with hierarchical priors was carried out, and we found that joint sampling by dynamic HMC can be much more efficient for sampling the hyperparmeter. The Gibbs sampler in this instance could not even sample the hyperparameter to any meaningful degree in terms of the ESS. Also, we found that the non-centered parametrizations allowed effective sampling of the hyperparameter, which the centered parameterization was unable to do. This matches the general observations from the Bayesian hierarchical models literature \cite{bernardo2003non}.
 
-Stochastic gradient HMC was investigated and compared with standard HMC for sampling from BNNs, and we found that SGHMC can can give similar performance as HMC but the result is not robust to the choice of tuning parameters. Therefore, it might be worthwhile to try SGHMC if there is enough data for a separate validation set for choosing the tuning parameters. The reduced computational cost of SGHMC means if we choose the right tuning parameter and can accept the unpleasant implications of using a biased sampler, we could achieve better test error than using the full HMC sampler.
+Stochastic gradient HMC was investigated and compared with standard HMC for sampling from BNNs, and we found that SGHMC can can give similar performance to HMC but the result is not robust to the choice of tuning parameters. Therefore, it might be worthwhile to try SGHMC if there is enough data for a separate validation set for choosing the tuning parameters. The reduced computational cost of SGHMC means if we choose the right tuning parameter and can accept the unpleasant implications of using a biased sampler, we could achieve better test error than using the full HMC sampler.
 
-On the question of model selection we looked at the WAIC as an alternative to holdout test set for choosing the model that minimizes predictive error. We were not able to clearly establish the WAIC as a better option for model selection for BNN than the holdout test set. When faced with insufficient data for a new partition into a test set, we do not recommend at the moment using the WAIC for model selection, instead we should collect more data from the generating distribution.
+On the question of model selection we looked at the WAIC as an alternative to holdout test set for choosing the model which minimizes the predictive error. We were not able to clearly establish the WAIC as a better option for model selection for BNNs than the holdout test set. When faced with insufficient data for creating a new partition into a test set, we do not recommend at the moment using the WAIC for model selection, instead we should collect more data from the data generating distribution.
 
+Now that we have some answers on questions about how to sample from BNNs, we need to choose  the right prior to regulate the weights in typically overparameterized neural network models. We already have experiments showing that the setting the scale of the prior by a multiple of the number of incoming units actually gives worse predictive performance. We further found that automatic relevance determination priors can improve significantly both the predictive accuracy and sampling efficiency, that the regularized horseshoe priors is better than the ordinary horseshoe prior, and that the normal prior is better any of the hierarchical priors test, ARD or otherwise. 
 
-Now that we have some answers on questions about how to sample from BNNs. We need to choose  the right prior to regulate the weights in typically overparametrized neural network models. We already have experiments showing that the setting the scale of the prior by a multiple of the number of incoming units actually gives worse predictive performance. We further found that automatic relevance determination priors can improve significantly both the predictive accuracy and sampling efficiency, that the regularized horseshoe priors is better than the ordinary horseshoe prior, and that the normal prior is better any of the hierarchical priors test, ARD or otherwise. 
+While all the experiments above where conducted in double precision, it is more a choice of convenience than of necessity. We have conducted experiments showing that switching to single precision does not result in a loss of accuracy in the leapfrog trajectories or in the test error computed from the final MCMC samples. This means that we should be able to carry out HMC sampling on GPUs to take advantage of the speed-up without any significant loss of correctness.
 
-While all the experiments above where conducted in double precision, it is more a choice of convenience than of necessity. We have conducted experiments showing that switching to single precision does not result in a loss of accuracy in the leapfrog trajectories or in the test error computed from the final MCMC samples. This means that we should be able to carry out HMC sampling on GPUs to take advantage of the speedup without any significant loss of correctness.
-
-Finally, results in this chapter should make one skeptical about claims made about Bayesian neural networks, since they defy some traditional wisdoms about statistics. For example, for overparametrized models where the dimension is much larger than the number of observations, one should use hierarchical priors like the horseshoe to perform regularization. However, our experiments show that such regularization often harms predictive accuracy, even when there is high ESS overall. Also, we found that frequentist predictions could achieve similar predictive accuracy as Bayesian alternatives, although BNNs do seem to be more robust to tuning parameters. These bizarre outcomes need to be explained first before we can make claims about Bayesian neural networks, for example, that the are approximated by stochastic gradient descent \cite{mandt2017stochastic} or other ad-hoc optimization techniques \cite{gal2015dropout,gal2015bayesian}
+Finally, results in this chapter raise more questions about Bayesian neural networks, since some of the results are not what one would expect based some traditional wisdoms about statistics. For example, for overparametrized models where the dimension is much larger than the number of observations, one should use hierarchical priors like the horseshoe to perform regularization. However, our experiments show that such regularization often harms predictive accuracy, even when there is high ESS overall. Also, we found that frequentist predictions could achieve similar predictive accuracy as Bayesian alternatives, although BNNs do seem to be more robust to tuning parameters. These bizarre outcomes need to be explained when we want to investigate claims made about Bayesian neural networks, for example, that the are approximated by stochastic gradient descent \cite{mandt2017stochastic} or other ad-hoc optimization techniques \cite{gal2015dropout,gal2015bayesian}
 
 
 
 \chapter{Conclusion}
 \section{Conclusion}
 
-	Bayesian neural networks have seen a resurgence with many optimization techniques being interpreted as approximate Bayesian inference. However, these claims were usually made without simulation studies using MCMC for full posterior inference. In this study we seeked to understand Bayesian inference for BNNs by using the best MCMC methods available to sample from these models. 
+	Bayesian neural networks have seen a resurgence with many optimization techniques being interpreted as approximate Bayesian inference. However, these claims were usually made without simulation studies using MCMC for full posterior inference. In this thesis we seek to understand Bayesian inference for BNNs by using the most suitable MCMC methods available to sample from these models. 
 
 
 In Chapter 2 we looked into the dynamic HMC samplers implemented in Stan and reimplemented them in PyTorch, along with methods for automatically tuning parameters and computing convergence diagnostics. We also provided pseudocode which should help future researchers understand the No-U-Turn sampler as implemented in Stan, since it differs significantly from the original implementation. Special attention needs to be paid to avoid computing probabilities on the original scale to maintain numerical stability.
 
 Then in Chapter 3 we delved into Bayesian neural networks. First we gave a review of the literature, which was mostly the contributions by Neal \cite{neal2012bayesian}. New developments like stochastic gradient Hamiltonian Monte Carlo and scaled initialization in the deep learning literature \cite{chen2014stochastic,bengio1994learning} were introduced and discussed. Finally, we discussed shrinkage priors, their origins in the statistics literature and adaptation for model selection with neural networks. 
 
-The discussions in chapter 2 and 3 provide the motivation for the simulation experiments in Chapter 4. Numerical experiments were conducted to sample from BNNs and compare different strategies. We found that dynamic HMC samplers can sample quite efficiently even from models with complicated hierarchical priors, although these priors do not necessarily improve predictive accuracy. Our main contention is that many of the claims made about BNNs in the deep learning should be viewed with skepticism because we found that even with relatively simple models and full MCMC sampling for Bayesian inference the effects of particular new priors do not seem clear, and it seems sometimes better initialized frequentist models would even beat BNNs sampled by robust, automatically tuned, state of the art HMC samplers.
+The discussions in chapter 2 and 3 provide the motivation for the simulation experiments in Chapter 4. Numerical experiments were conducted to sample from BNNs and compare different strategies. We found that dynamic HMC samplers can sample quite efficiently even from models with complicated hierarchical priors, although these priors do not necessarily improve predictive accuracy. Our main contention is that many of the claims made about BNNs in the deep learning should be scrutinized by further investigation because we found that even with relatively simple models and full MCMC sampling for Bayesian inference the effects of particular new priors do not seem clear, and it seems that sometimes better initialized frequentist models would even beat BNNs sampled by robust, automatically tuned, state-of-the-art HMC samplers.
 
 \bibliographystyle{plain}
 
