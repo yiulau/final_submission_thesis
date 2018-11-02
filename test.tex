@@ -83,7 +83,7 @@ Neural network models have become hugely popular under the name of Deep Learning
 
 In Chapter 3 we give a brief overview of the Bayesian neural network literature and identify areas where we feel could benefit from new developments in NUTS and related sampling techniques. In Neal's and Cho's work \cite{neal2012bayesian,choo2000learning}, sampling from the posterior distribution was by alternating between the lower and higher level parameters in a block-Gibbs fashion. With the model and data they used, they found joint sampling worse than Gibbs sampling for sampling the hyperparameter. We found that NUTS is capable of sampling the hyperparameter quite well (section \ref{sec:hyperparameter}) , is more robust to tuning parameters (section \ref{sec:xhmc}), and requires much less manual tuning.
 
-Then we talk about the choice of prior for neural network models. In the 1990s it was standard to put a hierarchical prior on the model weights , but in the new wave of Bayesian deep learning literature the standard normal prior is used most of the times. Recently shrinkage priors like the horseshoe prior have been used to automatically regularize the weights \cite{ghosh2017model}. In their paper the authors used variational inference to approximate the predictive distribution, which might miss important features of the  distribution. In section \ref{sec:priros}, we used NUTS to perform full posterior inference on a range of shrinkage priors . In short, we found that the standard normal prior performed best in terms of both effective sample size and predictive accuracy. The results of these experiments in full details will be presented in Chapter 4.
+Then we talk about the choice of prior for neural network models. In the 1990s it was standard to put a hierarchical prior on the model weights , but in the new wave of Bayesian deep learning literature the standard normal prior is used most of the times. Recently shrinkage priors like the horseshoe prior have been used to automatically regularize the weights \cite{ghosh2017model}. In their paper the authors used variational inference to approximate the predictive distribution, which might miss important features of the  distribution. In section \ref{sec:priors}, we used NUTS to perform full posterior inference on a range of shrinkage priors . In short, we found that the standard normal prior performed best in terms of both effective sample size and predictive accuracy. The results of these experiments in full details will be presented in Chapter 4.
 
 While the use of shrinkage priors should eliminate much of the need for model selection: one would simply fit the largest model possible and let the shrinkage prior eliminate any excess capacity, in practice sampling from such a model might prove too difficult, for example having too many hidden layers might result in vanishing or exploding gradients \cite{bengio1994learning}. There are also tuning parameters, like the activation function, which can not be chose by shrinkage priors. This necessitates model selection techniques. Model selection by information criteria like AIC and BIC is not backed by theory because neural networks violate one of their regularity conditions, namely that the model must have non-singular Fisher matrix. The Watanabe Information Criterion (WAIC) is designed to overcome this problem for all singular models. We experimented with the WAIC but found that it failed to choose the model that minimizes the test error on the dataset we chose. 
 
@@ -103,7 +103,7 @@ for example to carry out maximum a posteriori estimation (MAP) , marginal poster
 
 The most basic form of MCMC is the Metropolis-Hastings (MH) sampler. Suppose we have a an unnormalized density $\pi(q)$, and $h(q,p)$ is a proposal function such that conditional on the current state $q$, the probability of moving from $q$ to a measurable set $A$ is denoted by $h(q,A)$, we can calculate the Hastings ratio
 \[ r(q,q') = \frac{\pi(q')h(q',q)}{\pi(q)h(q,q')}. \]
-Then we accept the move to state $q'$ with probability $ \min (1, h(q,q')) $.
+Then we accept the move to state $q'$ with probability $ \min (1, r(q,q')) $.
 
 \begin{algorithm}
 \caption{Metropolis Hastings Sampler}
@@ -146,7 +146,7 @@ density,
 and 
 \[T(p) = \sum_{i=1}^D \frac{p_i^2}{m_i}, \]
 which is equivalent to introducing an independent multivariate Gaussian random variable of
-the same dimension as the original distribution as an auxiliary variable. 
+the same dimension as the original distribution as an auxiliary variable. Suppose the original distribution is of dimension $D$, then the auxiliary variable is also of dimension $D$. and the $i^{\text{th}}$ variable is a Gaussian random variable of mean 0 and variance $m_i$.
 
 Note that there is a physical interpretation of the system. The Hamiltonian uniquely determines the motion of a particle, whose position in space at any time is described by the $q$ coordinates, and whose momentum is described by the $p$ coordinates. Its motion can be described by solving a system of ordinary differential equations in Hamiltonian dynamics, known as Hamilton's equations:
 \begin{align*}
@@ -162,7 +162,7 @@ dynamics \cite{leimkuhler2004simulating}. The discretization should
 possess some nice properties, including reversibility and volume-preservation, to ensure convergence to the target distribution, as well as  maintain 
 stability and accuracy of the approximation over long trajectories, the lack of which significantly reduces the efficiency of the sampler, irrespective of model-related factors which might affect sampling efficiency, like parametrization or posterior correlation.  
 
-For the simple version of HMC where the momentum variable is independent from the position variable, i.e. $\pi(p|q)=\pi(p)$, an easy-to-implement integrator which is both volume-preserving and reversible, with lower approximation error than conventional alternatives for numerically solving like Euler's method, known as the leapfrog integrator \cite{leimkuhler2004simulating}, exists and works as follows. At time $t$ of the trajectory, given its current position and momentum, $q(t)$ and $p(t)$,and step size $\epsilon$, we would update the position and momentum at time $t+\epsilon$ by setting 
+For the simple version of HMC where the momentum variable is independent from the position variable, i.e. $\pi(p|q)=\pi(p)$, an easy-to-implement integrator which is both volume-preserving and reversible, with lower approximation error than conventional alternatives for numerically solving differential equations, like Euler's method, known as the leapfrog integrator \cite{leimkuhler2004simulating}, exists and works as follows. At time $t$ of the trajectory, given its current position and momentum, $q(t)$ and $p(t)$,and step size $\epsilon$, we would update the position and momentum at time $t+\epsilon$ by setting 
 \begin{align*}
     &p\left(t+\frac{\epsilon}{2}\right) = p(t) - \frac{\epsilon}{2}\cdot \frac{\partial
     U}{\partial
@@ -298,7 +298,7 @@ Third, the Hamiltonian is constant with respect to time, i.e., $\frac{dH}{dt} =
 0$. From the physics point of view, this is simply the conservation of energy in
 a closed system. It keeps acceptance probability high if the discrete simulation
 of the Hamiltonian dynamics is accurate enough, which is equivalent to staying
-close to the true trajectory,usually achieved by using a small leapfrog step size. This has been mentioned earlier
+close to the true trajectory, usually achieved by using a small leapfrog step size. This has been mentioned earlier
 and we will look at it from another angle here. The Metropolis acceptance step
 accepts the proposed state $(q_t,p_t)$ as the next state in the Markov chain
 with probability $\min(1, \exp(-H(q_t,p_t) + H(q_0,p_0)))$, where $(q_0,p_0)$ is
@@ -316,7 +316,7 @@ error determines how large the difference $ -H(q_t,p_t) + H(q_0,p_0)$ will be.
 Although it is possible that $(q_t,p_t)$ gives a smaller energy that the initial
 state and hence resulting in an acceptance probability of 1 as well, empirical
 evidence suggests that the Hamiltonian tends to oscillate along the trajectory
-traced out by leapfrog, and hence it is equally likely for $\exp(\Delta H)$to be
+traced out by leapfrog, and hence it is equally likely for $\exp(\Delta H)$ to be
 larger or less than 1. 
 
 Having discussed the Hamiltonian function, we now look at one of its two
@@ -353,7 +353,7 @@ distribution is easy
 for HMC and Random Walk Metropolis, because all the variables are independent and on
 the same scale. Dimensionality has no impact on sampling in this case because
 each dimension is sampled independently and separately, and since the proposal
-distribution is Gaussian it is very easy explore the support of the target
+distribution is Gaussian it is easy explore the support of the target
 distribution as it overlaps with the target distribution
 exactly. 
 
@@ -411,7 +411,7 @@ In the description of the basic HMC sampler above, we assume the step size $\eps
 
 The first parameter we will discuss is the step size $\epsilon$. A small step size would cost more computation time but gives better approximation to the correct trajectory. Worse still, when a too large step size is used, there are no constraints on how far the simulated trajectory would deviate from the correct one. The simulated trajectory could quickly move to a region of the support where the Hamiltonian function blows up. There needs to be a mechanism in the algorithm to detect divergence due to the step size and signals us to possibly tune it down, otherwise the unstable trajectory would diverge to infinity in terms of its Hamiltonian function value and causes the program to crash, not to mention a chain with too many divergences would generally be biased. It is suggested by Neal that introducing a random jitter around the step size at the start of each trajectory, for example, use $\epsilon + \epsilon*\text{Uniform}(-0.1,0.1)$ instead of $\epsilon$,  would help alleviate the problem, as sometimes the trajectory would be simulated using a step size under the stability limit for $\epsilon$, which can differ between different parts of the support of $\pi(q,p)$. This also deals with the problem of accidentally have $\epsilon L$ match the period of some variable or equivalently simulate a trajectory which returns to the original position at the end of its trajectory. This destroys ergodicity and makes the sampler biased. 
 
-The second parameter of interest is the trajectory length $L$. Once $\epsilon$ is fixed, it is essentially a proxy for the integration time $t= \epsilon L$. It controls how much of the state space is explored at each iteration of the Markov chain. The longer we let the trajectory run the more of the state space would be explored, but letting it run too long we would eventually come back to the initial position and the exploration is wasted. Similar to the discussion about tuning $\epsilon$, the tuning of $L$ could be dependent on the part of the state space where the chain finds itself.In the basic HMC sampler, we use the same $\epsilon$ and $L$ throughout the entire sampling process.  
+The second parameter of interest is the trajectory length $L$. Once $\epsilon$ is fixed, it is essentially a proxy for the integration time $t= \epsilon L$. It controls how much of the state space is explored at each iteration of the Markov chain. The longer we let the trajectory run the more of the state space would be explored, but letting it run too long we would eventually come back to the initial position and the exploration is wasted. Similar to the discussion about tuning $\epsilon$, the tuning of $L$ could be dependent on the part of the state space where the chain finds itself. In the basic HMC sampler, we use the same $\epsilon$ and $L$ throughout the entire sampling process.  
 
 Neal \cite{neal2012bayesian} suggests doing several preliminary runs with a combination of $\epsilon$ and $L$ values using the acceptance rate as guidance. There is no guarantee of optimality and in even moderately complex distributions we never know whether we have sufficiently integrated the trajectory long enough. The optimal acceptance rate for HMC has been derived as $0.65$. Optimality here is defined with respect to the cost of obtaining an independent point. See \cite{neal2011mcmc} for an intuitive derivation and see \cite{beskos2013optimal} for a theoretical derivation. This sort of manual tuning is similar in spirit to the manual tuning strategies from the MCMC literature, and shares with them the disadvantage of requiring human intervention after each chain is sampled. 
 
@@ -504,7 +504,7 @@ $\log w_{\text{prop}} = H(q_{\text{prop}},p_{\text{prop}}) $ \;
 \caption{Windowed HMC update step}
 \end{algorithm}
 
-The No-U-Turn Sampler \cite{hoffman2014no} builds on the windowed HMC sampler, which is extended to automatically adjust the trajectory length during sampling. Given an initial state $(q_0,p_0)$ in the phase space,similar to the windowed HMC sampler, the NUTS starts by randomly integrating forward or backward for $\ell$ number of leapfrog steps. For each subsequent integration step, the NUTS doubles the integration length. After each integration step, a termination criterion is computed to determine if the trajectory expansion should continue. Expansion stops when either end of the trajectory starts doubling back on itself. Compared to static HMC, where the number of leapfrog steps $L$ is fixed across the chain, NUTS can be considered a dynamic version of HMC, where the number of leapfrog steps can vary across iterations and is generally dependent on the geometry of the Hamiltonian flow trajectory in the phase space. 
+The No-U-Turn Sampler \cite{hoffman2014no} builds on the windowed HMC sampler, which is extended to automatically adjust the trajectory length during sampling. Given an initial state $(q_0,p_0)$ in the phase space, similar to the windowed HMC sampler, the NUTS starts by randomly integrating forward or backward for $\ell$ number of leapfrog steps. For each subsequent integration step, the NUTS doubles the integration length. After each integration step, a termination criterion is computed to determine if the trajectory expansion should continue. Expansion stops when either end of the trajectory starts doubling back on itself. Compared to static HMC, where the number of leapfrog steps $L$ is fixed across the chain, NUTS can be considered a dynamic version of HMC, where the number of leapfrog steps can vary across iterations and is generally dependent on the geometry of the Hamiltonian flow trajectory in the phase space. 
 
 The reason for doubling the integration lengths is that the algorithm needs to compute a termination criterion at the end of each trajectory, which is necessary for the correctness of the sampler because it maintains reversibility. Suppose $T(\mathbf{t}|z) $ is the transition probability of a trajectory given initial state $z=(q,p)$, and $\mathcal{L}^L_{z,z'}$ is the set of all trajectories of length $L$ containing the points $z$ and $z'$. Computing the termination criterion after each integration step ensures
 \[T(\mathbf{t}|z) = T(\mathbf{t}|z'), \quad \forall \mathbf{t} \in \mathcal{L}^L_{z,z'} . \]
@@ -665,7 +665,7 @@ $s' = \text{True}$ \;
 \end{algorithm}
 
 
-The Exhaustive Hamiltonian Monte Carlo (XHMC) termination criterion  relies on a significant amount of differential geometry for its justification. \cite{betancourt2016identifying}. Understanding fully the mathematics behind it is beyond the scope of this thesis. From my understanding it is a proxy to to monitor the return of a leapfrog trajectory to a neighbourhood around its initial point after having explored the energy level set. With a smaller threshold meant to push the neighbourhood smaller, hence forcing the exploration to continue for longer. Luckily the numerical quantities that needs to be computed are quite easily understood. In the original paper \cite{betancourt2016identifying}, the author demonstrated improved sampling performance over the NUTS criterion as indicated by increased effective sample size on correlated distributions. 
+The Exhaustive Hamiltonian Monte Carlo (XHMC) termination criterion  relies on a significant amount of differential geometry for its justification\cite{betancourt2016identifying}. Understanding fully the mathematics behind it is beyond the scope of this thesis. From my understanding it is a proxy to monitor the return of a leapfrog trajectory to a neighbourhood around its initial point after having explored the energy level set. With a smaller threshold meant to push the neighbourhood smaller, hence forcing the exploration to continue for longer. Luckily the numerical quantities that needs to be computed are quite easily understood. In the original paper \cite{betancourt2016identifying}, the author demonstrated improved sampling performance over the NUTS criterion as indicated by increased effective sample size on correlated distributions. 
 
 The exhaustive termination criterion is defined as follows: given a threshold $\delta > 0$, terminate trajectory expansion when 
 \[  \Bigl |\frac{1}{|\mathbf{t}|} \sum_{z \in \mathbf{t}} \mathbb{P}[z | \mathbf{t}] \frac{dG}{dt}(z) \Bigr | < \delta, \]
@@ -859,7 +859,7 @@ where $\pi$ is the marginal distribution of $q$ and $\pi_{H|q}$ and $\pi_{H}$
 are the conditional and marginal distributions of the Hamiltonian energy
 function $H$ respectively.Since the goal is
 to explore the energy parameter space , we want the two energy distributions, 
-closely match each other. BFMI allows us to measure that match.
+ closely match each other. BFMI allows us to measure that match.
 
  In practice the expectations must be estimated, but
 it is easily done by evaluating the energy function at the values from the
@@ -875,7 +875,7 @@ inefficient for sampling. In Stan, the default threshold for low E-BFMI is set t
 Other than divergence and BFMI, Stan also includes MCMC convergence diagnostics that are not specific to HMC samplers. They are the potential scale reduction factor and effective sample size. In the discussion that follows we assume the parameter under investigation is a one dimensional real variable $\psi$, it can be the log-posterior, the variance parameter for a regression model with normal prior, or the posterior mean of a covariate of interest.
 
 
-The Potential scale reduction factor, also commonly referred to as R hat $\hat{R}$ , can be thought of as the factor by which the scale of the current distribution for $\psi$ might be reduced if the simulations were continued in the limit $n \rightarrow \infty$. This quantity should converge to $1$ as $n \rightarrow \infty$. If $\hat{R}$ is high, $ > 1.1 $, for example, we might we want to continue simulation. 
+The Potential scale reduction factor, also commonly referred to as R hat $\hat{R}$ , can be thought of as the factor by which the scale of the current distribution for $\psi$ might be reduced if the simulations were continued in the limit $n \rightarrow \infty$. This quantity should converge to $1$ as $n \rightarrow \infty$. If $\hat{R}$ is high, $ > 1.1 $, for example, we might want to continue simulation. 
 
 It is defined as follows. Suppose we have $m$ chains each of length $n$, where $\psi_{ij}$ is the $i^\text{th}$ term in chain $j$. Then we have 
 
@@ -888,7 +888,7 @@ s_j^2 = \frac{1}{n-1} \sum_{i=1}^n (\psi_{ij} - \overline{\psi}_{\cdot j } )^2.\
 & \hat{\text{var}}^+(\psi|y) = \frac{n-1}{n} W + \frac{1}{n} B \\
 & \hat{R} = \sqrt{\frac{\hat{\text{var}}^+(\psi|y)}{W}}. \\
 \end{align*}
-The Effective Sample Size (ESS) takes into account the autocorrelation inherent in MCMC samples and can be interpreted to represent the equivalent number of independent draws that a set of MCMC draws can replace, for example in calculating expectations and various posterior quantities. The ESS has been computed  differently in the literature .The Stan implementation requires multiple chains and has the advantage that it mitigates the danger of overestimating the ESS when the chain has not converged. It is defined as 
+The Effective Sample Size (ESS) takes into account the autocorrelation inherent in MCMC samples and can be interpreted to represent the equivalent number of independent draws that a set of MCMC draws can replace, for example in calculating expectations and various posterior quantities. The ESS has been computed  differently in the literature. The Stan implementation requires multiple chains and has the advantage that it mitigates the danger of overestimating the ESS when the chain has not converged. It is defined as 
 \[n_{\text{eff}}  = \frac{mn}{1 + 2 \sum_{t=1}^\infty \rho_t}, \]
 where  $\rho_t$ is the lag at time $t$. The variogram at $t$ 
 \[V_t = \frac{1}{m(n-t)} \sum_{j=1}^m \sum_{i=t+1}^n (\psi_{i,j} - \psi_{i-t,j})^2 \]
@@ -1107,7 +1107,7 @@ The samplers implemented in this study have been tested on a two dimensional cor
 
 Deep Learning, a field in machine learning which studies multilayered neural network models, has become quite successful in Artificial Intelligence tasks and a lot of research has been, and is being done to improve our understanding of these models and to apply them better and to more fields. See \cite{goodfellow2016deep,lecun2015deep} for a general introduction into the methodology and application of deep learning, and \cite{schmidhuber2015deep} for an in-depth literature review. 
 
-Before there was deep learning, a term which only became popular in the mid 2000s, there were neural networks \cite{bishop1995neural,ripley2007pattern}, which were also hugely popular in the 90s, but eventually the enthusiasim for neural networks cooled off because they were perceived to be too computationally intensive and difficult to scale up. The main reason for this was the difficulty of training neural networks of more than one or two hidden layers. Traditional optimization techniques like stochastic gradient descent with backpropagation did not improve empirical test error for networks with more layers,not until ideas like pre-training to initialize optimization were experimented could we fit "deep" neural networks with more than two hidden layers. This rebooted the field, now rebranded as deep learning, and it was followed by innovations such as using the rectified linear units as activation functions \cite{nair2010rectified} to allow training deep networks without pre-training, and using GPUs to speed up the training process \cite{krizhevsky2012imagenet}, as well as the creation of software libraries like Theano \cite{bergstra2010theano}, Caffe \cite{jia2014caffe}, Tensorflow\cite{tensorflow2015-whitepaper}, and PyTorch \cite{paszke2017automatic}, just to name a few, that make building and training neural network models much easier by automating the backpropogation step with symbolic differentiation \cite{bahrampour2015comparative} and handles the transition between CPU and GPU computation modes. 
+Before there was deep learning, a term which only became popular in the mid 2000s, there were neural networks \cite{bishop1995neural,ripley2007pattern}, which were also hugely popular in the 90s, but eventually the enthusiasim for neural networks cooled off because they were perceived to be too computationally intensive and difficult to scale up. The main reason for this was the difficulty of training neural networks of more than one or two hidden layers. Traditional optimization techniques like stochastic gradient descent with backpropagation did not improve empirical test error for networks with more layers, not until ideas like pre-training to initialize optimization were experimented could we fit "deep" neural networks with more than two hidden layers. This rebooted the field, now rebranded as deep learning, and it was followed by innovations such as using the rectified linear units as activation functions \cite{nair2010rectified} to allow training deep networks without pre-training, and using GPUs to speed up the training process \cite{krizhevsky2012imagenet}, as well as the creation of software libraries like Theano \cite{bergstra2010theano}, Caffe \cite{jia2014caffe}, Tensorflow\cite{tensorflow2015-whitepaper}, and PyTorch \cite{paszke2017automatic}, just to name a few, that make building and training neural network models much easier by automating the backpropogation step with symbolic differentiation \cite{bahrampour2015comparative} and handles the transition between CPU and GPU computation modes. 
 
 First we describe one of the most popular neural network models, the feedforward networks. Suppose we have $n$ observed data points $\{y_i,x_i\}_{i=1}^n$ where $X_i \in
 \mathbb{R}^p$ is a $p$-dimensional vector, then a feedforward neural network models the
@@ -1289,11 +1289,11 @@ where
 & \{r_2^l\}_j \sim \text{Inv-Gamma}(0.5,0.5) \, \forall j  \\
 & r_1^g \sim \mathcal{N}^+(0,1)  \\
 & r_2^g \sim \text{Inv-Gamma}(0.5,0.5)   \\
-& \lambda =  r_1^l \cdot r_2^l \\
-& \tau = r_1^g \cdot r_2^g \\
-& \beta = z \cdot \lambda \tau . \\
+& \lambda =  r_1^l  r_2^l \\
+& \tau = r_1^g  r_2^g \\
+& \beta = z  \lambda \tau . \\
 \end{align*}
-Because the local and global $r_1$ parameters are constrained to be positive,the final unconstrained parameter space is $(z,\log r_1^l,r_2^l,\log r_1^g,r_2^g).$
+Because the local and global $r_1$ parameters are constrained to be positive, the final unconstrained parameter space is $(z,\log r_1^l,r_2^l,\log r_1^g,r_2^g).$
 
 \subsection{ARD Priors}
 Here we would briefly introduce the Automatic Relevance Determination (ARD) priors. It is a general way of assigning priors to the neural network weights that, along with a proper choice of prior, should allow the NNs to self-regulate excess hidden units, and hence obviating the need for choosing the number of hidden units.
@@ -1306,7 +1306,7 @@ Suppose $W_{i\ell}$ are the weights connecting into the $i^\text{th}$ hidden uni
 & \sigma_i^2  \sim \text{Inv-Gamma}(a_0,b_0), \forall i \in \{1,\dots,m\} . \\
 \end{align*}
 \section{Scaled Initialization}
-In the neural network literature, the initialization of weights has been observed to influence the final predictive performance of the optimized model. Conventional initializations like the normal distribution $\text{Uniform}(0,1) $ were replaced by scaled distributions whose scale is dependent on the model structure. For example,
+In the neural network literature, the initialization of weights has been observed to influence the final predictive performance of the optimized model. Conventional initializations like the normal distribution with mean 0 and variance 1, and the uniform distribution from 0 to 1 were replaced by scaled distributions whose scale is dependent on the model structure. For example,
 \[ W \sim \text{Uniform}(\frac{-1}{\sqrt{N_{in}}},\frac{1}{\sqrt{N_{\text{in}}}}) \]
 
 where $N_\text{in}$ is the number of incoming units from the previous layer. This motivates us to consider priors of this form. Experiment results will be discussed in Chapter 4.
@@ -1421,14 +1421,12 @@ Unless stated otherwise, all of the experiments that follow use a neural network
 where 
 \[p(W^{\text{in}}) = \prod_{k=1}^{N_{\text{in}}}\prod_{j=1}^{N_{\text{hidden}}} \text{exp}\left(- \frac{W_{kj}^{\text{in}} \cdot W_{kj}^{\text{in}}}{2}\right), \]
 \[p(W^{\text{out}}) = \prod_{k=1}^{N_{\text{hidden}}}\prod_{j=1}^{N_{\text{out}}} \text{exp}\left(- \frac{W_{kj}^{\text{out}} \cdot W_{kj}^{\text{out}}}{2}\right) \]
-are the priors for the input-to-hidden weights and hidden-to-output weights respectively, and 
+are the unnormalized normal prior density functions for the input-to-hidden weights and hidden-to-output weights respectively, and 
 
 \[ p(y_i,X_i) = \prod_{t=0}^9 \hat{\pi}_t^{\mathbb{I}[y_i=t]}, \]
-
 where $\hat{\pi}_t$ is the estimated probability for $X_i$ belonging to class $t$ under the model, computed by 
 
 \[\hat{\pi}_t =   h'(W^{\text{out}}h(W^{\text{in}}X)) \]
-
 where $h$ is the tanh function and $h'$ the softmax function.
 
 For high dimensional models like neural networks with standard normal prior, where no particular one-dimensional quantities could be singled out a priori for monitoring, the usual strategy of monitoring trace plots for diagnosing convergence is infeasible because it would require the user to skim through the trace plots for the thousands of parameters for even a moderately sized network. Therefore, instead we use multiple chains to compute Gelman's effective sample size (ESS) \cite{gelman2014bayesian} and monitor the minimum and median ESS over all parameters. The minimum ESS would indicate to us if any marginal quantities have slow convergence whereas the median would be indicative of the general speed of convergence of the chains as a whole. High ESS is desired as they imply low autocorrelation between samples, which means the Markov chain is moving rapidly across the parameter space and is generating more independent samples.
@@ -1534,7 +1532,7 @@ Median ESS    & 1348      & 1298  & 1220  & 911 & 1356     & 80      & 1354     
 \section{SGHMC}
 Next we would like to explore stochastic gradient Hamiltonian Monte Carlo. Since it is doubtful that even the full HMC can explore completely the full posterior distribution of a BNN because of its exponential multimodaility, we would not try to compare the empirical distributions of the HMC samples and those of the SGHMC samples directly. Instead we compare the two samplers by their test errors.
 
-The SGHMC has several extra tuning parameters other than the step size $\epsilon$ and number of leapfrogs $L$ that it inherits from the original HMC sampler. To reduce the number of parameters to tune, we fix these parameters ($\alpha=0.01, \hat{\beta}=0$) at the default values used in the experiments even though they are not sufficiently motivated. The parameters remain to be tuned are $\epsilon,L $ and $\eta$. We generated samples by SGHMC by trying every combination of tuning parameters on a grid of values.
+The SGHMC has several extra tuning parameters other than the step size $\epsilon$ and number of leapfrogs $L$ that it inherits from the original HMC sampler. To reduce the number of parameters to tune, we fix these parameters ($\alpha=0.01, \hat{\beta}=0$) at the default values used in the experiments even though they are not sufficiently motivated. These are the default values set in the original paper \cite{chen2014stochastic}. The parameters remain to be tuned are $\epsilon,L $ and $\eta$. We generated samples by SGHMC by trying every combination of tuning parameters on a grid of values.
 
 
 We found that the SGHMC can perform similarly to the HMC although it requires having the right tuning parameter. Because the Metropolis acceptance step is omitted, there is no mechanism to avoid the chain from diverging into a low probability zone in the parameter space. Note that $L=50$ seems to give the best predictive accuracy regardless of the step size, this is puzzling because the $\epsilon$'s span 4 orders of magnitude and thus gives a wide range of integration time $t = \epsilon L$. The role of the learning rate $\eta$ is unclear other than that too large a $\eta$ seems to cause divergence (denoted by NA in the tables) more often. We see that SGHMC can generate samples that have good predictive performance, but there is no clear way to tune all the different hyperparameters other than by a grid search. 
@@ -1752,7 +1750,7 @@ Now that we have some answers on questions about how to sample from BNNs, we nee
 
 While all the experiments above where conducted in double precision, it is more a choice of convenience than of necessity. We have conducted experiments showing that switching to single precision does not result in a loss of accuracy in the leapfrog trajectories or in the test error computed from the final MCMC samples. This means that we should be able to carry out HMC sampling on GPUs to take advantage of the speed-up without any significant loss of correctness.
 
-Finally, results in this chapter raise more questions about Bayesian neural networks, since some of the results are not what one would expect based some traditional wisdoms about statistics. For example, for overparametrized models where the dimension is much larger than the number of observations, one should use hierarchical priors like the horseshoe to perform regularization. However, our experiments show that such regularization often harms predictive accuracy, even when there is high ESS overall. Also, we found that frequentist predictions could achieve similar predictive accuracy as Bayesian alternatives, although BNNs do seem to be more robust to tuning parameters. These bizarre outcomes need to be explained when we want to investigate claims made about Bayesian neural networks, for example, that the are approximated by stochastic gradient descent \cite{mandt2017stochastic} or other ad-hoc optimization techniques \cite{gal2015dropout,gal2015bayesian}
+Finally, results in this chapter raise more questions about Bayesian neural networks, since some of the results are not what one would expect based some traditional wisdoms about statistics. For example, for overparametrized models where the dimension is much larger than the number of observations, one should use hierarchical priors like the horseshoe to perform regularization. However, our experiments show that such regularization often harms predictive accuracy, even when there is high ESS overall. Also, we found that frequentist predictions could achieve similar predictive accuracy as Bayesian alternatives, although BNNs do seem to be more robust to tuning parameters. These bizarre outcomes need to be explained when we want to investigate claims made about Bayesian neural networks, for example, that they are approximated by stochastic gradient descent \cite{mandt2017stochastic} or other ad-hoc optimization techniques \cite{gal2015dropout,gal2015bayesian}
 
 
 
