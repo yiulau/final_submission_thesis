@@ -81,9 +81,9 @@ Most algorithms discussed in chapter 2 will come with clear pseudocode and have 
 Neural network models have become hugely popular under the name of Deep Learning, attracting a lot of attention from researchers and practitioners alike \cite{goodfellow2016deep}. Many of its successes come from applications in vision, text, speech, and many other sub-fields in the field of artificial intelligence. However, there is not yet a consensus that explains why these models do so well, in many cases defying existing learning theory. 
 
 
-In Chapter 3 we give a brief overview of the Bayesian neural network literature and identify areas where we feel could benefit from new developments in NUTS and related sampling techniques. In Neal's and Cho's work \cite{neal2012bayesian,choo2000learning}, sampling from the posterior distribution was by alternating between the lower and higher level parameters in a block-Gibbs fashion. With the model and data they used, they found joint sampling worse than Gibbs sampling for sampling the hyperparameter. We found that NUTS is capable of sampling the hyperparameter quite well (section \ref{sec:hyperparameter}) , is more robust to tuning parameters (section \ref{sec:xhmc}), and requires much less manual tuning.
+In Chapter 3 we give a brief overview of the Bayesian neural network literature and identify areas where we feel could benefit from new developments in NUTS and related sampling techniques. In Neal's and Cho's work \cite{neal2012bayesian,choo2000learning}, sampling from the posterior distribution was by alternating between the lower and higher level parameters in a block-Gibbs fashion. With the model and data they used, they found joint sampling worse than Gibbs sampling for sampling the hyperparameter. We found that NUTS is capable of sampling the hyperparameter quite well (Section \ref{sec:hyperparameter}) , is more robust to tuning parameters (Section \ref{sec:xhmc}), and requires much less manual tuning.
 
-Then we talk about the choice of prior for neural network models. In the 1990s it was standard to put a hierarchical prior on the model weights , but in the new wave of Bayesian deep learning literature the standard normal prior is used most of the times. Recently shrinkage priors like the horseshoe prior have been used to automatically regularize the weights \cite{ghosh2017model}. In their paper the authors used variational inference to approximate the predictive distribution, which might miss important features of the  distribution. In section \ref{sec:priors}, we used NUTS to perform full posterior inference on a range of shrinkage priors . In short, we found that the standard normal prior performed best in terms of both effective sample size and predictive accuracy. The results of these experiments in full details will be presented in Chapter 4.
+Then we talk about the choice of prior for neural network models. In the 1990s it was standard to put a hierarchical prior on the model weights , but in the new wave of Bayesian deep learning literature the standard normal prior is used most of the times. Recently shrinkage priors like the horseshoe prior have been used to automatically regularize the weights \cite{ghosh2017model}. In their paper the authors used variational inference to approximate the predictive distribution, which might miss important features of the  distribution. In Section \ref{sec:priors}, we used NUTS to perform full posterior inference on a range of shrinkage priors . In short, we found that the standard normal prior performed best in terms of both effective sample size and predictive accuracy. The results of these experiments in full details will be presented in Chapter 4.
 
 While the use of shrinkage priors should eliminate much of the need for model selection: one would simply fit the largest model possible and let the shrinkage prior eliminate any excess capacity, in practice sampling from such a model might prove too difficult, for example having too many hidden layers might result in vanishing or exploding gradients \cite{bengio1994learning}. There are also tuning parameters, like the activation function, which can not be chose by shrinkage priors. This necessitates model selection techniques. Model selection by information criteria like AIC and BIC is not backed by theory because neural networks violate one of their regularity conditions, namely that the model must have non-singular Fisher matrix. The Watanabe Information Criterion (WAIC) is designed to overcome this problem for all singular models. We experimented with the WAIC but found that it failed to choose the model that minimizes the test error on the dataset we chose. 
 
@@ -215,11 +215,11 @@ this, we shall put HMC in the context of an auxiliary variable method.
 
 First, the joint distribution of the position (original) and momentum(auxiliary)
 variables is factored into a product of a conditional distribution $\pi(q,p|E)$ and an
-independent marginal distribution $\pi(E)$
+independent marginal distribution $\pi(E)$, where $E$ is the Hamiltonian energy for the state $(q,p)$,
 \[ \pi(q,p) = \pi(q,p|E)\pi(E) .\]
 
 Sampling from the joint distribution is done by first sampling from the
-auxiliary (energy) distribution $\pi(E)$. In this case randomness is introduced only during from the
+auxiliary (energy) distribution $\pi(E)$. In this case randomness is introduced only during  the
 re-sampling of the momentum variable, that is, change in the kinetic energy,
 because the potential energy is not dependent on the momentum. Then, conditional on the value of the
 current energy, we sample from the joint
@@ -344,7 +344,7 @@ assume a Gaussian distribution is used to model the auxiliary momentum variables
 A clever choice of mass matrix can significantly speed up the sampler. Its
 selection mainly has to do with decorrelating the irregular geometry of the
 target distribution,which slows down sampling. For example, if we would like to sample from a multivariate
-Gaussian distribution with a highly skewed covariance, one could adopt an
+highly correlated Gaussian distribution, one could adopt an
 appropriately adjusted mass
 matrix $M$ for the kinetic energy, and the induced sampling can be shown to be
 equivalent to sampling from a standard Gaussian with identity covariance in a
@@ -562,7 +562,7 @@ $ w' \leftarrow \pi(q',p') $ \;
 			$-,-,q_+,p_+,q'',s'',w'' \leftarrow \text{BuildTree}(q_+,p_+,v,j-1,\epsilon)$ \;
 		}
 		With probability $\min(1, \frac{w''}{w'+w''})$ , set $q' = p''$. \;
-		$ s' \leftarrow s'' \mathbb{I}[(q_+ - q_- )\cdot p^- \ge 0 ] \mathbb{I}[(q_+ - q_- )\cdot p_+ \ge 0 ]$ \;
+		$ s' \leftarrow s'' \mathbb{I}[(q_+ - q_- )^T p^- \ge 0 ] \mathbb{I}[(q_+ - q_- )^T p_+ \ge 0 ]$ \;
 		$w' \leftarrow w' + w'' $ \;
 	}
 	\KwRet{$q_-,p_-,q_+,p_+,q',s',w' $ }\;
@@ -858,8 +858,8 @@ momentum distribution.  The BFMI is defined as
 where $\pi$ is the marginal distribution of $q$ and $\pi_{H|q}$ and $\pi_{H}$
 are the conditional and marginal distributions of the Hamiltonian energy
 function $H$ respectively.Since the goal is
-to explore the energy parameter space , we want the two energy distributions, 
- closely match each other. BFMI allows us to measure that match.
+to explore the energy parameter space, we want the two energy distributions to
+ closely match each other, and BFMI allows us to measure that match.
 
  In practice the expectations must be estimated, but
 it is easily done by evaluating the energy function at the values from the
@@ -881,7 +881,7 @@ It is defined as follows. Suppose we have $m$ chains each of length $n$, where $
 
 \begin{align*}
 &B = \frac{n}{m-1} \sum_{j=1}^{m}(\overline{\psi}_{\cdot j} - \overline{\psi}_{\cdot \cdot})^2, \text{ where } 
-\overline{\psi}_{\cdot j} = \frac{1}{n} \sum_{i=1}^n \psi_{ij} , \overline{\psi}_{\cdot \cdot} = \frac{1}{m} \sum_{j=1}^m \overline{\psi}_{\cdot j }
+\overline{\psi}_{\cdot j} = \frac{1}{n} \sum_{i=1}^n \psi_{ij} ,\, \overline{\psi}_{\cdot \cdot} = \frac{1}{m} \sum_{j=1}^m \overline{\psi}_{\cdot j }
  \\
 &W = \frac{1}{m} \sum_{j=1}^m s_j^2 , \text{ where }
 s_j^2 = \frac{1}{n-1} \sum_{i=1}^n (\psi_{ij} - \overline{\psi}_{\cdot j } )^2.\\
@@ -1098,7 +1098,7 @@ Given a chain of $n$ MCMC samples $\{x_i\}_{i=1:n}$ generated by the sampler to 
 \[ \text{MCSE} = \frac{\hat{\sigma}}{\sqrt{n_{\text{eff}}}} \]
 where $\hat{\sigma}$ is the estimated standard deviation. By the Central Limit Theorem one would expect  $\eta \in (-\text{MCSE},\text{MCSE})$ with high probability.Similarly we can monitor quantities like $\frac{1}{n-1} \sum_{i=1}^n ({x_i}_1 -\mu_1)^2 - \sigma^2_1,  \frac{1}{n-1}^n \sum_{i=1}^n ({x_i}_1 - \mu_1)({x_i}_2 - \mu_2)^2 $ to assess convergence to the marginal variances and covariance.
 
-One can then construct example models where the mean and covariance are known explicitly, simulate multiple chains and monitor quantities for approximate convergence, in the sense that the empirical estimated quantities differ from their exact quantities by a margin no larger than its MCSE (or its constant multiple .) While this test does not guarantee convergence of the sampler under all circumstances, it is sophisticated enough to detect faulty implementations that lead to 
+One can then construct example models where the mean and covariance are known explicitly, simulate multiple chains and monitor quantities for approximate convergence, in the sense that the empirical estimated quantities differ from their exact quantities by a margin no larger than its MCSE (or its constant multiple .) While this test does not guarantee convergence of the sampler under all circumstances, it is sophisticated enough to detect faulty implementations that leads to non-convergence to the target distribution.
 
 The samplers implemented in this study have been tested on a two dimensional correlated normal distribution with known covariance and a Bayesian logistic regression problem whose posterior covariance is estimated by a long chain generated by Stan.
 
@@ -1109,10 +1109,15 @@ Deep Learning, a field in machine learning which studies multilayered neural net
 
 Before there was deep learning, a term which only became popular in the mid 2000s, there were neural networks \cite{bishop1995neural,ripley2007pattern}, which were also hugely popular in the 90s, but eventually the enthusiasim for neural networks cooled off because they were perceived to be too computationally intensive and difficult to scale up. The main reason for this was the difficulty of training neural networks of more than one or two hidden layers. Traditional optimization techniques like stochastic gradient descent with backpropagation did not improve empirical test error for networks with more layers, not until ideas like pre-training to initialize optimization were experimented could we fit "deep" neural networks with more than two hidden layers. This rebooted the field, now rebranded as deep learning, and it was followed by innovations such as using the rectified linear units as activation functions \cite{nair2010rectified} to allow training deep networks without pre-training, and using GPUs to speed up the training process \cite{krizhevsky2012imagenet}, as well as the creation of software libraries like Theano \cite{bergstra2010theano}, Caffe \cite{jia2014caffe}, Tensorflow\cite{tensorflow2015-whitepaper}, and PyTorch \cite{paszke2017automatic}, just to name a few, that make building and training neural network models much easier by automating the backpropogation step with symbolic differentiation \cite{bahrampour2015comparative} and handles the transition between CPU and GPU computation modes. 
 
-First we describe one of the most popular neural network models, the feedforward networks. Suppose we have $n$ observed data points $\{y_i,x_i\}_{i=1}^n$ where $X_i \in
+First we describe one of the most popular neural network models, the feedforward networks. Suppose we have $n$ observed data points $\{y_i,x_i\}_{i=1}^n$ where $x_i \in
 \mathbb{R}^p$ is a $p$-dimensional vector, then a feedforward neural network models the
 data as follows:
-\[y_i = \prod_{j=1}^Lg_j(V_jf_j(W_j))x_i \]
+\begin{align*}
+h_1 &= g_1(V_1f_1(W_1 x_i)))\\
+h_2 &= g_2(V_2f_1(W_2 h_1))) \\
+\vdots& \\
+y_i &= g_L(V_Lf_L(W_L h_{L-1})))\\
+\end{align*}
 where $L$ is the number of layers of the network, $W_j$ a $n_j \times m_{j-1}$
 weight matrix, $V_j$ a $m_j \times m_{j-1}$ weight matrix, and each $g_j$,$f_j$
 a pair of activation functions that are usually non-linear functions. There are
@@ -1120,21 +1125,21 @@ usually no restrictions on what these activation functions must be other than on
 $g_L$ which must match the data type of the $y_i$'s. For example, if $y_i$ are
 binary observations then we would like the last output activation function to be a
 logistic function so that it maps output strictly to $[0,1]$, just like with the
-logistic regression. For a concrete example of a neural network used in practice, see section \ref{sec:nnmodel}.
+logistic regression. For a concrete example of a neural network used in practice, see Section \ref{sec:nnmodel}.
 
 Popular activation functions in the classical neural network literature include
 the logistic function $f(x) = \frac{1}{1+\text{exp}(-x)} $ and the hyperbolic tangent function $h(x) =  2f(2x)-1$, but in modern deep
 learning the rectified linear unit (RELU) has come to dominate the field. It has
 a simple form of $g(x)=\max(0,x)$, which is straightforward to do
 backpropagation with despite a single point of nondifferentiability, and it was
-found to facilitate optimization enormously.It's particularly helpful for
-neural network models with many more layers than 2 and needs only random weight initialization, getting rid of the need for pre-training. 
+found to facilitate optimization. It is particularly helpful for
+neural network models with many more layers than 2, and it only requires random weight initialization, making it unnecessary to perform pre-training. 
 
 While neural networks can have different numbers of layers and number of hidden
 units within each layer, theoretically only one layer is sufficient to
 approximate any function as we increase the number of hidden units \cite{hornik1991approximation}. 
 
-For Bayesian neural networks where one puts a Gaussian prior distribution on the weights of model, it has been shown that for a one-hidden-layer model, the prior converges to a Gaussian process as the number of hidden units converge to infinity \cite{neal2012bayesian}. This gives a neat interpretation of Bayesian neural networks. 
+For Bayesian neural networks where one puts a Gaussian prior distribution on the weights of the model, it has been shown that for a one-hidden-layer model, the prior converges to a Gaussian process as the number of hidden units converge to infinity \cite{neal2012bayesian}. This gives a neat interpretation of Bayesian neural networks. 
 
 Further work by \cite{gal2015dropout} shows that heuristic training techniques such as dropout \cite{srivastava2014dropout}  are actually doing variational inference with Deep Gaussian Process \cite{damianou2013deep} as its prior, a process where several GPs are stacked one after another. 
 
@@ -1145,7 +1150,7 @@ Neal found that the windowed HMC sampler improves sampling in general, and also 
 
 When assessing convergence of the MCMC samples to the posterior distribution of a Bayesian neural network model, one needs to keep in mind that in general these models have a high number of local modes, usually as an exponential function of the number hidden units \cite{bishop1995neural}. This means we cannot interpret the samples as being drawn from the full posterior distribution, but only from the neighbourhoods containing the local modes that the chains happen to settle around. That means looking at the potential scale reduction (Rhat) for individual weights is probably not that useful because it's not designed to handle multimodal distributions.  
 
-It is still useful to monitor the convergence of the log posterior and of the E-BFMI statistics. Also it can still be useful to monitor the Rhat statistics (see section \ref{sec:otherdiag}) for the hyperparameter if we can reasonably expect it not to be multimodal, as we can in the case for the variance parameter of a Bayesian neural network.
+It is still useful to monitor the convergence of the log posterior and of the E-BFMI statistics. Also it can still be useful to monitor the Rhat statistics (see Section \ref{sec:otherdiag}) for the hyperparameter if we can reasonably expect it not to be multimodal, as we can in the case for the variance parameter of a Bayesian neural network.
 
 
 
@@ -1173,7 +1178,7 @@ He then proposed alternating between sampling the lower-level weights with HMC a
 
 In Cho's work \cite{choo2000learning}, he experimented with joint sampling of the lower-level weights and hyperparameters. However, since the dual averaging scheme for automatic tuning the step size was not available at the time, he had to rely on the heuristics invented by Neal, which asks for alternate sampling of the conditional distributions in which the step size is dependent on the variables being held constant. He devised a scheme where the leapfrog steps in the joint parameter space have to be done separately for the two groups of parameters. 
 
-A quick note on the parameterization used for the hierarchical prior. The non-centered parametrization (see section \ref{sec:priors}) is expected to mitigate the posterior correlation between the hyperparameter and the lower-level weights. Reducing posterior correlation is known to help improve sampling efficiency signficantly. We experimented with joint sampling under both parametrizations and found that non-centered parametrization is necessary for meaningful inference. The Hamiltonian sampler also performs better than the block-Gibbs sampler.
+A quick note on the parameterization used for the hierarchical prior. The non-centered parametrization (see Section \ref{sec:priors}) is expected to mitigate the posterior correlation between the hyperparameter and the lower-level weights. Reducing posterior correlation is known to help improve sampling efficiency signficantly. We experimented with joint sampling under both parametrizations and found that non-centered parametrization is necessary for meaningful inference. The Hamiltonian sampler also performs better than the block-Gibbs sampler.
 
 \section{Stochastic Gradient Hamiltonian Monte Carlo}
 The idea of simulating Hamiltonian dynamics without the Metropolis acceptance step was first experimented in the statistics/machine learning literature by Neal \cite{neal2012bayesian} in a batch HMC sampler for the posterior distribution of a BNN. He found that, with careful selection of the leapfrog step size, the biased samples achieve similar predictive performance as the full MCMC samples. Therefore, it seems to reason that for predictive tasks e.g. regression or classification where observations are abundant, we could 
@@ -1193,7 +1198,7 @@ dataset. Even if one can compute the MH correction, if the dynamics do not nearl
 "
 
 In deep learning, neural networks are usually fitted by stochastic gradient descent (SGD) \cite{ngiam2011optimization}.
-This is a first order method like regular gradient descent \cite{wright1999numerical}, except at each weight update a random subset(batch) of data points are sampled to be the  observations, and the sequence of step sizes over the optimization process must decay while satisfying the property
+This is a first order method like regular gradient descent, except at each weight update a random subset(batch) of data points are sampled to be the  observations, and the sequence of step sizes over the optimization process must decay while satisfying the property
 \[ \sum_{t=1}^\infty \epsilon_t = \infty , \sum_{t=1}^\infty \epsilon_t^2 < \infty. \]
 Theory from the stochastic optimization literature \cite{robbins1951stochastic} guarantees convergence to a local minimum. However, as per the norm in the optimization literature, the convergence property is usually only provable for easier classes of problems (.e.g. convex, quadratic functions) to which the likelihood of neural network models does not belong. Nonetheless, SGD has the advantage of easy implementation and low memory requirement ($O(D)$), and hence remains the predominant optimization method in deep learning.  
 
@@ -1281,6 +1286,7 @@ We can further reduce correlation by using a non-centered parametrization \cite{
 & z \sim \mathcal{N}^+(0,1)\\
 &\sigma^2 \sim \text{Inv-Gamma}(0.5,0.5). \\
 \end{align*}
+where $\mathcal{N}^+(0,1)$ is a truncated standard normal distribution.
 The joint parameter space then becomes $(z,r_1^l,r_2^l,r_1^g,r_2^g) $,
 where
 \begin{align*}
@@ -1309,7 +1315,7 @@ Suppose $W_{i\ell}$ are the weights connecting into the $i^\text{th}$ hidden uni
 In the neural network literature, the initialization of weights has been observed to influence the final predictive performance of the optimized model. Conventional initializations like the normal distribution with mean 0 and variance 1, and the uniform distribution from 0 to 1 were replaced by scaled distributions whose scale is dependent on the model structure. For example,
 \[ W \sim \text{Uniform}(\frac{-1}{\sqrt{N_{in}}},\frac{1}{\sqrt{N_{\text{in}}}}) \]
 
-where $N_\text{in}$ is the number of incoming units from the previous layer. This motivates us to consider priors of this form. Experiment results will be discussed in Chapter 4.
+where $N_\text{in}$ is the number of incoming units from the previous layer. Scaled initializations like this were found to facilitate the propagation the gradients, improve training speed and predictive accuracy \cite{glorot2010understanding}. This motivates us to consider priors of this form. Experiment results will be discussed in Chapter 4.
 \section{Model Selection}
 In a neural network model there are multiple hyperparameters that has to be selected by
 the user. These include the number of hidden layers, the number of hidden
@@ -1376,13 +1382,13 @@ where
 \[\text{lppd} = \sum_{i=1}^n \log( \frac{1}{S} \sum_{s=1}^S p(y_i|x_i,\theta^s) ) \]
 is the computed log pointwise predictive density.And 
 \[p_{\text{WAIC}} = \sum_{i=1}^n V_{s=1}^S(\log p(y_i|x_i, \theta^s)) \]
-is the effective number of parameters, where $V_s=1^S \log(p(y_i|x_i,\theta^s))$ is the empirical variance of the $S$  $\log(p(y_i|x_i,\theta^s))$ for fixed $i$. Note that only $nS$ points need to be stored to calculate the WAIC. $p_{\text{WAIC}}$ can be calculated differently, but here we follow the recommendation in \cite{gelman2014bayesian} and use the formula above.
+is the effective number of parameters, where $V_{s=1}^S \log(p(y_i|x_i,\theta^s))$ is the empirical variance of the $S$  $\log(p(y_i|x_i,\theta^s))$ for fixed $i$. Note that only $nS$ points need to be stored to calculate the WAIC. $p_{\text{WAIC}}$ can be calculated differently, but here we follow the recommendation in \cite{gelman2014bayesian} and use the formula above.
 
 The WAIC can also be calculated by importance sampling, using the variational distribution as the proposal distribution \cite{yamada2012information}.
 
 Once we have selected a model, we can make predictions about new data using its marginal posterior predictive distribution. That is, given a new data point $\{x_{\text{new}}\}$, we can find its marginal posterior predictive density $p(y_{\text{new}}|D)$ as 
-\[ p(y_{\text{new}}|D) = \int p(y_{\text{new}}|x_{\text{new}},\theta) p(\theta|D) d\theta \]
-If this is a classification problem of $C$ classes we would evaluate $p(y_{\text{new}}|D)$ for all $y_{\text{new}}=1,\dots, C$, and if a regression problem a number of points on the domain of the output can be evaluated 
+\[ p(y_{\text{new}}|D) = \int p(y_{\text{new}}|x_{\text{new}},\theta) p(\theta|D) d\theta. \]
+This integral is usually approximated in practice by drawing from the posterior distribution by MCMC. If this is a classification problem of $C$ classes we would evaluate $p(y_{\text{new}}|D)$ for all $y_{\text{new}}=1,\dots, C$, and if a regression problem a number of points on the domain of the output can be evaluated 
 and a prediction made by drawing from the empirical distribution. 
 \section{Relation to Stan and PyTorch}
 
@@ -1415,7 +1421,7 @@ MNIST \cite{lecun-mnisthandwrittendigit-2010} is a benchmark dataset that is arg
 \caption{Examples of the digits datasets. The first row contains some examples of the original MNIST digits. The second row contains some simplified digits}
 \end{figure}
 
-Unless stated otherwise, all of the experiments that follow use a neural network with one hidden layer, 35 hidden units, and the hyperbolic tangent function as activation function. We omit separate biases weights to simplify the presentation. It does not reduce the representational capacity of the model by too much because one of the hidden units can act as the bias by learning to represent a constant. The simplified model has two groups of weights,namely the input-to-hidden weights of dimension $N_{\text{in}} \times N_{\text{hidden}}$, and the hidden-to-output weights of dimension $N_{\text{hidden}} \times N_{\text{out}} $, where $N_{\text{in}},N_{\text{hidden}},N_{\text{out}}$, are the number of input covariates, hidden units and output units respectively. For example, for the simplified MNIST digits dataset described above, we have $N_{\text{in}} = 64 $ and $N_{\text{out}} = 10 $. Suppose $X,y$ are the training data input and target respectively. A single-hidden-layer neural network with a standard normal prior on its weights would have this posterior 
+Unless stated otherwise, all of the experiments that follow use a neural network with one hidden layer, 35 hidden units, and the hyperbolic tangent function as activation function. We omit separate biases weights to simplify the presentation. It does not reduce the representational capacity of the model by too much because one of the hidden units can act as the bias by learning to represent a constant \cite{bishop1995neural}. The simplified model has two groups of weights, namely the input-to-hidden weights of dimension $N_{\text{in}} \times N_{\text{hidden}}$, and the hidden-to-output weights of dimension $N_{\text{hidden}} \times N_{\text{out}} $, where $N_{\text{in}},N_{\text{hidden}},N_{\text{out}}$, are the number of input covariates, hidden units and output units respectively. For example, for the simplified MNIST digits dataset described above, we have $N_{\text{in}} = 64 $ and $N_{\text{out}} = 10 $. Suppose $X,y$ are the training data input and target respectively. A single-hidden-layer neural network with a standard normal prior on its weights would have this unnormalized posterior 
 
 \[ \prod_{i=1}^N p(y,X|W) p(W^{\text{in}})p(W^{\text{out}}) \]
 where 
@@ -1513,9 +1519,9 @@ where $ W_{i,\cdot}  $ are the weights entering the $i$'th hidden unit. This is 
 &c^2 \sim \text{Inv-Gamma}(2,8).
 \end{align*}
 
-In the experiments we compared the standard normal prior against a number of hierarchical priors and their ARD variants.We found that while the regularized horseshoe prior performs better than the original horseshoe prior in terms of having zero divergent transitions, neither of the horseshoe priors can be said to induce great sampling efficiency, as both result in models whose posterior distribution are difficult to sample, resulting in low ESS. What's more is that even the Normal-Inverse-Gamma prior does not give better predictive performance than the standard normal prior, which we have already seen in earlier experiments comparing Gibbs sampling to joint sampling for the hyperparameter. 
+In the experiments we compared the standard normal prior against a number of hierarchical priors and their ARD variants. We found that while the regularized horseshoe prior performs better than the original horseshoe prior in terms of having zero divergent transitions, neither of the horseshoe priors can be said to induce great sampling efficiency, as both result in models whose posterior distribution are difficult to sample, resulting in low ESS. What's more is that even the Normal-Inverse-Gamma prior does not give better predictive performance than the standard normal prior, which we have already seen in earlier experiments comparing Gibbs sampling to joint sampling for the hyperparameter. 
 
-We observe that the ARD priors in general have better predictive accuracy and \textit{much} better sampling efficiency. For the horseshoe prior in particular, the naive horseshoe application has extremely low mininum ESS it can be considered to be not even converging in some marginal dimensions.
+We observe that the ARD priors in general have better predictive accuracy and \textit{much} better sampling efficiency. For the horseshoe prior in particular, the naive horseshoe application has extremely low mininum ESS it can be considered to be not even converging marginally in some dimensions. We suspect the lower efficiency for the naive horseshoe priors is caused by the higher parameter-to-hyperparameter ratio compared to the ARD versions.
 \begin{table}[]
 \centering
 \begin{tabular}{@{}rrrrrrrr@{}}
@@ -1637,7 +1643,7 @@ Normal-Inv-Gamma ARD & 91.2 (23.2) [27.2]  & 4 (370) [140]  & 8 (1295) [1332]   
 Now we are interested in the impact of the number of layers on sampling efficiency. We know from the neural network literature that deep structures tend to reduce test error. However, there is no empirical studies on the impact of deep hierarchical structures in BNNs, since tradtionally only single-hidden-layer networks were studied.
 Here we fix the prior to be a standard normal distribution and vary the number of hidden layers.
 
-Initially we found that increasing the number of layers does reduce the test error, in line with the folk wisdom of the literature. However, for the the model with 4 hidden layers the test error went up significantly even though the ESSs stay about the same. Since the ESS does not seem to drop precipitously with increasing number layers, the drop in predictive accuracy cannot be attributed to sampling difficulties. In this case it is more likely due to overfitting. It shows that even Bayesian neural networks can overfit, corroborating observations in \cite{gal2015bayesian}.
+Initially we found that increasing the number of layers does reduce the test error, in line with the folk wisdom of the literature. However, for the the models with 4 hidden layers the test errors went up significantly even though the ESSs stay about the same. Since the ESS does not seem to drop precipitously with increasing number layers, the drop in predictive accuracy cannot be attributed to sampling difficulties. In this case it is more likely due to overfitting. It shows that even Bayesian neural networks can overfit, corroborating observations in \cite{gal2015bayesian}.
 
 
 
